@@ -8,6 +8,7 @@ import 'services/language_provider.dart';
 import 'services/status_registry.dart';
 import 'utils/statistics_collector.dart';
 import 'ui/screens/home_screen.dart';
+import 'utils/version_helper.dart';
 
 void main() {
   runApp(const IoTDevKitApp());
@@ -45,10 +46,57 @@ class IoTDevKitApp extends StatelessWidget {
               Locale('en'),
               Locale('zh'),
             ],
-            home: const HomeScreen(),
+            home: const AppRoot(),
           );
         },
       ),
+    );
+  }
+}
+
+class AppRoot extends StatelessWidget {
+  const AppRoot({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return PlatformMenuBar(
+      menus: [
+        PlatformMenu(
+          label: 'IoT DevKit',
+          menus: [
+            PlatformMenuItem(
+              label: 'About IoT DevKit',
+              onSelected: () async {
+                final version = await VersionHelper.getAppVersion();
+                if (context.mounted) {
+                  showAboutDialog(
+                    context: context,
+                    applicationName: 'IoT DevKit',
+                    applicationVersion: version,
+                    applicationIcon: const FlutterLogo(),
+                    applicationLegalese: 'Copyright © 2025 Chen Xu & Antigravity',
+                    children: [
+                      const SizedBox(height: 10),
+                      const Text('A powerful MQTT Device Simulator for IoT development.'),
+                      const SizedBox(height: 10),
+                      const Text('Built with Flutter & Dart.'),
+                    ],
+                  );
+                }
+              },
+            ),
+            const PlatformMenuItemGroup(
+              members: [
+                PlatformProvidedMenuItem(type: PlatformProvidedMenuItemType.quit),
+              ],
+            ),
+          ],
+        ),
+      ],
+      child: const HomeScreen(),
+    );
+  }
+}
     );
   }
 }

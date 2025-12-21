@@ -24,6 +24,7 @@ dependencies:
 
   # UI (Optional, but useful for icons if not using material default)
   cupertino_icons: ^1.0.8
+  package_info_plus: ^9.0.0
 
 dev_dependencies:
   flutter_test:
