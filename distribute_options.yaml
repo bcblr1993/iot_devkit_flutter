@@ -1,0 +1,31 @@
+output: dist/
+releases:
+  - name: release
+    jobs:
+      # macOS - Universal Binary (Intel + Apple Silicon) packaged as DMG
+      - name: macos-dmg
+        package:
+          platform: macos
+          target: dmg
+          # 'flutter build macos' creates a universal binary by default
+          build_args:
+            target: lib/main.dart
+            flavor: release
+
+      # Windows - x64 packaged as EXE installer (Requires Inno Setup installed)
+      - name: windows-exe
+        package:
+          platform: windows
+          target: exe
+          build_args:
+            target: lib/main.dart
+            flavor: release
+
+      # Linux - Packaged as DEB
+      - name: linux-deb
+        package:
+          platform: linux
+          target: deb
+          build_args:
+            target: lib/main.dart
+            flavor: release

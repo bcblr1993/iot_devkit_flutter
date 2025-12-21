@@ -1,0 +1,39 @@
+name: iot_devkit
+description: A new Flutter project for IoT MQTT Device Simulation.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  
+  # Core dependencies
+  mqtt_client: ^10.0.1
+  provider: ^6.1.1
+  shared_preferences: ^2.2.2
+  path_provider: ^2.1.1
+  uuid: ^4.2.1
+  intl: ^0.20.2
+  logging: ^1.2.0
+  file_picker: ^8.0.0
+
+  # UI (Optional, but useful for icons if not using material default)
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+flutter:
+  generate: true
+  uses-material-design: true
+  
+  # basic assets config if needed later
+#  assets:
+#    - assets/images/
