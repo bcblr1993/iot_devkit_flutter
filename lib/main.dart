@@ -156,7 +156,12 @@ class AppRoot extends StatelessWidget {
           ],
         ),
       ],
-      child: const HomeScreen(),
+      child: AnimatedTheme(
+        data: Theme.of(context),
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        child: const HomeScreen(),
+      ),
     );
   }
 }

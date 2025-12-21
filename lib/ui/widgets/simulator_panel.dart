@@ -132,7 +132,8 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
     final mqttController = Provider.of<MqttController>(context);
     final isRunning = mqttController.isRunning;
     final l10n = AppLocalizations.of(context)!;
-    final effect = Theme.of(context).extension<AppThemeEffect>() ?? 
+    final theme = Theme.of(context);
+    final effect = theme.extension<AppThemeEffect>() ?? 
                    const AppThemeEffect(animationCurve: Curves.easeInOut, layoutDensity: 1.0, icons: AppIcons.standard);
 
     return Column(
@@ -151,63 +152,33 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
 
         // Integrated Tabs & Content
         Expanded(
-          child: Padding(
-            // Add side padding to match layout if needed, or keep 0 if full width is desired. 
-            // Using small padding to frame it if it's a card.
-            padding: EdgeInsets.symmetric(horizontal: 12.0 * effect.layoutDensity),
-            child: Container(
-              decoration: BoxDecoration(
-                color: (Theme.of(context).colorScheme.primaryContainer != Theme.of(context).colorScheme.surface && 
-                        Theme.of(context).colorScheme.primaryContainer != Theme.of(context).colorScheme.background)
-                    ? Theme.of(context).colorScheme.primaryContainer
-                    : null,
-                borderRadius: BorderRadius.circular(16),
-                border: (Theme.of(context).colorScheme.primaryContainer == Theme.of(context).colorScheme.surface) 
-                    ? Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.2)) 
-                    : null, 
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12.0 * effect.layoutDensity),
+                child: TabBar(
+                  controller: _tabController,
+                  labelColor: theme.colorScheme.primary,
+                  unselectedLabelColor: theme.colorScheme.onSurface.withOpacity(0.6),
+                  indicatorColor: theme.colorScheme.primary,
+                  dividerColor: Colors.transparent,
+                  tabs: [
+                    Tab(text: l10n.basicMode),
+                    Tab(text: l10n.advancedMode),
+                  ],
+                ),
               ),
-              child: Column(
-                children: [
-                  Container(
-                    margin: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                       color: Theme.of(context).colorScheme.surface.withOpacity(0.4),
-                       borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: TabBar(
-                      controller: _tabController,
-                      labelColor: (Theme.of(context).colorScheme.primaryContainer != Theme.of(context).colorScheme.surface && 
-                                   Theme.of(context).colorScheme.primaryContainer != Theme.of(context).colorScheme.background)
-                          ? Theme.of(context).colorScheme.onPrimaryContainer
-                          : Theme.of(context).colorScheme.primary,
-                      unselectedLabelColor: (Theme.of(context).colorScheme.primaryContainer != Theme.of(context).colorScheme.surface && 
-                                             Theme.of(context).colorScheme.primaryContainer != Theme.of(context).colorScheme.background)
-                          ? Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.6)
-                          : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                      indicatorColor: (Theme.of(context).colorScheme.primaryContainer != Theme.of(context).colorScheme.surface && 
-                                       Theme.of(context).colorScheme.primaryContainer != Theme.of(context).colorScheme.background)
-                          ? Theme.of(context).colorScheme.onPrimaryContainer
-                          : Theme.of(context).colorScheme.primary,
-                      dividerColor: Colors.transparent, // Remove default divider
-                      tabs: [
-                        Tab(text: l10n.basicMode),
-                        Tab(text: l10n.advancedMode),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: TabBarView(
-                      controller: _tabController,
-                      physics: const BouncingScrollPhysics(),
-                      children: [
-                        KeepAliveWrapper(child: _buildBasicTab(mqttController, isRunning, l10n)),
-                        KeepAliveWrapper(child: _buildAdvancedTab(mqttController, isRunning, l10n)),
-                      ],
-                    ),
-                  ),
-                ],
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  physics: const BouncingScrollPhysics(),
+                  children: [
+                    KeepAliveWrapper(child: _buildBasicTab(mqttController, isRunning, l10n)),
+                    KeepAliveWrapper(child: _buildAdvancedTab(mqttController, isRunning, l10n)),
+                  ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
         const Divider(height: 1),
@@ -230,11 +201,13 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
           duration: const Duration(milliseconds: 300),
           curve: effect.animationCurve,
           height: widget.isLogExpanded ? MediaQuery.of(context).size.height * 0.35 : 40,
-          child: LogConsole(
-            logs: widget.logs,
-            isExpanded: widget.isLogExpanded,
-            onToggle: widget.onToggleLog,
-            onClear: widget.onClearLog,
+          child: RepaintBoundary(
+            child: LogConsole(
+              logs: widget.logs,
+              isExpanded: widget.isLogExpanded,
+              onToggle: widget.onToggleLog,
+              onClear: widget.onClearLog,
+            ),
           ),
         ),
       ],
@@ -313,8 +286,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
     final bool useFeaturedStyle = colorScheme.primaryContainer != colorScheme.surface && 
                                  colorScheme.primaryContainer != colorScheme.background;
                    
-    final themeManager = Provider.of<ThemeManager>(context);
-    final isGlass = themeManager.currentThemeName.contains('glass');
+    final bool isGlass = effect.useGlassEffect;
     
     final configTile = ExpansionTile(
       initiallyExpanded: _isBasicConfigExpanded,
@@ -385,11 +357,6 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
                 ],
               ),
               const SizedBox(height: 16),
-              const Divider(),
-              const SizedBox(height: 8),
-              // AppLocalizations.of(context) would fail if context is not passed, but l10n is passed safely.
-              Text("Custom Keys", style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
-              const SizedBox(height: 6),
               CustomKeysManager(
                 keys: _basicCustomKeys,
                 isLocked: isRunning,

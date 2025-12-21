@@ -48,7 +48,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: Row(
         children: [
-          NavigationRail(
+          RepaintBoundary(
+            child: NavigationRail(
             selectedIndex: _selectedIndex,
             onDestinationSelected: (int index) {
               setState(() {
@@ -111,15 +112,17 @@ class _HomeScreenState extends State<HomeScreen> {
                               return themeManager.availableThemes.map((String theme) {
                                 String label;
                                 switch (theme) {
-                                  case 'terminal-green': label = l10n.themeTerminalGreen; break;
-                                  case 'iot-slate': label = l10n.themeIoTSlate; break;
-                                  case 'cloud-white': label = l10n.themeCloudWhite; break;
-                                  case 'midnight-purple': label = l10n.themeMidnightPurple; break;
-                                  case 'arctic-teal': label = l10n.themeArcticTeal; break;
-                                  case 'azure-mist': label = l10n.themeAzureMist; break;
-                                  case 'amber-retro': label = l10n.themeAmberRetro; break;
-                                  case 'crimson-ops': label = l10n.themeCrimsonOps; break;
-                                  case 'neon-synth': label = l10n.themeNeonSynth; break;
+                                  case 'adminix-emerald': label = l10n.themeAdminixEmerald; break;
+                                  case 'rivlo-dark': label = l10n.themeRivloDark; break;
+                                  case 'salesflow-coral': label = l10n.themeSalesFlowCoral; break;
+                                  case 'rydex-racing': label = l10n.themeRydexRacing; break;
+                                  case 'finflow-blue': label = l10n.themeFinFlowBlue; break;
+                                  case 'vercel-white': label = l10n.themeVercelWhite; break;
+                                  case 'notion-milk': label = l10n.themeNotionMilk; break;
+                                  case 'apple-frost': label = l10n.themeAppleFrost; break;
+                                  case 'carbon-black': label = l10n.themeCarbonBlack; break;
+                                  case 'midnight-zen': label = l10n.themeMidnightZen; break;
+                                  case 'obsidian-mono': label = l10n.themeObsidianMono; break;
                                   default: label = theme;
                                 }
                                 return CheckedPopupMenuItem<String>(
@@ -137,10 +140,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
+            ),
           ),
           const VerticalDivider(thickness: 1, width: 1),
           Expanded(
-            child: _buildBody(),
+            child: RepaintBoundary(child: _buildBody()),
           ),
         ],
       ),

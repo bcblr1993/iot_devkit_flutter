@@ -189,28 +189,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get staticValue => '固定值';
 
   @override
-  String get themeVercelLight => '极简光 (Vercel)';
-
-  @override
-  String get themeGithubDark => 'GitHub 暗黑';
-
-  @override
-  String get themeDracula => '吸血鬼 (Dracula)';
-
-  @override
-  String get themeMonokai => '莫诺凯 (Monokai)';
-
-  @override
-  String get themeNordic => '北欧雪 (Nordic)';
-
-  @override
-  String get themeSolarized => '日蚀暗 (Solarized)';
-
-  @override
-  String get themeDeepOcean => '深邃海 (Ocean)';
-
-  @override
-  String get themeSakura => '樱花粉 (Sakura)';
+  String get themeAdminixEmerald => '翡翠之都 (Adminix)';
 
   @override
   String get timestampToDate => '时间戳 → 日期';
@@ -369,41 +348,62 @@ class AppLocalizationsZh extends AppLocalizations {
   String get confirm => '确定';
 
   @override
-  String get themeTerminalGreen => '终端绿 (Terminal Green)';
-
-  @override
-  String get themeIoTSlate => '物联灰 (IoT Slate)';
-
-  @override
-  String get themeCloudWhite => '云境白 (Cloud White)';
-
-  @override
-  String get themeMidnightPurple => '深夜紫 (Midnight Purple)';
-
-  @override
-  String get themeArcticTeal => '极地青 (Arctic Teal)';
-
-  @override
-  String get themeAzureMist => '蔚蓝迷雾 (Azure Mist)';
-
-  @override
-  String get themeAmberRetro => '复古琥珀 (Amber Retro)';
-
-  @override
-  String get themeCrimsonOps => '赤色警戒 (Crimson Ops)';
-
-  @override
-  String get themeNeonSynth => '霓虹合成 (Neon Synth)';
-
-  @override
   String get menuAbout => '关于 IoT DevKit';
 
   @override
   String get aboutDescription => '物联网开发工具箱 - MQTT 模拟 & 时间转换等工具集。';
 
   @override
-  String get aboutFooter => '版权所有 © 2025 Chen Xu & Antigravity';
+  String get aboutFooter => '版权所有 © 2025 Chen YanNan';
 
   @override
   String get close => '关闭';
+
+  @override
+  String get settingsLocked => '运行中配置已锁定';
+
+  @override
+  String get maxGroupsReached => '最多允许添加 12 个分组';
+
+  @override
+  String get groupLabel => '分组';
+
+  @override
+  String get limitExceeded => '超出限制';
+
+  @override
+  String get ignored => '已忽略';
+
+  @override
+  String get themeRivloDark => '幻夜绿光 (Rivlo)';
+
+  @override
+  String get themeSalesFlowCoral => '熔岩珊瑩 (SalesFlow)';
+
+  @override
+  String get themeRydexRacing => '竞速赤焰 (Rydex)';
+
+  @override
+  String get themeFinFlowBlue => '金融蜻篮 (FinFlow)';
+
+  @override
+  String get themeAdminixSharp => 'Adminix Sharp';
+
+  @override
+  String get themeVercelWhite => '极简专业 (Vercel)';
+
+  @override
+  String get themeNotionMilk => '柔白文档 (Notion)';
+
+  @override
+  String get themeAppleFrost => '苹果系白 (Apple)';
+
+  @override
+  String get themeCarbonBlack => '煤热深空 (Carbon)';
+
+  @override
+  String get themeMidnightZen => '深蓝护眼 (Midnight)';
+
+  @override
+  String get themeObsidianMono => '极简纯黑 (Obsidian)';
 }

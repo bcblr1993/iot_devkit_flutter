@@ -458,53 +458,11 @@ abstract class AppLocalizations {
   /// **'Static Value'**
   String get staticValue;
 
-  /// No description provided for @themeVercelLight.
+  /// No description provided for @themeAdminixEmerald.
   ///
   /// In en, this message translates to:
-  /// **'Vercel Light'**
-  String get themeVercelLight;
-
-  /// No description provided for @themeGithubDark.
-  ///
-  /// In en, this message translates to:
-  /// **'GitHub Dark'**
-  String get themeGithubDark;
-
-  /// No description provided for @themeDracula.
-  ///
-  /// In en, this message translates to:
-  /// **'Dracula'**
-  String get themeDracula;
-
-  /// No description provided for @themeMonokai.
-  ///
-  /// In en, this message translates to:
-  /// **'Monokai Pro'**
-  String get themeMonokai;
-
-  /// No description provided for @themeNordic.
-  ///
-  /// In en, this message translates to:
-  /// **'Nordic Snow'**
-  String get themeNordic;
-
-  /// No description provided for @themeSolarized.
-  ///
-  /// In en, this message translates to:
-  /// **'Solarized Dark'**
-  String get themeSolarized;
-
-  /// No description provided for @themeDeepOcean.
-  ///
-  /// In en, this message translates to:
-  /// **'Deep Ocean'**
-  String get themeDeepOcean;
-
-  /// No description provided for @themeSakura.
-  ///
-  /// In en, this message translates to:
-  /// **'Sakura Pink'**
-  String get themeSakura;
+  /// **'Adminix Emerald'**
+  String get themeAdminixEmerald;
 
   /// No description provided for @timestampToDate.
   ///
@@ -818,60 +776,6 @@ abstract class AppLocalizations {
   /// **'Confirm'**
   String get confirm;
 
-  /// No description provided for @themeTerminalGreen.
-  ///
-  /// In en, this message translates to:
-  /// **'Terminal Green'**
-  String get themeTerminalGreen;
-
-  /// No description provided for @themeIoTSlate.
-  ///
-  /// In en, this message translates to:
-  /// **'IoT Slate'**
-  String get themeIoTSlate;
-
-  /// No description provided for @themeCloudWhite.
-  ///
-  /// In en, this message translates to:
-  /// **'Cloud White'**
-  String get themeCloudWhite;
-
-  /// No description provided for @themeMidnightPurple.
-  ///
-  /// In en, this message translates to:
-  /// **'Midnight Purple'**
-  String get themeMidnightPurple;
-
-  /// No description provided for @themeArcticTeal.
-  ///
-  /// In en, this message translates to:
-  /// **'Arctic Teal'**
-  String get themeArcticTeal;
-
-  /// No description provided for @themeAzureMist.
-  ///
-  /// In en, this message translates to:
-  /// **'Azure Mist'**
-  String get themeAzureMist;
-
-  /// No description provided for @themeAmberRetro.
-  ///
-  /// In en, this message translates to:
-  /// **'Amber Retro'**
-  String get themeAmberRetro;
-
-  /// No description provided for @themeCrimsonOps.
-  ///
-  /// In en, this message translates to:
-  /// **'Crimson Ops'**
-  String get themeCrimsonOps;
-
-  /// No description provided for @themeNeonSynth.
-  ///
-  /// In en, this message translates to:
-  /// **'Neon Synth'**
-  String get themeNeonSynth;
-
   /// No description provided for @menuAbout.
   ///
   /// In en, this message translates to:
@@ -895,6 +799,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Close'**
   String get close;
+
+  /// No description provided for @settingsLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings locked while running'**
+  String get settingsLocked;
+
+  /// No description provided for @maxGroupsReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum 12 groups allowed'**
+  String get maxGroupsReached;
+
+  /// No description provided for @groupLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Group'**
+  String get groupLabel;
+
+  /// No description provided for @limitExceeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Limit exceeded'**
+  String get limitExceeded;
+
+  /// No description provided for @ignored.
+  ///
+  /// In en, this message translates to:
+  /// **'Ignored'**
+  String get ignored;
+
+  /// No description provided for @themeRivloDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Rivlo Dark'**
+  String get themeRivloDark;
+
+  /// No description provided for @themeSalesFlowCoral.
+  ///
+  /// In en, this message translates to:
+  /// **'SalesFlow Coral'**
+  String get themeSalesFlowCoral;
+
+  /// No description provided for @themeRydexRacing.
+  ///
+  /// In en, this message translates to:
+  /// **'Rydex Racing'**
+  String get themeRydexRacing;
+
+  /// No description provided for @themeFinFlowBlue.
+  ///
+  /// In en, this message translates to:
+  /// **'FinFlow Blue'**
+  String get themeFinFlowBlue;
+
+  /// No description provided for @themeAdminixSharp.
+  ///
+  /// In en, this message translates to:
+  /// **'Adminix Sharp'**
+  String get themeAdminixSharp;
+
+  /// No description provided for @themeVercelWhite.
+  ///
+  /// In en, this message translates to:
+  /// **'Vercel White'**
+  String get themeVercelWhite;
+
+  /// No description provided for @themeNotionMilk.
+  ///
+  /// In en, this message translates to:
+  /// **'Notion Milk'**
+  String get themeNotionMilk;
+
+  /// No description provided for @themeAppleFrost.
+  ///
+  /// In en, this message translates to:
+  /// **'Apple Frost'**
+  String get themeAppleFrost;
+
+  /// No description provided for @themeCarbonBlack.
+  ///
+  /// In en, this message translates to:
+  /// **'Carbon Black'**
+  String get themeCarbonBlack;
+
+  /// No description provided for @themeMidnightZen.
+  ///
+  /// In en, this message translates to:
+  /// **'Midnight Zen'**
+  String get themeMidnightZen;
+
+  /// No description provided for @themeObsidianMono.
+  ///
+  /// In en, this message translates to:
+  /// **'Obsidian Mono'**
+  String get themeObsidianMono;
 }
 
 class _AppLocalizationsDelegate

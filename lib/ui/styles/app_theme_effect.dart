@@ -100,12 +100,14 @@ class AppThemeEffect extends ThemeExtension<AppThemeEffect> {
   final Curve animationCurve;
   final double layoutDensity; // 1.0 = standard, 0.8 = compact, 1.2 = spacious
   final AppIcons icons;
+  final bool useGlassEffect;
   final BoxShadow? innerShadow; // Simulate depth if needed
 
   const AppThemeEffect({
     required this.animationCurve,
     required this.layoutDensity,
     required this.icons,
+    this.useGlassEffect = false,
     this.innerShadow,
   });
 
@@ -119,6 +121,7 @@ class AppThemeEffect extends ThemeExtension<AppThemeEffect> {
     return AppThemeEffect(
       animationCurve: animationCurve ?? this.animationCurve,
       layoutDensity: layoutDensity ?? this.layoutDensity,
+      useGlassEffect: useGlassEffect ?? this.useGlassEffect,
       icons: icons ?? this.icons,
       innerShadow: innerShadow ?? this.innerShadow,
     );
@@ -130,10 +133,11 @@ class AppThemeEffect extends ThemeExtension<AppThemeEffect> {
       return this;
     }
     return AppThemeEffect(
-      // Curves cannot be lerped easily, snap to target at 50%
+      // Snap curve and icons at 50%
       animationCurve: t < 0.5 ? animationCurve : other.animationCurve,
-      layoutDensity: lerpDouble(layoutDensity, other.layoutDensity, t),
-      // Icons cannot be lerped, snap to target
+      // Snap layoutDensity and glass effect at 50%
+      layoutDensity: t < 0.5 ? layoutDensity : other.layoutDensity,
+      useGlassEffect: t < 0.5 ? useGlassEffect : other.useGlassEffect,
       icons: t < 0.5 ? icons : other.icons,
       innerShadow: BoxShadow.lerp(innerShadow, other.innerShadow, t),
     );

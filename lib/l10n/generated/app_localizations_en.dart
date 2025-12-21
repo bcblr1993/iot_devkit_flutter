@@ -189,28 +189,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get staticValue => 'Static Value';
 
   @override
-  String get themeVercelLight => 'Vercel Light';
-
-  @override
-  String get themeGithubDark => 'GitHub Dark';
-
-  @override
-  String get themeDracula => 'Dracula';
-
-  @override
-  String get themeMonokai => 'Monokai Pro';
-
-  @override
-  String get themeNordic => 'Nordic Snow';
-
-  @override
-  String get themeSolarized => 'Solarized Dark';
-
-  @override
-  String get themeDeepOcean => 'Deep Ocean';
-
-  @override
-  String get themeSakura => 'Sakura Pink';
+  String get themeAdminixEmerald => 'Adminix Emerald';
 
   @override
   String get timestampToDate => 'Timestamp → Date';
@@ -370,33 +349,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirm => 'Confirm';
 
   @override
-  String get themeTerminalGreen => 'Terminal Green';
-
-  @override
-  String get themeIoTSlate => 'IoT Slate';
-
-  @override
-  String get themeCloudWhite => 'Cloud White';
-
-  @override
-  String get themeMidnightPurple => 'Midnight Purple';
-
-  @override
-  String get themeArcticTeal => 'Arctic Teal';
-
-  @override
-  String get themeAzureMist => 'Azure Mist';
-
-  @override
-  String get themeAmberRetro => 'Amber Retro';
-
-  @override
-  String get themeCrimsonOps => 'Crimson Ops';
-
-  @override
-  String get themeNeonSynth => 'Neon Synth';
-
-  @override
   String get menuAbout => 'About IoT DevKit';
 
   @override
@@ -408,4 +360,52 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get close => 'Close';
+
+  @override
+  String get settingsLocked => 'Settings locked while running';
+
+  @override
+  String get maxGroupsReached => 'Maximum 12 groups allowed';
+
+  @override
+  String get groupLabel => 'Group';
+
+  @override
+  String get limitExceeded => 'Limit exceeded';
+
+  @override
+  String get ignored => 'Ignored';
+
+  @override
+  String get themeRivloDark => 'Rivlo Dark';
+
+  @override
+  String get themeSalesFlowCoral => 'SalesFlow Coral';
+
+  @override
+  String get themeRydexRacing => 'Rydex Racing';
+
+  @override
+  String get themeFinFlowBlue => 'FinFlow Blue';
+
+  @override
+  String get themeAdminixSharp => 'Adminix Sharp';
+
+  @override
+  String get themeVercelWhite => 'Vercel White';
+
+  @override
+  String get themeNotionMilk => 'Notion Milk';
+
+  @override
+  String get themeAppleFrost => 'Apple Frost';
+
+  @override
+  String get themeCarbonBlack => 'Carbon Black';
+
+  @override
+  String get themeMidnightZen => 'Midnight Zen';
+
+  @override
+  String get themeObsidianMono => 'Obsidian Mono';
 }

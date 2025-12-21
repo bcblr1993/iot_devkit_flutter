@@ -29,12 +29,22 @@ class _GroupsManagerState extends State<GroupsManager> {
   // We keep a local copy to edit, then emit changes up
   late List<GroupConfig> _localGroups;
 
+  bool _initialCheckDone = false;
+
   @override
   void initState() {
     super.initState();
     _localGroups = List.from(widget.groups);
-    if (_localGroups.isEmpty) {
-      _addGroup();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialCheckDone) {
+      if (_localGroups.isEmpty) {
+        _addGroup();
+      }
+      _initialCheckDone = true;
     }
   }
 
@@ -49,14 +59,15 @@ class _GroupsManagerState extends State<GroupsManager> {
   }
 
   void _addGroup() {
+    final l10n = AppLocalizations.of(context)!;
     if (_localGroups.length >= 12) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Maximum 12 groups allowed')),
+        SnackBar(content: Text(l10n.maxGroupsReached)),
       );
       return;
     }
     setState(() {
-      _localGroups.add(GroupConfig(name: 'Group ${String.fromCharCode(65 + _localGroups.length)}'));
+      _localGroups.add(GroupConfig(name: '${l10n.groupLabel} ${String.fromCharCode(65 + _localGroups.length)}'));
       widget.onGroupsChanged(_localGroups);
     });
   }
@@ -149,7 +160,7 @@ class _GroupsManagerState extends State<GroupsManager> {
           _updateGroup(index, group.copyWith(isExpanded: expanded));
         },
         title: Text(group.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text('Devices: ${group.startDeviceNumber} - ${group.endDeviceNumber}', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
+        subtitle: Text('${l10n.unitDevices}: ${group.startDeviceNumber} - ${group.endDeviceNumber}', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
         trailing: widget.isLocked 
           ? null 
           : IconButton(
@@ -160,7 +171,7 @@ class _GroupsManagerState extends State<GroupsManager> {
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: widget.isLocked 
-                ? Text('Settings locked while running.', style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5)))
+                ? Text('${l10n.settingsLocked}.', style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5)))
                 : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

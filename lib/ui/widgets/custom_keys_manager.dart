@@ -121,7 +121,7 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
                 Text(l10n.customKeys, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: widget.headerColor ?? theme.colorScheme.primary)),
                 if (_localKeys.length > widget.maxKeys)
                   Text(
-                    'Limit exceeded (${_localKeys.length}/${widget.maxKeys})',
+                    '${l10n.limitExceeded} (${_localKeys.length}/${widget.maxKeys})',
                     style: TextStyle(color: theme.colorScheme.error, fontSize: 12),
                   )
                 else
@@ -174,7 +174,6 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
               onChanged: (v) => setState(() => _searchQuery = v),
             ),
           ),
-        const SizedBox(height: 6),
         const SizedBox(height: 6),
         widget.enableExpandedLayout 
           ? Expanded(child: _buildListContainer())
@@ -256,7 +255,7 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
                     borderRadius: BorderRadius.circular(2),
                   ),
                   child: Text(
-                    'Ignored', 
+                    l10n.ignored, 
                     style: TextStyle(
                       fontSize: 10, 
                       fontWeight: FontWeight.bold, 
@@ -293,7 +292,7 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
                 ),
                 items: CustomKeyType.values.map((type) => DropdownMenuItem(
                   value: type,
-                  child: Text(type.name.toUpperCase(), style: const TextStyle(fontSize: 12)),
+                  child: Text(_getTypeLabel(type, l10n), style: const TextStyle(fontSize: 12)),
                 )).toList(),
                 onChanged: widget.isLocked ? null : (v) => _updateKey(key.copyWith(type: v!)),
               ),
@@ -311,7 +310,7 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
                 ),
                 items: CustomKeyMode.values.map((mode) => DropdownMenuItem(
                   value: mode,
-                  child: Text(mode.name.toUpperCase(), style: const TextStyle(fontSize: 12)),
+                  child: Text(_getModeLabel(mode, l10n), style: const TextStyle(fontSize: 12)),
                 )).toList(),
                 onChanged: widget.isLocked ? null : (v) => _updateKey(key.copyWith(mode: v!)),
               ),
