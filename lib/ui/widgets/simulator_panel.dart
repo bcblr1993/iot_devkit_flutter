@@ -19,6 +19,7 @@ class SimulatorPanel extends StatefulWidget {
   final bool isLogExpanded;
   final VoidCallback onToggleLog;
   final VoidCallback onClearLog;
+  final VoidCallback? onSimulationStarted;
 
   const SimulatorPanel({
     super.key,
@@ -26,6 +27,7 @@ class SimulatorPanel extends StatefulWidget {
     required this.isLogExpanded,
     required this.onToggleLog,
     required this.onClearLog,
+    this.onSimulationStarted,
   });
 
   @override
@@ -500,6 +502,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
        final config = _getCompleteConfig();
        ConfigService.saveToLocalStorage(config);
        controller.start(config);
+       widget.onSimulationStarted?.call();
     }
   }
 
@@ -507,6 +510,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
      final config = _getCompleteConfig();
      ConfigService.saveToLocalStorage(config);
      controller.start(config);
+     widget.onSimulationStarted?.call();
   }
 
   void _setStatus(String msg, Color color) {

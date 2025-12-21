@@ -221,6 +221,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   _logs.clear();
                 });
               },
+              onSimulationStarted: () {
+                if (!_isLogExpanded) {
+                  setState(() {
+                    _isLogExpanded = true;
+                  });
+                }
+              },
             ),
           ),
           

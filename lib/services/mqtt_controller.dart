@@ -26,6 +26,13 @@ class MqttController extends ChangeNotifier {
   final List<MqttServerClient> _clients = [];
   final Map<String, List<Timer>> _clientTimers = {};
   
+  // Reconnection tracking
+  final Map<String, Map<String, dynamic>> _clientConfigs = {}; // Store client config for reconnection
+  final Map<String, int> _reconnectAttempts = {};
+  final Map<String, Timer?> _reconnectTimers = {};
+  static const int _baseReconnectDelayMs = 2000; // 2 seconds base delay
+  static const int _maxReconnectDelayMs = 30000; // Max 30 seconds
+  
   // Callback for logs
   Function(String message, String type)? onLog;
   
@@ -52,6 +59,14 @@ class MqttController extends ChangeNotifier {
       }
     }
     _clientTimers.clear();
+    
+    // 1.5. Cancel all reconnect timers
+    for (var timer in _reconnectTimers.values) {
+      timer?.cancel();
+    }
+    _reconnectTimers.clear();
+    _reconnectAttempts.clear();
+    _clientConfigs.clear();
 
     // 2. Disconnect clients
     for (var client in _clients) {
@@ -163,29 +178,58 @@ class MqttController extends ChangeNotifier {
     required String topic,
     required GroupConfig group,
   }) async {
+    // Store config for reconnection
+    _clientConfigs[clientId] = {
+      'host': host,
+      'port': port,
+      'username': username,
+      'password': password,
+      'topic': topic,
+      'group': group,
+      'mode': 'advanced',
+    };
+    
     final client = MqttServerClient(host, clientId);
     client.port = port;
     client.keepAlivePeriod = 60;
     client.logging(on: false);
+    client.autoReconnect = false; // We handle reconnection manually
     
     final connMess = MqttConnectMessage()
         .withClientIdentifier(clientId)
         .authenticateAs(username, password)
         .startClean();
     client.connectionMessage = connMess;
+    
+    // Set up disconnect callback for auto-reconnect
+    client.onDisconnected = () {
+      if (!isRunning) return;
+      _clients.remove(client);
+      // Cancel all timers for this client to prevent publish errors with old client
+      if (_clientTimers.containsKey(clientId)) {
+        for (var t in _clientTimers[clientId]!) {
+          t.cancel();
+        }
+        _clientTimers[clientId]!.clear();
+      }
+      statisticsCollector.setOnlineDevices(_clients.length);
+      log('[$clientId] Disconnected, will retry...', type: 'warning');
+      _scheduleReconnect(clientId);
+    };
 
     try {
       await client.connect();
     } catch (e) {
       log('[$clientId] Connection failed: $e', type: 'error');
-      client.disconnect();
       statisticsCollector.incrementFailure();
+      _scheduleReconnect(clientId);
       return;
     }
 
     if (client.connectionStatus!.state == MqttConnectionState.connected) {
       log('[$clientId] Connected', type: 'success');
       _clients.add(client);
+      _reconnectAttempts[clientId] = 0; // Reset retry counter on success
       statisticsCollector.setOnlineDevices(_clients.length);
       
       int now = DateTime.now().millisecondsSinceEpoch;
@@ -212,8 +256,8 @@ class MqttController extends ChangeNotifier {
       
     } else {
       log('[$clientId] Connection failed status: ${client.connectionStatus!.state}', type: 'error');
-      client.disconnect();
       statisticsCollector.incrementFailure();
+      _scheduleReconnect(clientId);
     }
   }
 
@@ -398,10 +442,25 @@ class MqttController extends ChangeNotifier {
     required int dataPointCount,
     List<CustomKeyConfig> customKeys = const [],
   }) async {
+    // Store config for reconnection
+    _clientConfigs[clientId] = {
+      'host': host,
+      'port': port,
+      'username': username,
+      'password': password,
+      'topic': topic,
+      'intervalSeconds': intervalSeconds,
+      'format': format,
+      'dataPointCount': dataPointCount,
+      'customKeys': customKeys,
+      'mode': 'basic',
+    };
+    
     final client = MqttServerClient(host, clientId);
     client.port = port;
     client.keepAlivePeriod = 60;
     client.logging(on: false);
+    client.autoReconnect = false; // We handle reconnection manually
     
     // Set connection message
     final connMess = MqttConnectMessage()
@@ -409,19 +468,36 @@ class MqttController extends ChangeNotifier {
         .authenticateAs(username, password)
         .startClean();
     client.connectionMessage = connMess;
+    
+    // Set up disconnect callback for auto-reconnect
+    client.onDisconnected = () {
+      if (!isRunning) return;
+      _clients.remove(client);
+      // Cancel all timers for this client to prevent publish errors with old client
+      if (_clientTimers.containsKey(clientId)) {
+        for (var t in _clientTimers[clientId]!) {
+          t.cancel();
+        }
+        _clientTimers[clientId]!.clear();
+      }
+      statisticsCollector.setOnlineDevices(_clients.length);
+      log('[$clientId] Disconnected, will retry...', type: 'warning');
+      _scheduleReconnect(clientId);
+    };
 
     try {
       await client.connect();
     } catch (e) {
       log('[$clientId] Connection failed: $e', type: 'error');
-      client.disconnect();
       statisticsCollector.incrementFailure();
+      _scheduleReconnect(clientId);
       return;
     }
 
     if (client.connectionStatus!.state == MqttConnectionState.connected) {
       log('[$clientId] Connected', type: 'success');
       _clients.add(client);
+      _reconnectAttempts[clientId] = 0; // Reset retry counter on success
       statisticsCollector.setOnlineDevices(_clients.length);
       
       // Start Publishing Loop
@@ -443,9 +519,56 @@ class MqttController extends ChangeNotifier {
       
     } else {
       log('[$clientId] Connection failed status: ${client.connectionStatus!.state}', type: 'error');
-      client.disconnect();
       statisticsCollector.incrementFailure();
+      _scheduleReconnect(clientId);
     }
+  }
+  
+  /// Schedule reconnection with exponential backoff
+  void _scheduleReconnect(String clientId) {
+    if (!isRunning) return;
+    if (!_clientConfigs.containsKey(clientId)) return;
+    
+    // Cancel existing reconnect timer if any
+    _reconnectTimers[clientId]?.cancel();
+    
+    // Calculate delay with exponential backoff
+    int attempts = _reconnectAttempts[clientId] ?? 0;
+    int delayMs = (_baseReconnectDelayMs * (1 << attempts.clamp(0, 5))).clamp(0, _maxReconnectDelayMs);
+    _reconnectAttempts[clientId] = attempts + 1;
+    
+    log('[$clientId] Reconnecting in ${delayMs ~/ 1000}s (attempt ${attempts + 1})...', type: 'info');
+    
+    _reconnectTimers[clientId] = Timer(Duration(milliseconds: delayMs), () {
+      if (!isRunning) return;
+      
+      final config = _clientConfigs[clientId]!;
+      if (config['mode'] == 'basic') {
+        _createClient(
+          host: config['host'],
+          port: config['port'],
+          clientId: clientId,
+          username: config['username'],
+          password: config['password'],
+          topic: config['topic'],
+          intervalSeconds: config['intervalSeconds'],
+          format: config['format'],
+          dataPointCount: config['dataPointCount'],
+          customKeys: config['customKeys'],
+        );
+      } else {
+        // Advanced mode reconnection
+        _createAdvancedClient(
+          host: config['host'],
+          port: config['port'],
+          clientId: clientId,
+          username: config['username'],
+          password: config['password'],
+          topic: config['topic'],
+          group: config['group'],
+        );
+      }
+    });
   }
 
   void _scheduleNextPublish(
