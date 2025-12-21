@@ -74,7 +74,7 @@ class AppRoot extends StatelessWidget {
                     applicationName: 'IoT DevKit',
                     applicationVersion: version,
                     applicationIcon: const FlutterLogo(),
-                    applicationLegalese: 'Copyright © 2025 Chen Xu & Antigravity',
+                    applicationLegalese: 'Copyright © 2025 YanNan.Chen',
                     children: [
                       const SizedBox(height: 10),
                       const Text('A powerful MQTT Device Simulator for IoT development.'),
@@ -94,9 +94,6 @@ class AppRoot extends StatelessWidget {
         ),
       ],
       child: const HomeScreen(),
-    );
-  }
-}
     );
   }
 }
