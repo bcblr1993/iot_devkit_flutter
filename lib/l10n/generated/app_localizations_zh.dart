@@ -387,9 +387,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get themeFinFlowBlue => '金融蜻篮 (FinFlow)';
 
   @override
-  String get themeAdminixSharp => 'Adminix Sharp';
-
-  @override
   String get themeVercelWhite => '极简专业 (Vercel)';
 
   @override

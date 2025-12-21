@@ -56,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 _selectedIndex = index;
               });
             },
-            minWidth: 60.0,
+            minWidth: 48.0,
             labelType: NavigationRailLabelType.all,
             destinations: <NavigationRailDestination>[
               NavigationRailDestination(
@@ -78,60 +78,109 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 16.0),
                   child: Column(
-                    mainAxisSize: MainAxisSize.min, // shrink wrap
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       // Language Switcher
                       Consumer<LanguageProvider>(
                         builder: (context, langProvider, child) {
-                          return PopupMenuButton<Locale>(
-                            icon: const Icon(Icons.language),
-                            tooltip: l10n.selectLanguage,
-                            onSelected: (Locale locale) {
-                              langProvider.setLocale(locale);
-                            },
-                            itemBuilder: (BuildContext context) {
-                              return const [
-                                PopupMenuItem(value: Locale('en'), child: Text('English')),
-                                PopupMenuItem(value: Locale('zh'), child: Text('简体中文')),
-                              ];
-                            },
+                          final currentLang = langProvider.currentLocale.languageCode == 'zh' ? '中' : 'EN';
+                          return Tooltip(
+                            message: l10n.selectLanguage,
+                            child: PopupMenuButton<Locale>(
+                              onSelected: (Locale locale) {
+                                langProvider.setLocale(locale);
+                              },
+                              itemBuilder: (BuildContext context) {
+                                return [
+                                  CheckedPopupMenuItem(
+                                    value: const Locale('en'),
+                                    checked: langProvider.currentLocale.languageCode == 'en',
+                                    child: const Text('English'),
+                                  ),
+                                  CheckedPopupMenuItem(
+                                    value: const Locale('zh'),
+                                    checked: langProvider.currentLocale.languageCode == 'zh',
+                                    child: const Text('简体中文'),
+                                  ),
+                                ];
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.language, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                                    const SizedBox(height: 2),
+                                    Text(currentLang, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                                  ],
+                                ),
+                              ),
+                            ),
                           );
                         },
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       // Theme Switcher
                       Consumer<ThemeManager>(
                         builder: (context, themeManager, child) {
-                          return PopupMenuButton<String>(
-                            icon: const Icon(Icons.palette),
-                            tooltip: l10n.selectTheme,
-                            onSelected: (String themeName) {
-                              themeManager.setTheme(themeName);
-                            },
-                            itemBuilder: (BuildContext context) {
-                              return themeManager.availableThemes.map((String theme) {
-                                String label;
-                                switch (theme) {
-                                  case 'adminix-emerald': label = l10n.themeAdminixEmerald; break;
-                                  case 'rivlo-dark': label = l10n.themeRivloDark; break;
-                                  case 'salesflow-coral': label = l10n.themeSalesFlowCoral; break;
-                                  case 'rydex-racing': label = l10n.themeRydexRacing; break;
-                                  case 'finflow-blue': label = l10n.themeFinFlowBlue; break;
-                                  case 'vercel-white': label = l10n.themeVercelWhite; break;
-                                  case 'notion-milk': label = l10n.themeNotionMilk; break;
-                                  case 'apple-frost': label = l10n.themeAppleFrost; break;
-                                  case 'carbon-black': label = l10n.themeCarbonBlack; break;
-                                  case 'midnight-zen': label = l10n.themeMidnightZen; break;
-                                  case 'obsidian-mono': label = l10n.themeObsidianMono; break;
-                                  default: label = theme;
-                                }
-                                return CheckedPopupMenuItem<String>(
-                                  value: theme,
-                                  checked: theme == themeManager.currentThemeName,
-                                  child: Text(label),
-                                );
-                              }).toList();
-                            },
+                          final isDark = Theme.of(context).brightness == Brightness.dark;
+                          return Tooltip(
+                            message: l10n.selectTheme,
+                            child: PopupMenuButton<String>(
+                              onSelected: (String themeName) {
+                                themeManager.setTheme(themeName);
+                              },
+                              itemBuilder: (BuildContext context) {
+                                return themeManager.availableThemes.map((String theme) {
+                                  String label;
+                                  switch (theme) {
+                                    case 'adminix-emerald': label = l10n.themeAdminixEmerald; break;
+                                    case 'rivlo-dark': label = l10n.themeRivloDark; break;
+                                    case 'salesflow-coral': label = l10n.themeSalesFlowCoral; break;
+                                    case 'rydex-racing': label = l10n.themeRydexRacing; break;
+                                    case 'finflow-blue': label = l10n.themeFinFlowBlue; break;
+                                    case 'vercel-white': label = l10n.themeVercelWhite; break;
+                                    case 'notion-milk': label = l10n.themeNotionMilk; break;
+                                    case 'apple-frost': label = l10n.themeAppleFrost; break;
+                                    case 'carbon-black': label = l10n.themeCarbonBlack; break;
+                                    case 'midnight-zen': label = l10n.themeMidnightZen; break;
+                                    case 'obsidian-mono': label = l10n.themeObsidianMono; break;
+                                    default: label = theme;
+                                  }
+                                  return CheckedPopupMenuItem<String>(
+                                    value: theme,
+                                    checked: theme == themeManager.currentThemeName,
+                                    child: Text(label),
+                                  );
+                                }).toList();
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+                                      size: 16,
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      isDark ? '暗' : '亮',
+                                      style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                           );
                         },
                       ),

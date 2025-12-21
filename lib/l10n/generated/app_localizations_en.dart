@@ -389,9 +389,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeFinFlowBlue => 'FinFlow Blue';
 
   @override
-  String get themeAdminixSharp => 'Adminix Sharp';
-
-  @override
   String get themeVercelWhite => 'Vercel White';
 
   @override

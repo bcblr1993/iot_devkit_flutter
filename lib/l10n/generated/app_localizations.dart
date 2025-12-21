@@ -854,12 +854,6 @@ abstract class AppLocalizations {
   /// **'FinFlow Blue'**
   String get themeFinFlowBlue;
 
-  /// No description provided for @themeAdminixSharp.
-  ///
-  /// In en, this message translates to:
-  /// **'Adminix Sharp'**
-  String get themeAdminixSharp;
-
   /// No description provided for @themeVercelWhite.
   ///
   /// In en, this message translates to:
