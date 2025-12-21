@@ -31,7 +31,9 @@ class _HomeScreenState extends State<HomeScreen> {
       controller.onLog = (String message, String type) {
         if (!mounted) return;
         setState(() {
-          _logs.add(LogEntry(message, type, DateTime.now().toIso8601String().split('T')[1].substring(0, 8)));
+          final now = DateTime.now();
+          final timestamp = '${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
+          _logs.add(LogEntry(message, type, timestamp));
           // Limit logs to prevent memory issues
           if (_logs.length > 2000) {
             _logs.removeRange(0, 500);
