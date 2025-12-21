@@ -55,6 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 _selectedIndex = index;
               });
             },
+            minWidth: 60.0,
             labelType: NavigationRailLabelType.all,
             destinations: <NavigationRailDestination>[
               NavigationRailDestination(
@@ -110,16 +111,15 @@ class _HomeScreenState extends State<HomeScreen> {
                               return themeManager.availableThemes.map((String theme) {
                                 String label;
                                 switch (theme) {
-                                  case 'neon-core': label = l10n.themeNeonCore; break;
-                                  case 'phantom-violet': label = l10n.themePhantomViolet; break;
-                                  case 'aerix-amber': label = l10n.themeAerixAmber; break;
-                                  case 'vitality-lime': label = l10n.themeVitalityLime; break;
-                                  case 'azure-radiance': label = l10n.themeAzureRadiance; break;
-                                  case 'glassy-ice': label = l10n.themeGlassyIce; break;
-                                  case 'minimal-white': label = l10n.themeMinimalWhite; break;
-                                  case 'classic-dark': label = l10n.themeClassicDark; break;
-                                  case 'deep-glass': label = l10n.themeDeepGlass; break;
-                                  case 'clear-glass': label = l10n.themeClearGlass; break;
+                                  case 'terminal-green': label = l10n.themeTerminalGreen; break;
+                                  case 'iot-slate': label = l10n.themeIoTSlate; break;
+                                  case 'cloud-white': label = l10n.themeCloudWhite; break;
+                                  case 'midnight-purple': label = l10n.themeMidnightPurple; break;
+                                  case 'arctic-teal': label = l10n.themeArcticTeal; break;
+                                  case 'azure-mist': label = l10n.themeAzureMist; break;
+                                  case 'amber-retro': label = l10n.themeAmberRetro; break;
+                                  case 'crimson-ops': label = l10n.themeCrimsonOps; break;
+                                  case 'neon-synth': label = l10n.themeNeonSynth; break;
                                   default: label = theme;
                                 }
                                 return CheckedPopupMenuItem<String>(

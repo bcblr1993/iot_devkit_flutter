@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:provider/provider.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../services/mqtt_controller.dart';
@@ -10,6 +11,8 @@ import 'custom_keys_manager.dart';
 import '../../services/config_service.dart';
 import '../../services/status_registry.dart';
 import 'log_console.dart';
+import '../styles/app_theme_effect.dart';
+import '../../services/theme_manager.dart';
 
 class SimulatorPanel extends StatefulWidget {
   final List<LogEntry> logs;
@@ -37,6 +40,8 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
   final _hostController = TextEditingController(text: 'localhost');
   final _portController = TextEditingController(text: '1883');
   final _topicController = TextEditingController(text: 'v1/devices/me/telemetry');
+  bool _isStatsExpanded = true;
+  bool _isBasicConfigExpanded = true;
   final _startIdxController = TextEditingController(text: '1');
   final _endIdxController = TextEditingController(text: '10');
   final _intervalController = TextEditingController(text: '1');
@@ -127,54 +132,95 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
     final mqttController = Provider.of<MqttController>(context);
     final isRunning = mqttController.isRunning;
     final l10n = AppLocalizations.of(context)!;
+    final effect = Theme.of(context).extension<AppThemeEffect>() ?? 
+                   const AppThemeEffect(animationCurve: Curves.easeInOut, layoutDensity: 1.0, icons: AppIcons.standard);
 
     return Column(
       children: [
         // Shared MQTT Config Section
         Padding(
-          padding: const EdgeInsets.all(12.0),
+          padding: EdgeInsets.all(12.0 * effect.layoutDensity),
           child: Column(
             children: [
-              _buildMqttSection(isRunning, l10n),
-              const SizedBox(height: 12),
-              _buildStats(l10n),
+              _buildMqttSection(isRunning, l10n, effect),
+              SizedBox(height: 12 * effect.layoutDensity),
+              _buildStats(l10n, effect),
             ],
           ),
         ),
 
-        // Tab Bar
-        TabBar(
-          controller: _tabController,
-          labelColor: Theme.of(context).colorScheme.primary,
-          unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-          indicatorColor: Theme.of(context).colorScheme.primary,
-          tabs: [
-            Tab(text: l10n.basicMode),
-            Tab(text: l10n.advancedMode),
-          ],
-        ),
-        
-        // Tab Content
+        // Integrated Tabs & Content
         Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            physics: const BouncingScrollPhysics(),
-            children: [
-              _buildBasicTab(mqttController, isRunning, l10n),
-              _buildAdvancedTab(mqttController, isRunning, l10n),
-            ],
+          child: Padding(
+            // Add side padding to match layout if needed, or keep 0 if full width is desired. 
+            // Using small padding to frame it if it's a card.
+            padding: EdgeInsets.symmetric(horizontal: 12.0 * effect.layoutDensity),
+            child: Container(
+              decoration: BoxDecoration(
+                color: (Theme.of(context).colorScheme.primaryContainer != Theme.of(context).colorScheme.surface && 
+                        Theme.of(context).colorScheme.primaryContainer != Theme.of(context).colorScheme.background)
+                    ? Theme.of(context).colorScheme.primaryContainer
+                    : null,
+                borderRadius: BorderRadius.circular(16),
+                border: (Theme.of(context).colorScheme.primaryContainer == Theme.of(context).colorScheme.surface) 
+                    ? Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.2)) 
+                    : null, 
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    margin: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                       color: Theme.of(context).colorScheme.surface.withOpacity(0.4),
+                       borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: TabBar(
+                      controller: _tabController,
+                      labelColor: (Theme.of(context).colorScheme.primaryContainer != Theme.of(context).colorScheme.surface && 
+                                   Theme.of(context).colorScheme.primaryContainer != Theme.of(context).colorScheme.background)
+                          ? Theme.of(context).colorScheme.onPrimaryContainer
+                          : Theme.of(context).colorScheme.primary,
+                      unselectedLabelColor: (Theme.of(context).colorScheme.primaryContainer != Theme.of(context).colorScheme.surface && 
+                                             Theme.of(context).colorScheme.primaryContainer != Theme.of(context).colorScheme.background)
+                          ? Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.6)
+                          : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      indicatorColor: (Theme.of(context).colorScheme.primaryContainer != Theme.of(context).colorScheme.surface && 
+                                       Theme.of(context).colorScheme.primaryContainer != Theme.of(context).colorScheme.background)
+                          ? Theme.of(context).colorScheme.onPrimaryContainer
+                          : Theme.of(context).colorScheme.primary,
+                      dividerColor: Colors.transparent, // Remove default divider
+                      tabs: [
+                        Tab(text: l10n.basicMode),
+                        Tab(text: l10n.advancedMode),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      physics: const BouncingScrollPhysics(),
+                      children: [
+                        KeepAliveWrapper(child: _buildBasicTab(mqttController, isRunning, l10n)),
+                        KeepAliveWrapper(child: _buildAdvancedTab(mqttController, isRunning, l10n)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
         const Divider(height: 1),
         
         // Persistent Action Buttons
         Padding(
-          padding: const EdgeInsets.all(12.0),
+          padding: EdgeInsets.all(12.0 * effect.layoutDensity),
           child: _buildActionButtons(
             mqttController, 
             isRunning, 
             l10n, 
-            isBasic: _tabController.index == 0
+            isBasic: _tabController.index == 0,
+            effect: effect,
           ),
         ),
 
@@ -182,7 +228,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
         // Integrated Log Console
         AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
+          curve: effect.animationCurve,
           height: widget.isLogExpanded ? MediaQuery.of(context).size.height * 0.35 : 40,
           child: LogConsole(
             logs: widget.logs,
@@ -195,108 +241,224 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
     );
   }
 
-  Widget _buildMqttSection(bool isRunning, AppLocalizations l10n) {
-    return Column(
+  Widget _buildMqttSection(bool isRunning, AppLocalizations l10n, AppThemeEffect effect) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
+    // Check if we should use the "Featured Highlight" style (Green card in Elegant Forest)
+    final bool useFeaturedStyle = colorScheme.primaryContainer != colorScheme.surface && 
+                                 colorScheme.primaryContainer != colorScheme.background;
+
+    Widget content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader(l10n.mqttBroker),
-        Row(
-          children: [
-            Expanded(flex: 3, child: _buildTextField(l10n.host, _hostController, isRunning)),
-            const SizedBox(width: 8),
-            Expanded(flex: 1, child: _buildTextField(l10n.port, _portController, isRunning, isNumber: true)),
-          ],
+        _buildSectionHeader(
+          l10n.mqttBroker, 
+          color: useFeaturedStyle ? colorScheme.onPrimaryContainer : null,
         ),
-        const SizedBox(height: 8),
-        _buildTextField(l10n.topic, _topicController, isRunning),
+        AnimatedCrossFade(
+          firstChild: Padding(
+            padding: const EdgeInsets.only(top: 5),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(flex: 3, child: _buildTextField(l10n.host, _hostController, isRunning, customColor: useFeaturedStyle ? colorScheme.onPrimaryContainer : null)),
+                    const SizedBox(width: 8),
+                    Expanded(flex: 1, child: _buildTextField(l10n.port, _portController, isRunning, isNumber: true, customColor: useFeaturedStyle ? colorScheme.onPrimaryContainer : null)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                _buildTextField(l10n.topic, _topicController, isRunning, customColor: useFeaturedStyle ? colorScheme.onPrimaryContainer : null),
+              ],
+            ),
+          ),
+          secondChild: const SizedBox(width: double.infinity),
+          crossFadeState: isRunning ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+          duration: const Duration(milliseconds: 300),
+          sizeCurve: Curves.easeInOut,
+        ),
       ],
     );
+
+    if (useFeaturedStyle) {
+      return Container(
+        padding: EdgeInsets.fromLTRB(
+          16 * effect.layoutDensity, 
+          32 * effect.layoutDensity, 
+          16 * effect.layoutDensity, 
+          16 * effect.layoutDensity
+        ),
+        decoration: BoxDecoration(
+          color: colorScheme.primaryContainer,
+          borderRadius: BorderRadius.circular(theme.cardTheme.shape is RoundedRectangleBorder 
+            ? (theme.cardTheme.shape as RoundedRectangleBorder).borderRadius.resolve(Directionality.of(context)).topLeft.x
+            : 16),
+        ),
+        child: content,
+      );
+    }
+
+    return content;
   }
 
   Widget _buildBasicTab(MqttController controller, bool isRunning, AppLocalizations l10n) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final effect = theme.extension<AppThemeEffect>() ?? 
+                   const AppThemeEffect(animationCurve: Curves.easeInOut, layoutDensity: 1.0, icons: AppIcons.standard);
+                   
+    // Check if we should use the "Featured Highlight" style
+    final bool useFeaturedStyle = colorScheme.primaryContainer != colorScheme.surface && 
+                                 colorScheme.primaryContainer != colorScheme.background;
+                   
+    final themeManager = Provider.of<ThemeManager>(context);
+    final isGlass = themeManager.currentThemeName.contains('glass');
+    
+    final configTile = ExpansionTile(
+      initiallyExpanded: _isBasicConfigExpanded,
+      onExpansionChanged: (expanded) {
+        // Don't call setState here to avoid triggering a full panel rebuild during animation start.
+        // ExpansionTile manages its own animation state.
+        _isBasicConfigExpanded = expanded; 
+      },
+      title: Text(l10n.deviceConfig, style: const TextStyle(fontWeight: FontWeight.bold)),
+      subtitle: Text('${l10n.unitDevices}: ${_startIdxController.text} - ${_endIdxController.text}', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(child: _buildTextField(l10n.startIndex, _startIdxController, isRunning, isNumber: true, onChanged: (_) => setState(() {}))),
+                  const SizedBox(width: 8),
+                  Expanded(child: _buildTextField(l10n.endIndex, _endIdxController, isRunning, isNumber: true, onChanged: (_) => setState(() {}))),
+                  const SizedBox(width: 8),
+                  Expanded(child: _buildTextField(l10n.deviceName, _devicePrefixController, isRunning)),
+                  const SizedBox(width: 8),
+                  Expanded(child: _buildTextField(l10n.clientId, _clientIdPrefixController, isRunning)),
+                  const SizedBox(width: 8),
+                  Expanded(child: _buildTextField(l10n.dataPointCount, _dataPointController, isRunning, isNumber: true, onChanged: (_) => setState(() {}))),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(child: _buildTextField(l10n.username, _usernamePrefixController, isRunning)),
+                  const SizedBox(width: 8),
+                  Expanded(child: _buildTextField(l10n.password, _passwordPrefixController, isRunning)),
+                  const SizedBox(width: 8),
+                  Expanded(child: _buildTextField(l10n.interval, _intervalController, isRunning, isNumber: true)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      borderRadius: BorderRadius.circular(12),
+                      dropdownColor: theme.colorScheme.surface,
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface, 
+                        fontSize: 14 // Match default size
+                      ),
+                      iconEnabledColor: theme.colorScheme.onSurface.withOpacity(0.7),
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                        // align with _buildTextField decoration
+                      ),
+                      value: _format,
+                      items: [
+                        DropdownMenuItem(value: 'default', child: Text(l10n.formatDefault, style: const TextStyle(fontSize: 12))),
+                        DropdownMenuItem(value: 'tn', child: Text(l10n.formatTieNiu, style: const TextStyle(fontSize: 12))),
+                        DropdownMenuItem(value: 'tn-empty', child: Text(l10n.formatTieNiuEmpty, style: const TextStyle(fontSize: 12))),
+                      ],
+                      onChanged: isRunning ? null : (String? value) {
+                        if (value != null) {
+                          setState(() {
+                            _format = value;
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 8),
+              // AppLocalizations.of(context) would fail if context is not passed, but l10n is passed safely.
+              Text("Custom Keys", style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
+              const SizedBox(height: 6),
+              CustomKeysManager(
+                keys: _basicCustomKeys,
+                isLocked: isRunning,
+                maxKeys: int.tryParse(_dataPointController.text) ?? 10,
+                enableExpandedLayout: false, // Must be false inside Scrollable
+                onKeysChanged: (newKeys) => setState(() => _basicCustomKeys = newKeys),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    Widget deviceConfigContent;
+    
+    if (isGlass) {
+      deviceConfigContent = RepaintBoundary(
+        child: Card(
+          elevation: 0,
+          color: theme.cardColor,
+          margin: const EdgeInsets.only(bottom: 8.0),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16.0),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+              child: configTile,
+            ),
+          ),
+        ),
+      );
+    } else {
+      deviceConfigContent = RepaintBoundary(
+        child: Card(
+          elevation: 1,
+          margin: const EdgeInsets.only(bottom: 8.0),
+          child: configTile,
+        ),
+      );
+    }
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(12.0),
+      padding: EdgeInsets.all((12.0 * effect.layoutDensity).toDouble()),
       child: Form(
         key: _formKeyBasic,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildSectionHeader(l10n.deviceConfig),
-          Row(
-            children: [
-              Expanded(child: _buildTextField(l10n.startIndex, _startIdxController, isRunning, isNumber: true)),
-              const SizedBox(width: 8),
-              Expanded(child: _buildTextField(l10n.endIndex, _endIdxController, isRunning, isNumber: true)),
-              const SizedBox(width: 8),
-              Expanded(child: _buildTextField(l10n.deviceName, _devicePrefixController, isRunning)),
-              const SizedBox(width: 8),
-              Expanded(child: _buildTextField(l10n.clientId, _clientIdPrefixController, isRunning)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(child: _buildTextField(l10n.username, _usernamePrefixController, isRunning)),
-              const SizedBox(width: 8),
-              Expanded(child: _buildTextField(l10n.password, _passwordPrefixController, isRunning)),
-              const SizedBox(width: 8),
-              Expanded(child: _buildTextField(l10n.dataPointCount, _dataPointController, isRunning, isNumber: true, onChanged: (_) => setState(() {}))),
-              const SizedBox(width: 8),
-              Expanded(child: _buildTextField(l10n.interval, _intervalController, isRunning, isNumber: true)),
-            ],
-          ),
-          const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              decoration: InputDecoration(labelText: l10n.format, border: const OutlineInputBorder()),
-              value: _format,
-              items: [
-                DropdownMenuItem(value: 'default', child: Text(l10n.formatDefault)),
-                DropdownMenuItem(value: 'tn', child: Text(l10n.formatTieNiu)),
-                DropdownMenuItem(value: 'tn-empty', child: Text(l10n.formatTieNiuEmpty)),
-              ],
-              onChanged: isRunning ? null : (v) => setState(() => _format = v!),
-            ),
-
-            const SizedBox(height: 12),
-            const Divider(),
-            CustomKeysManager(
-              keys: _basicCustomKeys,
-              isLocked: isRunning,
-              maxKeys: int.tryParse(_dataPointController.text) ?? 10,
-              onKeysChanged: (newKeys) {
-                setState(() {
-                  _basicCustomKeys = newKeys;
-                });
-              },
-            ),
-
-            const SizedBox(height: 20),
-          ],
-        ),
+        child: deviceConfigContent,
       ),
     );
   }
 
   Widget _buildAdvancedTab(MqttController controller, bool isRunning, AppLocalizations l10n) {
+    final theme = Theme.of(context);
+    final effect = theme.extension<AppThemeEffect>() ?? 
+                   const AppThemeEffect(animationCurve: Curves.easeInOut, layoutDensity: 1.0, icons: AppIcons.standard);
+                   
+    Widget content = GroupsManager(
+      groups: _groups,
+      isLocked: isRunning,
+      onGroupsChanged: (newGroups) {
+        _groups = newGroups;
+      },
+    );
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(12.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-            GroupsManager(
-              groups: _groups,
-              isLocked: isRunning,
-              onGroupsChanged: (newGroups) {
-                _groups = newGroups;
-              },
-            ),
-            const SizedBox(height: 20),
-        ],
-      ),
+      padding: EdgeInsets.all(12.0 * effect.layoutDensity),
+      child: content,
     );
   }
 
-  Widget _buildActionButtons(MqttController controller, bool isRunning, AppLocalizations l10n, {required bool isBasic}) {
+  Widget _buildActionButtons(MqttController controller, bool isRunning, AppLocalizations l10n, {required bool isBasic, required AppThemeEffect effect}) {
     final theme = Theme.of(context);
     final errorColor = theme.colorScheme.error;
     final primaryColor = theme.colorScheme.primary;
@@ -321,7 +483,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
               height: 48,
               child: FilledButton.icon(
                 onPressed: () {}, // Dummy to keep button in "enabled" visual state
-                icon: Icon(isRunning ? Icons.stop : Icons.play_arrow),
+                icon: Icon(isRunning ? effect.icons.stop : effect.icons.play),
                 label: Text(isRunning ? l10n.stopSimulation : l10n.startSimulation),
                 style: FilledButton.styleFrom(
                   backgroundColor: isRunning ? errorColor : primaryColor,
@@ -341,7 +503,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
                 onPressed: isRunning ? null : _handleExport,
                 child: OutlinedButton.icon(
                   onPressed: isRunning ? null : () {}, // Reflect correct enabled/disabled state
-                  icon: const Icon(Icons.download, size: 18),
+                  icon: Icon(effect.icons.download, size: 18),
                   label: Text(l10n.exportConfig),
                 ),
               ),
@@ -352,7 +514,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
                 onPressed: isRunning ? null : _handleImport,
                 child: OutlinedButton.icon(
                   onPressed: isRunning ? null : () {}, // Reflect correct enabled/disabled state
-                  icon: const Icon(Icons.upload, size: 18),
+                  icon: Icon(effect.icons.upload, size: 18),
                   label: Text(l10n.importConfig),
                 ),
               ),
@@ -392,7 +554,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
     final result = await ConfigService.exportToFile(config);
     
     if (result.cancelled) {
-      // Silent cancel - matches system style
+      _setStatus(l10n.configExportCancelled, Colors.orange);
       return;
     }
 
@@ -486,68 +648,155 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
     };
   }
 
-  Widget _buildStats(AppLocalizations l10n) {
+  Widget _buildStats(AppLocalizations l10n, AppThemeEffect effect) {
     return Consumer<StatisticsCollector>(
       builder: (context, stats, child) {
         final s = stats.getSnapshot();
         final theme = Theme.of(context);
         final colorScheme = theme.colorScheme;
         
-        return Card(
-          margin: EdgeInsets.zero,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-            child: Row(
-              children: [
-                Expanded(child: _statBox('📱', '${l10n.online}', '${s['onlineDevices']} / ${s['totalDevices']}', colorScheme.primary)),
-                const SizedBox(width: 8),
-                Expanded(child: _statBox('📨', '发送', '${s['totalMessages']}', colorScheme.secondary)),
-                const SizedBox(width: 8),
-                Expanded(child: _statBox('✅', '成功', '${s['successCount']} (${s['successRate']}%)', Colors.green)), // Keep green for success semantics
-                const SizedBox(width: 8),
-                Expanded(child: _statBox('❌', '失败', '${s['failureCount']}', colorScheme.error)),
-                const SizedBox(width: 8),
-                Expanded(child: _statBox('⏱️', '延迟', '${s['avgLatency']} ms', colorScheme.tertiary ?? Colors.orange)),
-              ],
+        // Check if we should use the "Featured Highlight" style
+        final bool useFeaturedStyle = colorScheme.primaryContainer != colorScheme.surface && 
+                                     colorScheme.primaryContainer != colorScheme.background;
+
+        Widget content = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10, top: 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(l10n.dataStatistics, style: TextStyle(
+                    fontSize: 16, 
+                    fontWeight: FontWeight.bold, 
+                    color: useFeaturedStyle ? colorScheme.onPrimaryContainer : theme.colorScheme.primary,
+                  )),
+                  IconButton(
+                    icon: Icon(_isStatsExpanded ? Icons.expand_less : Icons.expand_more, 
+                      color: useFeaturedStyle ? colorScheme.onPrimaryContainer : theme.colorScheme.primary
+                    ),
+                    onPressed: () => setState(() => _isStatsExpanded = !_isStatsExpanded),
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    iconSize: 20,
+                  ),
+                ],
+              ),
             ),
-          ),
+            AnimatedCrossFade(
+              firstChild: Row(
+                children: [
+                  Expanded(child: _statBox('📱', '${l10n.online}', '${s['onlineDevices']} / ${s['totalDevices']} ${l10n.unitDevices}', colorScheme.primary, useFeaturedStyle)),
+                  const SizedBox(width: 8),
+                  Expanded(child: _statBox('📨', '发送', '${s['totalMessages']} ${l10n.unitMessages}', colorScheme.secondary, useFeaturedStyle)),
+                  const SizedBox(width: 8),
+                  Expanded(child: _statBox('✅', '成功', '${s['successCount']} (${s['successRate']}%)', Colors.green, useFeaturedStyle)), // Keep green for success semantics
+                  const SizedBox(width: 8),
+                  Expanded(child: _statBox('❌', '失败', '${s['failureCount']} ${l10n.unitMessages}', colorScheme.error, useFeaturedStyle)),
+                  const SizedBox(width: 8),
+                  Expanded(child: _statBox('⏱️', '延迟', '${s['avgLatency']} ms', colorScheme.tertiary ?? Colors.orange, useFeaturedStyle)),
+                ],
+              ),
+              secondChild: const SizedBox(width: double.infinity),
+              crossFadeState: _isStatsExpanded ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+              duration: const Duration(milliseconds: 300),
+              sizeCurve: Curves.easeInOut,
+            ),
+          ],
         );
+
+        if (useFeaturedStyle) {
+          return Container(
+            padding: EdgeInsets.all(16 * effect.layoutDensity),
+            decoration: BoxDecoration(
+              color: colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(theme.cardTheme.shape is RoundedRectangleBorder 
+                ? (theme.cardTheme.shape as RoundedRectangleBorder).borderRadius.resolve(Directionality.of(context)).topLeft.x
+                : 16),
+            ),
+            child: content,
+          );
+        }
+        
+        // Return without Container in standard modes (to avoid double padding issue if parent has padding)
+        // But since we removed Card wrap, we should probably ensure it visually groups if not highlighted.
+        // The original code returned a Card. If we remove Card, we might lose visual grouping in standard themes.
+        // Let's stick to the requested "Same as MQTT Agent" style which does simple Column if not highlighted.
+        return content;
       },
     );
   }
 
-  Widget _statBox(String icon, String label, String value, Color color) {
+  Widget _statBox(String icon, String label, String value, Color color, bool isInverse) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
+    // In "Featured" mode (e.g. Terminal Green), the background IS primaryContainer.
+    // So inner boxes should probably be slightly different or transparent to look good.
+    // If isInverse is true, we are on a colored background.
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: isInverse ? Colors.black.withOpacity(0.1) : color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(
+          color: isInverse ? colorScheme.onPrimaryContainer.withOpacity(0.2) : color.withOpacity(0.3)
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(icon, style: const TextStyle(fontSize: 14)),
           const SizedBox(width: 4),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w500)),
-              Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-            ],
+          Expanded( // Prevent overflow
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label, 
+                  style: TextStyle(
+                    fontSize: 10, 
+                    color: isInverse ? colorScheme.onPrimaryContainer.withOpacity(0.8) : color, 
+                    fontWeight: FontWeight.w500
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  value, 
+                  style: TextStyle(
+                    fontSize: 12, 
+                    fontWeight: FontWeight.bold,
+                    color: isInverse ? colorScheme.onPrimaryContainer : null,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, bool isLocked, {bool isNumber = false, Function(String)? onChanged}) {
+  Widget _buildTextField(String label, TextEditingController controller, bool isLocked, {bool isNumber = false, Function(String)? onChanged, Color? customColor}) {
+    final theme = Theme.of(context);
+    
     return TextFormField(
       controller: controller,
       enabled: !isLocked,
+      style: customColor != null ? TextStyle(color: customColor) : null,
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: customColor != null ? TextStyle(color: customColor.withOpacity(0.7)) : null,
+        floatingLabelStyle: customColor != null ? TextStyle(color: customColor, fontWeight: FontWeight.bold) : null,
         border: const OutlineInputBorder(),
+        enabledBorder: customColor != null ? OutlineInputBorder(borderSide: BorderSide(color: customColor.withOpacity(0.5))) : null,
+        focusedBorder: customColor != null ? OutlineInputBorder(borderSide: BorderSide(color: customColor, width: 2)) : null,
         isDense: true,
       ),
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
@@ -560,10 +809,14 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
     );
   }
   
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(String title, {Color? color}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+      padding: const EdgeInsets.only(bottom: 10, top: 4),
+      child: Text(title, style: TextStyle(
+        fontSize: 16, 
+        fontWeight: FontWeight.bold, 
+        color: color ?? Theme.of(context).colorScheme.primary,
+      )),
     );
   }
 }
@@ -596,5 +849,24 @@ class _AnimatedTactileButtonState extends State<_AnimatedTactileButton> {
         child: IgnorePointer(child: widget.child),
       ),
     );
+  }
+}
+
+class KeepAliveWrapper extends StatefulWidget {
+  final Widget child;
+  const KeepAliveWrapper({super.key, required this.child});
+
+  @override
+  State<KeepAliveWrapper> createState() => _KeepAliveWrapperState();
+}
+
+class _KeepAliveWrapperState extends State<KeepAliveWrapper> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
   }
 }

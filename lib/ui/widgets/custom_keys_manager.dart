@@ -7,6 +7,8 @@ class CustomKeysManager extends StatefulWidget {
   final Function(List<CustomKeyConfig>) onKeysChanged;
   final bool isLocked;
   final int maxKeys;
+  final Color? headerColor;
+  final bool enableExpandedLayout;
 
   const CustomKeysManager({
     super.key,
@@ -14,6 +16,8 @@ class CustomKeysManager extends StatefulWidget {
     required this.onKeysChanged,
     this.isLocked = false,
     this.maxKeys = 100,
+    this.headerColor,
+    this.enableExpandedLayout = false,
   });
 
   @override
@@ -23,6 +27,18 @@ class CustomKeysManager extends StatefulWidget {
 class _CustomKeysManagerState extends State<CustomKeysManager> {
   late List<CustomKeyConfig> _localKeys;
   final ScrollController _scrollController = ScrollController();
+  
+  // Search State
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  bool _isSearchVisible = false;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -38,26 +54,54 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
     }
   }
 
+  List<CustomKeyConfig> get _filteredKeys {
+    if (_searchQuery.isEmpty) return _localKeys;
+    return _localKeys.where((k) => k.name.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+  }
+
   void _addKey() {
     if (_localKeys.length >= widget.maxKeys) return;
     setState(() {
       _localKeys.add(CustomKeyConfig(name: 'key_custom_${_localKeys.length + 1}'));
+      _clearSearch(); // Clear search to show new key
       widget.onKeysChanged(_localKeys);
     });
   }
 
-  void _removeKey(int index) {
+  void _removeKey(CustomKeyConfig key) {
     setState(() {
-      _localKeys.removeAt(index);
+      _localKeys.removeWhere((k) => k.id == key.id);
       widget.onKeysChanged(_localKeys);
     });
   }
 
-  void _updateKey(int index, CustomKeyConfig newKey) {
+  void _updateKey(CustomKeyConfig newKey) {
+    final index = _localKeys.indexWhere((k) => k.id == newKey.id);
+    if (index != -1) {
+      setState(() {
+        _localKeys[index] = newKey;
+        widget.onKeysChanged(_localKeys);
+      });
+    }
+  }
+
+  void _createSearch() {
     setState(() {
-      _localKeys[index] = newKey;
-      widget.onKeysChanged(_localKeys);
+      _isSearchVisible = !_isSearchVisible;
+      if (!_isSearchVisible) {
+        _searchQuery = '';
+        _searchController.clear();
+      }
     });
+  }
+  
+  void _clearSearch() {
+    if (_searchQuery.isNotEmpty) {
+      setState(() {
+        _searchQuery = '';
+        _searchController.clear();
+      });
+    }
   }
 
   @override
@@ -74,7 +118,7 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l10n.customKeys, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: theme.colorScheme.primary)),
+                Text(l10n.customKeys, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: widget.headerColor ?? theme.colorScheme.primary)),
                 if (_localKeys.length > widget.maxKeys)
                   Text(
                     'Limit exceeded (${_localKeys.length}/${widget.maxKeys})',
@@ -88,36 +132,105 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
               ],
             ),
             if (!widget.isLocked)
-              FilledButton.icon(
-                onPressed: _localKeys.length >= widget.maxKeys ? null : _addKey,
-                icon: const Icon(Icons.add, size: 16),
-                label: Text(l10n.add),
-                style: FilledButton.styleFrom(visualDensity: VisualDensity.compact),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: Icon(_isSearchVisible ? Icons.search_off : Icons.search, size: 20),
+                    onPressed: _createSearch,
+                    tooltip: l10n.searchLabel,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  const SizedBox(width: 4),
+                  FilledButton.icon(
+                    onPressed: _localKeys.length >= widget.maxKeys ? null : _addKey,
+                    icon: const Icon(Icons.add, size: 16),
+                    label: Text(l10n.add),
+                    style: FilledButton.styleFrom(visualDensity: VisualDensity.compact),
+                  ),
+                ],
               ),
           ],
         ),
-        const SizedBox(height: 6),
-        Container(
-          constraints: const BoxConstraints(maxHeight: 320),
-          child: Scrollbar(
-            controller: _scrollController,
-            thumbVisibility: true,
-            child: ListView.builder(
-              controller: _scrollController,
-              shrinkWrap: true,
-              itemCount: _localKeys.length,
-              itemBuilder: (context, index) {
-                final isIgnored = index >= widget.maxKeys;
-                return _buildKeyCard(index, _localKeys[index], l10n, theme, isIgnored);
-              },
+        if (_isSearchVisible)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0, top: 4.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: l10n.searchHint,
+                isDense: true,
+                prefixIcon: const Icon(Icons.search, size: 18),
+                suffixIcon: _searchQuery.isNotEmpty 
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, size: 16),
+                      onPressed: _clearSearch,
+                    )
+                  : null,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              style: const TextStyle(fontSize: 13),
+              onChanged: (v) => setState(() => _searchQuery = v),
             ),
           ),
-        ),
+        const SizedBox(height: 6),
+        const SizedBox(height: 6),
+        widget.enableExpandedLayout 
+          ? Expanded(child: _buildListContainer())
+          : _buildListContainer(),
       ],
     );
   }
 
-  Widget _buildKeyCard(int index, CustomKeyConfig key, AppLocalizations l10n, ThemeData theme, bool isIgnored) {
+  Widget _buildListContainer() {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    
+    if (!widget.enableExpandedLayout) {
+      // Natural flow layout (part of parent scroll)
+      return ListView.builder(
+        // remove controller to avoid "no Client" errors when disposed in ExpansionTile
+        physics: const NeverScrollableScrollPhysics(),
+        shrinkWrap: true,
+        itemCount: _filteredKeys.length,
+        itemBuilder: (context, index) {
+          final key = _filteredKeys[index];
+          final originalIndex = _localKeys.indexOf(key);
+          final isIgnored = originalIndex >= widget.maxKeys;
+          return KeyedSubtree(
+            key: ValueKey(key.id),
+            child: _buildKeyCard(key, l10n, theme, isIgnored),
+          );
+        },
+      );
+    }
+
+    // Expanded/Scrollable layout independent of parent
+    return Container(
+      constraints: null,
+      child: Scrollbar(
+        controller: _scrollController,
+        thumbVisibility: true,
+        child: ListView.builder(
+          controller: _scrollController,
+          shrinkWrap: false,
+          itemCount: _filteredKeys.length,
+          itemBuilder: (context, index) {
+            final key = _filteredKeys[index];
+            final originalIndex = _localKeys.indexOf(key);
+            final isIgnored = originalIndex >= widget.maxKeys;
+            return KeyedSubtree(
+              key: ValueKey(key.id),
+              child: _buildKeyCard(key, l10n, theme, isIgnored),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildKeyCard(CustomKeyConfig key, AppLocalizations l10n, ThemeData theme, bool isIgnored) {
     return Opacity(
       opacity: isIgnored ? 0.5 : 1.0,
       child: Container(
@@ -162,7 +275,7 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
                   isDense: true,
                   border: const UnderlineInputBorder(),
                 ),
-                onChanged: (v) => _updateKey(index, key.copyWith(name: v)),
+                onChanged: (v) => _updateKey(key.copyWith(name: v)),
                 enabled: !widget.isLocked,
                 style: const TextStyle(fontSize: 13),
               ),
@@ -182,7 +295,7 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
                   value: type,
                   child: Text(type.name.toUpperCase(), style: const TextStyle(fontSize: 12)),
                 )).toList(),
-                onChanged: widget.isLocked ? null : (v) => _updateKey(index, key.copyWith(type: v!)),
+                onChanged: widget.isLocked ? null : (v) => _updateKey(key.copyWith(type: v!)),
               ),
             ),
             const SizedBox(width: 8),
@@ -200,21 +313,21 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
                   value: mode,
                   child: Text(mode.name.toUpperCase(), style: const TextStyle(fontSize: 12)),
                 )).toList(),
-                onChanged: widget.isLocked ? null : (v) => _updateKey(index, key.copyWith(mode: v!)),
+                onChanged: widget.isLocked ? null : (v) => _updateKey(key.copyWith(mode: v!)),
               ),
             ),
             const SizedBox(width: 8),
             // Mode specific params
             Expanded(
                flex: 4,
-               child: _buildModeParams(index, key, l10n),
+               child: _buildModeParams(key, l10n),
             ),
             
             if (!widget.isLocked) ...[
               const SizedBox(width: 4),
               IconButton(
                 icon: Icon(Icons.delete_outline, size: 18, color: theme.colorScheme.error),
-                onPressed: () => _removeKey(index),
+                onPressed: () => _removeKey(key),
                 visualDensity: VisualDensity.compact,
               ),
             ]
@@ -224,7 +337,7 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
     );
   }
 
-  Widget _buildModeParams(int index, CustomKeyConfig key, AppLocalizations l10n) {
+  Widget _buildModeParams(CustomKeyConfig key, AppLocalizations l10n) {
     if (key.mode == CustomKeyMode.random) {
       return Row(
         children: [
@@ -237,7 +350,7 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
                 border: const UnderlineInputBorder(),
               ),
               keyboardType: TextInputType.number,
-              onChanged: (v) => _updateKey(index, key.copyWith(min: double.tryParse(v) ?? 0)),
+              onChanged: (v) => _updateKey(key.copyWith(min: double.tryParse(v) ?? 0)),
               enabled: !widget.isLocked,
               style: const TextStyle(fontSize: 13),
             ),
@@ -252,7 +365,7 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
                 border: const UnderlineInputBorder(),
               ),
               keyboardType: TextInputType.number,
-              onChanged: (v) => _updateKey(index, key.copyWith(max: double.tryParse(v) ?? 100)),
+              onChanged: (v) => _updateKey(key.copyWith(max: double.tryParse(v) ?? 100)),
               enabled: !widget.isLocked,
               style: const TextStyle(fontSize: 13),
             ),
@@ -267,7 +380,7 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
           isDense: true,
           border: const UnderlineInputBorder(),
         ),
-        onChanged: (v) => _updateKey(index, key.copyWith(staticValue: v)),
+        onChanged: (v) => _updateKey(key.copyWith(staticValue: v)),
         enabled: !widget.isLocked,
         style: const TextStyle(fontSize: 13),
       );

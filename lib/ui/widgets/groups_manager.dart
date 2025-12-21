@@ -11,12 +11,14 @@ class GroupsManager extends StatefulWidget {
   final List<GroupConfig> groups;
   final Function(List<GroupConfig>) onGroupsChanged;
   final bool isLocked;
+  final Color? headerColor;
 
   const GroupsManager({
     super.key,
     required this.groups,
     required this.onGroupsChanged,
     this.isLocked = false,
+    this.headerColor,
   });
 
   @override
@@ -47,6 +49,12 @@ class _GroupsManagerState extends State<GroupsManager> {
   }
 
   void _addGroup() {
+    if (_localGroups.length >= 12) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Maximum 12 groups allowed')),
+      );
+      return;
+    }
     setState(() {
       _localGroups.add(GroupConfig(name: 'Group ${String.fromCharCode(65 + _localGroups.length)}'));
       widget.onGroupsChanged(_localGroups);
@@ -69,23 +77,50 @@ class _GroupsManagerState extends State<GroupsManager> {
     });
   }
 
+  void _toggleAll(bool expand) {
+    // If we're expanding, we iterate and set isExpanded = true
+    // If collapsing, isExpanded = false
+    final newGroups = _localGroups.map((g) => g.copyWith(isExpanded: expand)).toList();
+    setState(() {
+      _localGroups = newGroups;
+      widget.onGroupsChanged(_localGroups);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final bool allExpanded = _localGroups.every((g) => g.isExpanded);
     
     return Column(
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(l10n.groupManagement, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).colorScheme.primary)),
-            if (!widget.isLocked)
-              FilledButton.icon(
-                onPressed: _addGroup,
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(l10n.addGroup),
-                style: FilledButton.styleFrom(visualDensity: VisualDensity.compact),
-              ),
+            Text(l10n.groupManagement, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: widget.headerColor ?? Theme.of(context).colorScheme.primary)),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextButton.icon(
+                  onPressed: () => _toggleAll(!allExpanded),
+                  icon: Icon(allExpanded ? Icons.unfold_less : Icons.unfold_more, size: 18),
+                  label: Text(allExpanded ? l10n.collapseAll : l10n.expandAll, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  style: TextButton.styleFrom(
+                    foregroundColor: widget.headerColor ?? Theme.of(context).colorScheme.primary,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+                if (!widget.isLocked) ...[
+                  const SizedBox(width: 8),
+                  FilledButton.icon(
+                    onPressed: _localGroups.length >= 12 ? null : _addGroup,
+                    icon: const Icon(Icons.add, size: 18),
+                    label: Text(l10n.addGroup),
+                    style: FilledButton.styleFrom(visualDensity: VisualDensity.compact),
+                  ),
+                ],
+              ],
+            ),
           ],
         ),
         const SizedBox(height: 10),
@@ -107,18 +142,8 @@ class _GroupsManagerState extends State<GroupsManager> {
     final themeManager = Provider.of<ThemeManager>(context);
     final isGlass = themeManager.currentThemeName.contains('glass');
     
-    return Card(
-      elevation: isGlass ? 0 : 1,
-      color: isGlass ? theme.cardColor : null, // Use transparent color from theme
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16), // Match theme radius if possible
-        child: BackdropFilter(
-          filter: isGlass 
-              ? ImageFilter.blur(sigmaX: 10, sigmaY: 10) 
-              : ImageFilter.blur(sigmaX: 0, sigmaY: 0),
-          child: ExpansionTile(
-        key: ValueKey(group.id),
+    final cardContent = ExpansionTile(
+        key: ValueKey("${group.id}_${group.isExpanded}"),
         initiallyExpanded: group.isExpanded,
         onExpansionChanged: (expanded) {
           _updateGroup(index, group.copyWith(isExpanded: expanded));
@@ -204,9 +229,28 @@ class _GroupsManagerState extends State<GroupsManager> {
             ),
           ),
         ],
-      ),
+      );
+
+    if (isGlass) {
+      return Card(
+        elevation: 0,
+        color: theme.cardColor,
+        margin: const EdgeInsets.only(bottom: 8),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: cardContent,
+          ),
         ),
-      ),
+      );
+    }
+
+    return Card(
+      elevation: 1,
+      margin: const EdgeInsets.only(bottom: 8),
+      // No ClipRRect or BackdropFilter for non-glass
+      child: cardContent,
     );
   }
 

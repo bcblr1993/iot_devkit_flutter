@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../ui/styles/app_theme_effect.dart';
 
 class ThemeManager extends ChangeNotifier {
   static const String _kInfoTheme = 'app-theme';
@@ -11,7 +12,7 @@ class ThemeManager extends ChangeNotifier {
   String get currentThemeName => _currentThemeName;
 
   ThemeManager() {
-    _currentTheme = _themes['neon-core']!;
+    _currentTheme = _themes['cloud-white']!;
     _loadPreference();
   }
 
@@ -28,11 +29,19 @@ class ThemeManager extends ChangeNotifier {
     double borderRadius = 8.0,
     String? fontFamily,
     Color? borderColor,
+    Color? progressIndicatorColor,
+    Color? snackBarBackgroundColor,
+    Color? snackBarContentColor,
+    Color? primaryContainer,
+    Color? onPrimaryContainer,
+    AppThemeEffect? effect, // Dynamic extension
   }) {
     final colorScheme = ColorScheme(
       brightness: brightness,
       primary: primary,
       onPrimary: brightness == Brightness.dark ? Colors.black : Colors.white,
+      primaryContainer: primaryContainer ?? primary.withOpacity(0.12),
+      onPrimaryContainer: onPrimaryContainer ?? primary,
       secondary: secondary,
       onSecondary: brightness == Brightness.dark ? Colors.black : Colors.white,
       error: error,
@@ -58,7 +67,15 @@ class ThemeManager extends ChangeNotifier {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: background,
       cardColor: surface,
+      canvasColor: surface, // Fixes DropdownButton background color
       fontFamily: fontFamily,
+      extensions: [
+        effect ?? const AppThemeEffect(
+          animationCurve: Curves.easeInOut, 
+          layoutDensity: 1.0, 
+          icons: AppIcons.standard,
+        ),
+      ],
       
       // 1. 卡片主题
       cardTheme: CardThemeData(
@@ -69,7 +86,21 @@ class ThemeManager extends ChangeNotifier {
           borderRadius: BorderRadius.circular(borderRadius),
           side: BorderSide(color: borderColor ?? onBackground.withOpacity(0.08)), // Subtle border or custom
         ),
-        margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 0),
+      ),
+      
+      // 2. 进度条主题
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: progressIndicatorColor ?? primary,
+      ),
+
+      // 3. SnackBar 主题
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: snackBarBackgroundColor ?? primary,
+        contentTextStyle: textTheme.bodyMedium?.copyWith(
+          color: snackBarContentColor ?? colorScheme.onPrimary,
+        ),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
 
       // 2. 输入框主题
@@ -128,17 +159,15 @@ class ThemeManager extends ChangeNotifier {
         ),
       ),
 
-      // 4. 对话框与 SnackBar
+      // 4. 对话框
       dialogTheme: DialogThemeData(
         backgroundColor: surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius + 4)),
         titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: onBackground),
       ),
-      snackBarTheme: SnackBarThemeData(
-        backgroundColor: secondary,
-        contentTextStyle: TextStyle(color: brightness == Brightness.dark ? Colors.black : Colors.white),
-        behavior: SnackBarBehavior.floating,
+      popupMenuTheme: PopupMenuThemeData(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius)),
+        color: surface,
         elevation: 4,
       ),
 
@@ -186,136 +215,194 @@ class ThemeManager extends ChangeNotifier {
   }
 
   static final Map<String, ThemeData> _themes = {
-    // 1. Neon Core (霓虹核心) - Cyberpunk/Industrial (Default)
-    'neon-core': _buildProTheme(
+    // 1. Terminal Green (终端绿) - Developer Classic
+    'terminal-green': _buildProTheme(
       brightness: Brightness.dark,
-      primary: const Color(0xFF00F0FF), // Cyber Neon (Cyan)
-      secondary: const Color(0xFF7000FF), // Electric Purple
-      background: const Color(0xFF0B0E14), // Void Blue
-      surface: const Color(0xFF1A1F29), // Lighter Gunmetal for separation
-      onSurface: const Color(0xFFE2E8F0), 
-      onBackground: const Color(0xFFE2E8F0),
-      error: const Color(0xFFFF2E54), 
-      borderRadius: 12.0,
+      primary: const Color(0xFF00FF41), // Terminal Green
+      secondary: const Color(0xFF808080), // Neutral Grey
+      background: const Color(0xFF0C0C0C),
+      surface: const Color(0xFF1A1A1A),
+      onSurface: const Color(0xFFE0E0E0),
+      onBackground: const Color(0xFFE0E0E0),
+      error: const Color(0xFFFFFF00), // Warning Yellow
+      borderRadius: 4.0,
       fontFamily: 'JetBrains Mono',
+      borderColor: const Color(0xFF00FF41).withOpacity(0.3),
+      primaryContainer: const Color(0xFF00FF41).withOpacity(0.1),
+      onPrimaryContainer: const Color(0xFF00FF41),
+      effect: const AppThemeEffect(
+        animationCurve: Curves.linear, // Instant / Glitchy
+        layoutDensity: 0.8, // Compact
+        icons: AppIcons.sharp,
+      ),
     ),
 
-    // 2. Phantom Violet (幽灵紫) - CoinCore/Webwallet Inspired
-    'phantom-violet': _buildProTheme(
+    // 2. IoT Slate (物联灰) - Industrial Professional
+    'iot-slate': _buildProTheme(
       brightness: Brightness.dark,
-      primary: const Color(0xFFD946EF), // Fuchsia Pink
-      secondary: const Color(0xFF8B5CF6), // Violet
-      background: const Color(0xFF0F0518), // Deepest Purple Black
-      surface: const Color(0xFF251842), // Dark Violet Surface
-      onSurface: const Color(0xFFF3E8FF), // Pale Purple
-      onBackground: const Color(0xFFF3E8FF),
-      error: const Color(0xFFFF3366),
-      borderRadius: 16.0,
+      primary: const Color(0xFFFF8C00), // Industrial Orange
+      secondary: const Color(0xFF4A90E2), // Cool Blue
+      background: const Color(0xFF2B2D30),
+      surface: const Color(0xFF3C3F41),
+      onSurface: const Color(0xFFD4D4D4),
+      onBackground: const Color(0xFFD4D4D4),
+      error: const Color(0xFFED4545),
+      borderRadius: 6.0,
+      borderColor: const Color(0xFFFF8C00).withOpacity(0.5),
+      primaryContainer: const Color(0xFFFF8C00).withOpacity(0.1),
+      onPrimaryContainer: const Color(0xFFFF8C00),
+      effect: const AppThemeEffect(
+        animationCurve: Curves.easeOutQuart, // Heavy mechanical
+        layoutDensity: 0.9,
+        icons: AppIcons.standard, // Standard filled
+      ),
     ),
 
-    // 3. Aerix Amber (琥珀工控) - Aerix Inspired
-    'aerix-amber': _buildProTheme(
-      brightness: Brightness.dark,
-      primary: const Color(0xFFFF9F1C), // Safety Orange/Amber
-      secondary: const Color(0xFF2EC4B6), // Teal
-      background: const Color(0xFF011627), // Deep Navy
-      surface: const Color(0xFF0B253A), // Lighter Navy
-      onSurface: const Color(0xFFFDFFFC), 
-      onBackground: const Color(0xFFE2E8F0),
-      error: const Color(0xFFE71D36),
-      borderRadius: 4.0, // Sharper, industrial look
-    ),
-
-    // 4. Vitality Lime (活力青柠) - Swirly Inspired
-    'vitality-lime': _buildProTheme(
+    // 3. Cloud White (云境白) - Modern Clean
+    'cloud-white': _buildProTheme(
       brightness: Brightness.light,
-      primary: const Color(0xFF84CC16), // Lime 500
-      secondary: const Color(0xFF10B981), // Emerald
-      background: const Color(0xFFF7FEE7), // Lime 50
-      surface: const Color(0xFFFFFFFF), 
-      onSurface: const Color(0xFF3F6212), // Dark Forest Green for readability
-      onBackground: const Color(0xFF3F6212),
-      error: const Color(0xFFEF4444),
-      borderRadius: 20.0, // Very round, organic
-    ),
-
-    // 5. Azure Radiance (蔚蓝光辉) - Sooni Inspired
-    'azure-radiance': _buildProTheme(
-      brightness: Brightness.light, // Can be light or dark, Sooni is bright blue
-      primary: const Color(0xFF2563EB), // Royal Blue
-      secondary: const Color(0xFF00C4B4), // Electric Teal accent
-      background: const Color(0xFFF8FAFC), // Very pale blue-grey
+      primary: const Color(0xFF0969DA), // GitHub Blue
+      secondary: const Color(0xFF2DA44E), // Success Green
+      background: const Color(0xFFFAFBFC),
       surface: const Color(0xFFFFFFFF),
-      onSurface: const Color(0xFF1E3A8A), // Blue 900
-      onBackground: const Color(0xFF1E3A8A),
-      error: const Color(0xFFDC2626),
-      borderRadius: 4.0, // Sharp, modern
+      onSurface: const Color(0xFF24292F),
+      onBackground: const Color(0xFF24292F),
+      error: const Color(0xFFCF222E),
+      borderRadius: 8.0,
+      borderColor: const Color(0xFFD0D7DE),
+      primaryContainer: const Color(0xFFF6F8FA),
+      onPrimaryContainer: const Color(0xFF0969DA),
+      effect: const AppThemeEffect(
+        animationCurve: Curves.easeInOutCubic, // Soft floating
+        layoutDensity: 1.1, // Spacious
+        icons: AppIcons.rounded,
+      ),
     ),
 
-    // 6. Glassy Ice (冰川玻璃) - One Click Apps Inspired
-    'glassy-ice': _buildProTheme(
-      brightness: Brightness.light,
-      primary: const Color(0xFF6366F1), // Indigo
-      secondary: const Color(0xFFA5B4FC), // Indigo 200
-      background: const Color(0xFFF3F4F6), // Cool Grey
-      surface: const Color(0xFFFFFFFF), // Pure white for glass effect
-      onSurface: const Color(0xFF374151), // Grey 700
-      onBackground: const Color(0xFF374151),
-      error: const Color(0xFFF87171),
+    // 4. Midnight Purple (深夜紫) - Eye Comfort
+    'midnight-purple': _buildProTheme(
+      brightness: Brightness.dark,
+      primary: const Color(0xFFBD93F9), // Lavender
+      secondary: const Color(0xFF50FA7B), // Soft Green
+      background: const Color(0xFF1E1E2E),
+      surface: const Color(0xFF2A2A3E),
+      onSurface: const Color(0xFFF8F8F2),
+      onBackground: const Color(0xFFF8F8F2),
+      error: const Color(0xFFFF79C6),
+      borderRadius: 10.0,
+      borderColor: const Color(0xFFBD93F9).withOpacity(0.2),
+      primaryContainer: const Color(0xFFBD93F9).withOpacity(0.1),
+      onPrimaryContainer: const Color(0xFFBD93F9),
+      effect: const AppThemeEffect(
+        animationCurve: Curves.easeOut,
+        layoutDensity: 1.0,
+        icons: AppIcons.rounded,
+      ),
+    ),
+
+    // 5. Arctic Teal (极地青) - Tech Future
+    'arctic-teal': _buildProTheme(
+      brightness: Brightness.dark,
+      primary: const Color(0xFF00D9FF), // Cyan
+      secondary: const Color(0xFF7B61FF), // Tech Purple
+      background: const Color(0xFF0A0E27),
+      surface: const Color(0xFF131D3A),
+      onSurface: const Color(0xFFE6F1FF),
+      onBackground: const Color(0xFFE6F1FF),
+      error: const Color(0xFFFF4081),
       borderRadius: 12.0,
+      borderColor: const Color(0xFF00D9FF).withOpacity(0.2),
+      primaryContainer: const Color(0xFF00D9FF).withOpacity(0.1),
+      onPrimaryContainer: const Color(0xFF00D9FF),
+      effect: const AppThemeEffect(
+        animationCurve: Curves.elasticOut, // Springy tech
+        layoutDensity: 1.0,
+        icons: AppIcons.tech, // Outlined
+      ),
     ),
 
-    // 7. Minimal White (极简白) - Vercel Light
-    'minimal-white': _buildProTheme(
+    // 6. Azure Mist (蔚蓝迷雾) - Light Gradient Blue
+    'azure-mist': _buildProTheme(
       brightness: Brightness.light,
-      primary: const Color(0xFF000000), 
-      secondary: const Color(0xFF666666),
-      background: const Color(0xFFFFFFFF),
-      surface: const Color(0xFFFAFAFA), 
-      onSurface: const Color(0xFF000000),
-      onBackground: const Color(0xFF000000),
-      error: const Color(0xFFE00000),
-      borderRadius: 6.0,
+      primary: const Color(0xFF4FC3F7), // Light Blue 300
+      secondary: const Color(0xFF81D4FA), // Light Blue 200
+      background: const Color(0xFFF0F7FF), // Very Pale Blue
+      surface: const Color(0xFFFFFFFF),
+      onSurface: const Color(0xFF0277BD), // Light Blue 800
+      onBackground: const Color(0xFF0277BD),
+      error: const Color(0xFFD32F2F),
+      borderRadius: 16.0,
+      borderColor: const Color(0xFF4FC3F7).withOpacity(0.2),
+      primaryContainer: const Color(0xFFE1F5FE), // Light Blue 50
+      onPrimaryContainer: const Color(0xFF01579B), // Dark Blue text
+      effect: const AppThemeEffect(
+        animationCurve: Curves.easeInOutSine, // Very smooth
+        layoutDensity: 1.2, // Very Spacious
+        icons: AppIcons.rounded,
+      ),
     ),
 
-    // 8. Classic Dark (经典黑) - GitHub Dark
-    'classic-dark': _buildProTheme(
+    // 7. Amber Retro (复古琥珀) - 80s CRT Style
+    'amber-retro': _buildProTheme(
       brightness: Brightness.dark,
-      primary: const Color(0xFF58A6FF), 
-      secondary: const Color(0xFF238636),
-      background: const Color(0xFF0D1117),
-      surface: const Color(0xFF161B22),
-      onSurface: const Color(0xFFC9D1D9),
-      onBackground: const Color(0xFFC9D1D9),
-      error: const Color(0xFFDA3633),
-      borderRadius: 6.0,
-    ),
-    // 10. Deep Glass (磨砂黑) - Textured, Blurred
-    'deep-glass': _buildProTheme(
-      brightness: Brightness.dark,
-      primary: const Color(0xFF00F0FF), // Cyber Cyan accents
-      secondary: const Color(0xFFBD93F9), // Purple accents
-      background: const Color(0xFF000000), // Pure black background
-      surface: const Color(0xFFFFFFFF).withOpacity(0.08), // Very transparent white
-      onSurface: const Color(0xFFFFFFFF),
-      onBackground: const Color(0xFFFFFFFF), 
-      error: const Color(0xFFFF5555),
-      borderRadius: 16.0,
-      borderColor: const Color(0xFFFFFFFF).withOpacity(0.1),
+      primary: const Color(0xFFFFC107), // Amber
+      secondary: const Color(0xFFFFD54F), // Light Amber
+      background: const Color(0xFF101010), // Near Black
+      surface: const Color(0xFF1E1E1E),
+      onSurface: const Color(0xFFFFC107), // Amber Text
+      onBackground: const Color(0xFFFFC107),
+      error: const Color(0xFFD32F2F),
+      borderRadius: 4.0, // Terminal style
+      borderColor: const Color(0xFFFFC107).withOpacity(0.3),
+      primaryContainer: const Color(0xFFFFC107).withOpacity(0.1),
+      onPrimaryContainer: const Color(0xFFFFC107),
+      effect: const AppThemeEffect(
+        animationCurve: Curves.linear, // Instant
+        layoutDensity: 0.8, // Compact
+        icons: AppIcons.sharp,
+      ),
     ),
 
-    // 11. Clear Glass (磨砂白) - Icy, Blurred
-    'clear-glass': _buildProTheme(
-      brightness: Brightness.light,
-      primary: const Color(0xFF2563EB), // Royal Blue
-      secondary: const Color(0xFF3B82F6), // Sky Blue
-      background: const Color(0xFFE2E8F0), // Slate 200 background
-      surface: const Color(0xFFFFFFFF).withOpacity(0.5), // Semi-transparent white
-      onSurface: const Color(0xFF1E293B), // Slate 800
-      onBackground: const Color(0xFF1E293B),
-      error: const Color(0xFFEF4444),
-      borderRadius: 16.0,
-      borderColor: const Color(0xFFFFFFFF).withOpacity(0.4),
+    // 8. Crimson Ops (赤色警戒) - Mission Critical
+    'crimson-ops': _buildProTheme(
+      brightness: Brightness.dark,
+      primary: const Color(0xFFFF3D00), // Deep Orange/Red
+      secondary: const Color(0xFFFF6E40),
+      background: const Color(0xFF050505), // Deep Black
+      surface: const Color(0xFF150505), // Dark Red tint
+      onSurface: const Color(0xFFFF3D00),
+      onBackground: const Color(0xFFFF3D00),
+      error: const Color(0xFFB71C1C),
+      borderRadius: 4.0,
+      borderColor: const Color(0xFFFF3D00).withOpacity(0.3),
+      primaryContainer: const Color(0xFFFF3D00).withOpacity(0.1),
+      onPrimaryContainer: const Color(0xFFFF3D00),
+      effect: const AppThemeEffect(
+        animationCurve: Curves.linear, // Instant
+        layoutDensity: 0.8, // Compact
+        icons: AppIcons.sharp,
+      ),
+    ),
+
+    // 9. Neon Synth (霓虹合成) - Cyberpunk
+    'neon-synth': _buildProTheme(
+      brightness: Brightness.dark,
+      primary: const Color(0xFFD500F9), // Neon Purple
+      secondary: const Color(0xFF00E5FF), // Cyan
+      background: const Color(0xFF0F0518), // Deep  Purple Black
+      surface: const Color(0xFF1A0A2A),
+      onSurface: const Color(0xFFE1BEE7), // Light Purple Text
+      onBackground: const Color(0xFFE1BEE7),
+      error: const Color(0xFFFF4081),
+      borderRadius: 4.0,
+      borderColor: const Color(0xFFD500F9).withOpacity(0.3),
+      primaryContainer: const Color(0xFFD500F9).withOpacity(0.1),
+      onPrimaryContainer: const Color(0xFFD500F9),
+      effect: const AppThemeEffect(
+        animationCurve: Curves.linear, // Instant
+        layoutDensity: 0.8, // Compact
+        icons: AppIcons.sharp,
+      ),
     ),
   };
 
@@ -340,8 +427,8 @@ class ThemeManager extends ChangeNotifier {
       notifyListeners();
     } else {
        // Force default if legacy theme found
-       _currentTheme = _themes['neon-core']!;
-       _currentThemeName = 'neon-core';
+       _currentTheme = _themes['cloud-white']!;
+       _currentThemeName = 'cloud-white';
        notifyListeners();
     }
   }

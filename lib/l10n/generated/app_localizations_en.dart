@@ -30,6 +30,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mqttBroker => 'MQTT Broker';
 
   @override
+  String get dataStatistics => 'Data Statistics';
+
+  @override
+  String get unitMessages => 'msgs';
+
+  @override
+  String get unitDevices => 'devices';
+
+  @override
   String get host => 'Host';
 
   @override
@@ -240,7 +249,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importConfig => 'Import Config';
 
   @override
-  String get configExported => 'Configuration exported';
+  String get configExported => 'Configuration Saved Successfully';
+
+  @override
+  String get configExportCancelled => 'Export Cancelled';
 
   @override
   String get configImported => 'Configuration imported';
@@ -358,32 +370,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirm => 'Confirm';
 
   @override
-  String get themeNeonCore => 'Neon Core (Cyberpunk)';
+  String get themeTerminalGreen => 'Terminal Green';
 
   @override
-  String get themePhantomViolet => 'Phantom Violet';
+  String get themeIoTSlate => 'IoT Slate';
 
   @override
-  String get themeAerixAmber => 'Aerix Amber (Industrial)';
+  String get themeCloudWhite => 'Cloud White';
 
   @override
-  String get themeVitalityLime => 'Vitality Lime';
+  String get themeMidnightPurple => 'Midnight Purple';
 
   @override
-  String get themeAzureRadiance => 'Azure Radiance';
+  String get themeArcticTeal => 'Arctic Teal';
 
   @override
-  String get themeGlassyIce => 'Glassy Ice';
+  String get themeAzureMist => 'Azure Mist';
 
   @override
-  String get themeMinimalWhite => 'Minimal White';
+  String get themeAmberRetro => 'Amber Retro';
 
   @override
-  String get themeClassicDark => 'Classic Dark';
+  String get themeCrimsonOps => 'Crimson Ops';
 
   @override
-  String get themeDeepGlass => 'Deep Glass';
+  String get themeNeonSynth => 'Neon Synth';
 
   @override
-  String get themeClearGlass => 'Clear Glass';
+  String get menuAbout => 'About IoT DevKit';
+
+  @override
+  String get aboutDescription =>
+      'A powerful MQTT Device Simulator for IoT development.\nBuilt with Flutter & Dart.';
+
+  @override
+  String get aboutFooter => 'Copyright © 2025 Chen Xu & Antigravity';
+
+  @override
+  String get close => 'Close';
 }

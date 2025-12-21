@@ -1,0 +1,95 @@
+{
+  "mode": "basic",
+  "mqtt": {
+    "host": "localhost",
+    "port": 1883,
+    "topic": "v1/devices/me/telemetry"
+  },
+  "device_start_number": 1,
+  "device_end_number": 1,
+  "send_interval": 1,
+  "client_id_prefix": "dd-pcs",
+  "device_prefix": "dd-pcs",
+  "username_prefix": "dd-pcs",
+  "password_prefix": "dd-pcs",
+  "data": {
+    "format": "default",
+    "data_point_count": 10
+  },
+  "custom_keys": [
+    {
+      "id": "07114f76-457a-4a10-b4ae-16c722bd5e29",
+      "name": "key_custom_1",
+      "type": "integer",
+      "mode": "random",
+      "min": 0.0,
+      "max": 100.0,
+      "static_value": ""
+    },
+    {
+      "id": "76c67ef0-3870-42d9-9944-418d1ede5591",
+      "name": "key_custom_2",
+      "type": "integer",
+      "mode": "random",
+      "min": 0.0,
+      "max": 100.0,
+      "static_value": ""
+    },
+    {
+      "id": "67914ca2-db98-488f-bafe-83b70021ecd5",
+      "name": "key_custom_3",
+      "type": "integer",
+      "mode": "random",
+      "min": 0.0,
+      "max": 100.0,
+      "static_value": ""
+    },
+    {
+      "id": "9b5c1699-e4fd-4ed1-902d-20757bac8f74",
+      "name": "key_custom_4",
+      "type": "integer",
+      "mode": "random",
+      "min": 0.0,
+      "max": 100.0,
+      "static_value": ""
+    },
+    {
+      "id": "5e9c2e1a-ff47-495e-a7ab-bdb9854b589e",
+      "name": "key_custom_5",
+      "type": "integer",
+      "mode": "random",
+      "min": 0.0,
+      "max": 100.0,
+      "static_value": ""
+    },
+    {
+      "id": "d93d590e-0940-43ba-8d32-b3cf41ad03da",
+      "name": "key_custom_6",
+      "type": "integer",
+      "mode": "random",
+      "min": 0.0,
+      "max": 100.0,
+      "static_value": ""
+    }
+  ],
+  "groups": [
+    {
+      "id": "a302c094-4bd5-4618-b287-4d713e1ded3e",
+      "name": "Group A",
+      "startDeviceNumber": 1,
+      "endDeviceNumber": 10,
+      "devicePrefix": "device",
+      "clientIdPrefix": "device",
+      "usernamePrefix": "user",
+      "passwordPrefix": "pass",
+      "totalKeyCount": 10,
+      "fullIntervalSeconds": 300,
+      "changeIntervalSeconds": 1,
+      "changeRatio": 0.3,
+      "format": "default",
+      "customKeys": []
+    }
+  ],
+  "_app_signature": "iot_devkit_flutter_v1",
+  "_export_time": "2025-12-21T17:01:13.664622"
+}

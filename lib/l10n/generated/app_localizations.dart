@@ -140,6 +140,24 @@ abstract class AppLocalizations {
   /// **'MQTT Broker'**
   String get mqttBroker;
 
+  /// No description provided for @dataStatistics.
+  ///
+  /// In en, this message translates to:
+  /// **'Data Statistics'**
+  String get dataStatistics;
+
+  /// No description provided for @unitMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'msgs'**
+  String get unitMessages;
+
+  /// No description provided for @unitDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'devices'**
+  String get unitDevices;
+
   /// No description provided for @host.
   ///
   /// In en, this message translates to:
@@ -563,8 +581,14 @@ abstract class AppLocalizations {
   /// No description provided for @configExported.
   ///
   /// In en, this message translates to:
-  /// **'Configuration exported'**
+  /// **'Configuration Saved Successfully'**
   String get configExported;
+
+  /// No description provided for @configExportCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Export Cancelled'**
+  String get configExportCancelled;
 
   /// No description provided for @configImported.
   ///
@@ -794,65 +818,83 @@ abstract class AppLocalizations {
   /// **'Confirm'**
   String get confirm;
 
-  /// No description provided for @themeNeonCore.
+  /// No description provided for @themeTerminalGreen.
   ///
   /// In en, this message translates to:
-  /// **'Neon Core (Cyberpunk)'**
-  String get themeNeonCore;
+  /// **'Terminal Green'**
+  String get themeTerminalGreen;
 
-  /// No description provided for @themePhantomViolet.
+  /// No description provided for @themeIoTSlate.
   ///
   /// In en, this message translates to:
-  /// **'Phantom Violet'**
-  String get themePhantomViolet;
+  /// **'IoT Slate'**
+  String get themeIoTSlate;
 
-  /// No description provided for @themeAerixAmber.
+  /// No description provided for @themeCloudWhite.
   ///
   /// In en, this message translates to:
-  /// **'Aerix Amber (Industrial)'**
-  String get themeAerixAmber;
+  /// **'Cloud White'**
+  String get themeCloudWhite;
 
-  /// No description provided for @themeVitalityLime.
+  /// No description provided for @themeMidnightPurple.
   ///
   /// In en, this message translates to:
-  /// **'Vitality Lime'**
-  String get themeVitalityLime;
+  /// **'Midnight Purple'**
+  String get themeMidnightPurple;
 
-  /// No description provided for @themeAzureRadiance.
+  /// No description provided for @themeArcticTeal.
   ///
   /// In en, this message translates to:
-  /// **'Azure Radiance'**
-  String get themeAzureRadiance;
+  /// **'Arctic Teal'**
+  String get themeArcticTeal;
 
-  /// No description provided for @themeGlassyIce.
+  /// No description provided for @themeAzureMist.
   ///
   /// In en, this message translates to:
-  /// **'Glassy Ice'**
-  String get themeGlassyIce;
+  /// **'Azure Mist'**
+  String get themeAzureMist;
 
-  /// No description provided for @themeMinimalWhite.
+  /// No description provided for @themeAmberRetro.
   ///
   /// In en, this message translates to:
-  /// **'Minimal White'**
-  String get themeMinimalWhite;
+  /// **'Amber Retro'**
+  String get themeAmberRetro;
 
-  /// No description provided for @themeClassicDark.
+  /// No description provided for @themeCrimsonOps.
   ///
   /// In en, this message translates to:
-  /// **'Classic Dark'**
-  String get themeClassicDark;
+  /// **'Crimson Ops'**
+  String get themeCrimsonOps;
 
-  /// No description provided for @themeDeepGlass.
+  /// No description provided for @themeNeonSynth.
   ///
   /// In en, this message translates to:
-  /// **'Deep Glass'**
-  String get themeDeepGlass;
+  /// **'Neon Synth'**
+  String get themeNeonSynth;
 
-  /// No description provided for @themeClearGlass.
+  /// No description provided for @menuAbout.
   ///
   /// In en, this message translates to:
-  /// **'Clear Glass'**
-  String get themeClearGlass;
+  /// **'About IoT DevKit'**
+  String get menuAbout;
+
+  /// No description provided for @aboutDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A powerful MQTT Device Simulator for IoT development.\nBuilt with Flutter & Dart.'**
+  String get aboutDescription;
+
+  /// No description provided for @aboutFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'Copyright © 2025 Chen Xu & Antigravity'**
+  String get aboutFooter;
+
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
 }
 
 class _AppLocalizationsDelegate

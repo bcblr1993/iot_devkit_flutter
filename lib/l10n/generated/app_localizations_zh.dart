@@ -18,7 +18,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navTimestamp => '时间转换';
 
   @override
-  String get navJson => 'JSON格式化';
+  String get navJson => 'JSON工具';
 
   @override
   String get startSimulation => '开始模拟';
@@ -27,10 +27,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get stopSimulation => '停止模拟';
 
   @override
-  String get mqttBroker => 'MQTT 代理';
+  String get mqttBroker => 'MQTT 代理配置';
 
   @override
-  String get host => '主机地址';
+  String get dataStatistics => '数据统计';
+
+  @override
+  String get unitMessages => '条';
+
+  @override
+  String get unitDevices => '台';
+
+  @override
+  String get host => '服务器地址';
 
   @override
   String get port => '端口';
@@ -240,7 +249,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get importConfig => '导入配置';
 
   @override
-  String get configExported => '配置已导出';
+  String get configExported => '配置保存成功';
+
+  @override
+  String get configExportCancelled => '导出已取消';
 
   @override
   String get configImported => '配置已导入';
@@ -357,32 +369,41 @@ class AppLocalizationsZh extends AppLocalizations {
   String get confirm => '确定';
 
   @override
-  String get themeNeonCore => '霓虹核心 (Neon Core)';
+  String get themeTerminalGreen => '终端绿 (Terminal Green)';
 
   @override
-  String get themePhantomViolet => '幽灵紫 (Phantom Violet)';
+  String get themeIoTSlate => '物联灰 (IoT Slate)';
 
   @override
-  String get themeAerixAmber => '琥珀工控 (Aerix Amber)';
+  String get themeCloudWhite => '云境白 (Cloud White)';
 
   @override
-  String get themeVitalityLime => '活力青柠 (Vitality Lime)';
+  String get themeMidnightPurple => '深夜紫 (Midnight Purple)';
 
   @override
-  String get themeAzureRadiance => '蔚蓝光辉 (Azure Radiance)';
+  String get themeArcticTeal => '极地青 (Arctic Teal)';
 
   @override
-  String get themeGlassyIce => '冰川玻璃 (Glassy Ice)';
+  String get themeAzureMist => '蔚蓝迷雾 (Azure Mist)';
 
   @override
-  String get themeMinimalWhite => '极简白 (Minimal White)';
+  String get themeAmberRetro => '复古琥珀 (Amber Retro)';
 
   @override
-  String get themeClassicDark => '经典黑 (Classic Dark)';
+  String get themeCrimsonOps => '赤色警戒 (Crimson Ops)';
 
   @override
-  String get themeDeepGlass => '深空磨砂 (Deep Glass)';
+  String get themeNeonSynth => '霓虹合成 (Neon Synth)';
 
   @override
-  String get themeClearGlass => '透亮磨砂 (Clear Glass)';
+  String get menuAbout => '关于 IoT DevKit';
+
+  @override
+  String get aboutDescription => '物联网开发工具箱 - MQTT 模拟 & 时间转换等工具集。';
+
+  @override
+  String get aboutFooter => '版权所有 © 2025 Chen Xu & Antigravity';
+
+  @override
+  String get close => '关闭';
 }

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../styles/app_theme_effect.dart';
 
 class TimestampTool extends StatefulWidget {
   const TimestampTool({super.key});
@@ -229,9 +230,11 @@ class _TimestampToolState extends State<TimestampTool> {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final effect = theme.extension<AppThemeEffect>() ?? 
+                   const AppThemeEffect(animationCurve: Curves.easeInOut, layoutDensity: 1.0, icons: AppIcons.standard);
 
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: EdgeInsets.all(16.0 * effect.layoutDensity),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -257,7 +260,7 @@ class _TimestampToolState extends State<TimestampTool> {
                            const SizedBox(width: 8),
                            IconButton(
                              onPressed: () => _copy(_format.format(_now)),
-                             icon: Icon(Icons.copy, color: colorScheme.onPrimaryContainer.withOpacity(0.7), size: 18),
+                             icon: Icon(effect.icons.copy, color: colorScheme.onPrimaryContainer.withOpacity(0.7), size: 18),
                              tooltip: l10n.copyDate,
                            ),
                          ],
@@ -277,7 +280,7 @@ class _TimestampToolState extends State<TimestampTool> {
                            const SizedBox(width: 8),
                            IconButton(
                              onPressed: () => _copy(_now.millisecondsSinceEpoch.toString()),
-                             icon: Icon(Icons.copy, color: colorScheme.onPrimaryContainer.withOpacity(0.7), size: 18),
+                             icon: Icon(effect.icons.copy, color: colorScheme.onPrimaryContainer.withOpacity(0.7), size: 18),
                              tooltip: l10n.copyTimestamp,
                            ),
                          ],
@@ -300,7 +303,8 @@ class _TimestampToolState extends State<TimestampTool> {
                    child: _buildConverterPanel(
                      context,
                      title: l10n.timestampToDate,
-                     icon: Icons.timer,
+                     icon: effect.icons.time,
+                     effect: effect,
                      inputWidget: TextField(
                         controller: _tsController,
                         decoration: InputDecoration(
@@ -328,7 +332,8 @@ class _TimestampToolState extends State<TimestampTool> {
                    child: _buildConverterPanel(
                      context,
                      title: l10n.dateToTimestamp,
-                     icon: Icons.calendar_today,
+                     icon: effect.icons.calendar,
+                     effect: effect,
                      inputWidget: TextField(
                         controller: _dateController,
                         decoration: InputDecoration(
@@ -393,6 +398,7 @@ class _TimestampToolState extends State<TimestampTool> {
     required VoidCallback onConvert,
     required String resultValue,
     required bool isPlaceholder,
+    required AppThemeEffect effect,
   }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -401,7 +407,7 @@ class _TimestampToolState extends State<TimestampTool> {
     return Card(
       elevation: 2,
       child: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: EdgeInsets.all(24.0 * effect.layoutDensity),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -412,10 +418,14 @@ class _TimestampToolState extends State<TimestampTool> {
                 Text(title, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
               ],
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24 * effect.layoutDensity),
             inputWidget,
-            const SizedBox(height: 16),
+            SizedBox(height: 16 * effect.layoutDensity),
             DropdownButtonFormField<String>(
+              borderRadius: BorderRadius.circular(12),
+              dropdownColor: theme.colorScheme.surface,
+              style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14),
+              iconEnabledColor: theme.colorScheme.onSurface.withOpacity(0.7),
               value: timezoneValue,
               decoration: InputDecoration(labelText: l10n.timezone, border: const OutlineInputBorder()),
               items: _timezones.map((e) => DropdownMenuItem(value: e['value'] as String, child: Text(e['label'] as String))).toList(),
