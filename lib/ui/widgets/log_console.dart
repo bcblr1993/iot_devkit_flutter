@@ -16,12 +16,17 @@ class LogConsole extends StatefulWidget {
   final bool isExpanded;
   final VoidCallback onToggle;
 
+  final bool isMaximized;
+  final VoidCallback onMaximize;
+
   const LogConsole({
     super.key,
     required this.logs,
     required this.onClear,
     this.isExpanded = true,
     required this.onToggle,
+    this.isMaximized = false,
+    required this.onMaximize,
   });
 
   @override
@@ -136,6 +141,18 @@ class _LogConsoleState extends State<LogConsole> {
                       tooltip: clear,
                     ),
                     const SizedBox(width: 4),
+                    const SizedBox(width: 4),
+                    IconButton(
+                      iconSize: 18,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: Icon(widget.isMaximized ? Icons.close_fullscreen : Icons.open_in_full),
+                      onPressed: widget.onMaximize,
+                      tooltip: widget.isMaximized 
+                          ? (l10n?.logRestore ?? 'Restore Logs') 
+                          : (l10n?.logMaximize ?? 'Maximize Logs'),
+                    ),
+                    const SizedBox(width: 4),
                   ],
                   IconButton(
                     iconSize: 18,
@@ -195,16 +212,12 @@ class _LogConsoleState extends State<LogConsole> {
           ),
         if (widget.isExpanded)
           Expanded(
-            child: SingleChildScrollView(
-              physics: const NeverScrollableScrollPhysics(),
-              child: SizedBox(
-                height: MediaQuery.of(context).size.height * 0.35 - (_isSearchVisible ? 72 : 40),
-                child: Column(
-                  children: [
-                    const Divider(height: 1),
-                    Expanded(
-                      child: Container(
-                        color: Colors.black87,
+            child: Column(
+              children: [
+                const Divider(height: 1),
+                Expanded(
+                  child: Container(
+                    color: Colors.black87,
                         child: ListView.builder(
                           controller: _scrollController,
                           itemCount: _filteredLogs.length,
@@ -242,8 +255,6 @@ class _LogConsoleState extends State<LogConsole> {
                     ),
                   ],
                 ),
-              ),
-            ),
           ),
       ],
     );

@@ -135,5 +135,11 @@
   "themeAppleFrost": "Apple Frost",
   "themeCarbonBlack": "Carbon Black",
   "themeMidnightZen": "Midnight Zen",
-  "themeObsidianMono": "Obsidian Mono"
+  "themeObsidianMono": "Obsidian Mono",
+  "logMaximize": "Maximize Logs",
+  "logRestore": "Restore Logs",
+  "sectionDeviceScope": "Device Scope",
+  "sectionNamingAuth": "Naming & Authentication",
+  "sectionDataConfig": "Data Configuration"
 }
+

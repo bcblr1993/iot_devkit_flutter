@@ -889,6 +889,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Obsidian Mono'**
   String get themeObsidianMono;
+
+  /// No description provided for @logMaximize.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximize Logs'**
+  String get logMaximize;
+
+  /// No description provided for @logRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Logs'**
+  String get logRestore;
+
+  /// No description provided for @sectionDeviceScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Device Scope'**
+  String get sectionDeviceScope;
+
+  /// No description provided for @sectionNamingAuth.
+  ///
+  /// In en, this message translates to:
+  /// **'Naming & Authentication'**
+  String get sectionNamingAuth;
+
+  /// No description provided for @sectionDataConfig.
+  ///
+  /// In en, this message translates to:
+  /// **'Data Configuration'**
+  String get sectionDataConfig;
 }
 
 class _AppLocalizationsDelegate

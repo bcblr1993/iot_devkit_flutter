@@ -403,4 +403,19 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get themeObsidianMono => '极简纯黑 (Obsidian)';
+
+  @override
+  String get logMaximize => '最大化日志';
+
+  @override
+  String get logRestore => '还原日志';
+
+  @override
+  String get sectionDeviceScope => '设备范围';
+
+  @override
+  String get sectionNamingAuth => '命名与认证';
+
+  @override
+  String get sectionDataConfig => '数据配置';
 }

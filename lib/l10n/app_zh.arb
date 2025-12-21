@@ -135,5 +135,10 @@
   "themeAppleFrost": "苹果系白 (Apple)",
   "themeCarbonBlack": "煤热深空 (Carbon)",
   "themeMidnightZen": "深蓝护眼 (Midnight)",
-  "themeObsidianMono": "极简纯黑 (Obsidian)"
+  "themeObsidianMono": "极简纯黑 (Obsidian)",
+  "logMaximize": "最大化日志",
+  "logRestore": "还原日志",
+  "sectionDeviceScope": "设备范围",
+  "sectionNamingAuth": "命名与认证",
+  "sectionDataConfig": "数据配置"
 }

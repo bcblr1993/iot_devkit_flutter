@@ -60,6 +60,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
 
   // Advanced Mode State
   List<GroupConfig> _groups = [];
+  bool _isLogMaximized = false;
 
   @override
   void initState() {
@@ -138,77 +139,108 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
     final effect = theme.extension<AppThemeEffect>() ?? 
                    const AppThemeEffect(animationCurve: Curves.easeInOut, layoutDensity: 1.0, icons: AppIcons.standard);
 
-    return Column(
+    return Stack(
       children: [
-        // Shared MQTT Config Section
-        Padding(
-          padding: EdgeInsets.all(12.0 * effect.layoutDensity),
+        Positioned.fill(
+          bottom: 40, // Reserve space for collapsed logs
           child: Column(
             children: [
-              _buildMqttSection(isRunning, l10n, effect),
-              SizedBox(height: 12 * effect.layoutDensity),
-              _buildStats(l10n, effect),
-            ],
-          ),
-        ),
-
-        // Integrated Tabs & Content
-        Expanded(
-          child: Column(
-            children: [
+              // Shared MQTT Config Section
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12.0 * effect.layoutDensity),
-                child: TabBar(
-                  controller: _tabController,
-                  labelColor: theme.colorScheme.primary,
-                  unselectedLabelColor: theme.colorScheme.onSurface.withOpacity(0.6),
-                  indicatorColor: theme.colorScheme.primary,
-                  dividerColor: Colors.transparent,
-                  tabs: [
-                    Tab(text: l10n.basicMode),
-                    Tab(text: l10n.advancedMode),
+                padding: EdgeInsets.all(12.0 * effect.layoutDensity),
+                child: Column(
+                  children: [
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                      child: !isRunning
+                          ? Column(
+                              children: [
+                                _buildMqttSection(isRunning, l10n, effect),
+                                SizedBox(height: 12 * effect.layoutDensity),
+                              ],
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+                    _buildStats(l10n, effect),
                   ],
                 ),
               ),
+
+              // Integrated Tabs & Content
               Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  physics: const BouncingScrollPhysics(),
-                  children: [
-                    KeepAliveWrapper(child: _buildBasicTab(mqttController, isRunning, l10n)),
-                    KeepAliveWrapper(child: _buildAdvancedTab(mqttController, isRunning, l10n)),
-                  ],
+                child: IgnorePointer(
+                  ignoring: isRunning,
+                  child: Opacity(
+                    opacity: isRunning ? 0.7 : 1.0,
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 12.0 * effect.layoutDensity),
+                          child: TabBar(
+                            controller: _tabController,
+                            labelColor: theme.colorScheme.primary,
+                            unselectedLabelColor: theme.colorScheme.onSurface.withOpacity(0.6),
+                            indicatorColor: theme.colorScheme.primary,
+                            dividerColor: Colors.transparent,
+                            tabs: [
+                              Tab(text: l10n.basicMode),
+                              Tab(text: l10n.advancedMode),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: TabBarView(
+                            controller: _tabController,
+                            physics: const BouncingScrollPhysics(),
+                            children: [
+                              KeepAliveWrapper(child: _buildBasicTab(mqttController, isRunning, l10n)),
+                              KeepAliveWrapper(child: _buildAdvancedTab(mqttController, isRunning, l10n)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const Divider(height: 1),
+              
+              // Persistent Action Buttons
+              Padding(
+                padding: EdgeInsets.all(12.0 * effect.layoutDensity),
+                child: _buildActionButtons(
+                  mqttController, 
+                  isRunning, 
+                  l10n, 
+                  isBasic: _tabController.index == 0,
+                  effect: effect,
                 ),
               ),
             ],
           ),
         ),
-        const Divider(height: 1),
-        
-        // Persistent Action Buttons
-        Padding(
-          padding: EdgeInsets.all(12.0 * effect.layoutDensity),
-          child: _buildActionButtons(
-            mqttController, 
-            isRunning, 
-            l10n, 
-            isBasic: _tabController.index == 0,
-            effect: effect,
-          ),
-        ),
 
-        const Divider(height: 1),
-        // Integrated Log Console
-        AnimatedContainer(
+        // Floating Log Console
+        AnimatedPositioned(
           duration: const Duration(milliseconds: 300),
           curve: effect.animationCurve,
-          height: widget.isLogExpanded ? MediaQuery.of(context).size.height * 0.35 : 40,
-          child: RepaintBoundary(
+          left: 0, 
+          right: 0,
+          bottom: 0,
+          height: _isLogMaximized 
+              ? MediaQuery.of(context).size.height 
+              : (widget.isLogExpanded ? MediaQuery.of(context).size.height * 0.5 : 40),
+          child: Material(
+            elevation: 16,
+            shadowColor: Colors.black.withOpacity(0.5),
             child: LogConsole(
               logs: widget.logs,
               isExpanded: widget.isLogExpanded,
               onToggle: widget.onToggleLog,
               onClear: widget.onClearLog,
+              isMaximized: _isLogMaximized,
+              onMaximize: () => setState(() => _isLogMaximized = !_isLogMaximized),
             ),
           ),
         ),
@@ -280,130 +312,128 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
 
   Widget _buildBasicTab(MqttController controller, bool isRunning, AppLocalizations l10n) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final effect = theme.extension<AppThemeEffect>() ?? 
-                   const AppThemeEffect(animationCurve: Curves.easeInOut, layoutDensity: 1.0, icons: AppIcons.standard);
-                   
-    // Check if we should use the "Featured Highlight" style
-    final bool useFeaturedStyle = colorScheme.primaryContainer != colorScheme.surface && 
-                                 colorScheme.primaryContainer != colorScheme.background;
-                   
-    final bool isGlass = effect.useGlassEffect;
     
-    final configTile = ExpansionTile(
-      initiallyExpanded: _isBasicConfigExpanded,
-      onExpansionChanged: (expanded) {
-        // Don't call setState here to avoid triggering a full panel rebuild during animation start.
-        // ExpansionTile manages its own animation state.
-        _isBasicConfigExpanded = expanded; 
-      },
-      title: Text(l10n.deviceConfig, style: const TextStyle(fontWeight: FontWeight.bold)),
-      subtitle: Text('${l10n.unitDevices}: ${_startIdxController.text} - ${_endIdxController.text}', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(child: _buildTextField(l10n.startIndex, _startIdxController, isRunning, isNumber: true, onChanged: (_) => setState(() {}))),
-                  const SizedBox(width: 8),
-                  Expanded(child: _buildTextField(l10n.endIndex, _endIdxController, isRunning, isNumber: true, onChanged: (_) => setState(() {}))),
-                  const SizedBox(width: 8),
-                  Expanded(child: _buildTextField(l10n.deviceName, _devicePrefixController, isRunning)),
-                  const SizedBox(width: 8),
-                  Expanded(child: _buildTextField(l10n.clientId, _clientIdPrefixController, isRunning)),
-                  const SizedBox(width: 8),
-                  Expanded(child: _buildTextField(l10n.dataPointCount, _dataPointController, isRunning, isNumber: true, onChanged: (_) => setState(() {}))),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(child: _buildTextField(l10n.username, _usernamePrefixController, isRunning)),
-                  const SizedBox(width: 8),
-                  Expanded(child: _buildTextField(l10n.password, _passwordPrefixController, isRunning)),
-                  const SizedBox(width: 8),
-                  Expanded(child: _buildTextField(l10n.interval, _intervalController, isRunning, isNumber: true)),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      borderRadius: BorderRadius.circular(12),
-                      dropdownColor: theme.colorScheme.surface,
-                      style: TextStyle(
-                        color: theme.colorScheme.onSurface, 
-                        fontSize: 14 // Match default size
-                      ),
-                      iconEnabledColor: theme.colorScheme.onSurface.withOpacity(0.7),
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        isDense: true,
-                        // align with _buildTextField decoration
-                      ),
-                      value: _format,
-                      items: [
-                        DropdownMenuItem(value: 'default', child: Text(l10n.formatDefault, style: const TextStyle(fontSize: 12))),
-                        DropdownMenuItem(value: 'tn', child: Text(l10n.formatTieNiu, style: const TextStyle(fontSize: 12))),
-                        DropdownMenuItem(value: 'tn-empty', child: Text(l10n.formatTieNiuEmpty, style: const TextStyle(fontSize: 12))),
-                      ],
-                      onChanged: isRunning ? null : (String? value) {
-                        if (value != null) {
-                          setState(() {
-                            _format = value;
-                          });
-                        }
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              CustomKeysManager(
-                keys: _basicCustomKeys,
-                isLocked: isRunning,
-                maxKeys: int.tryParse(_dataPointController.text) ?? 10,
-                enableExpandedLayout: false, // Must be false inside Scrollable
-                onKeysChanged: (newKeys) => setState(() => _basicCustomKeys = newKeys),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-
-    Widget deviceConfigContent;
-    
-    if (isGlass) {
-      deviceConfigContent = RepaintBoundary(
-        child: Card(
-          elevation: 0,
-          color: theme.cardColor,
-          margin: const EdgeInsets.only(bottom: 8.0),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16.0),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-              child: configTile,
-            ),
-          ),
-        ),
-      );
-    } else {
-      deviceConfigContent = RepaintBoundary(
-        child: Card(
-          elevation: 1,
-          margin: const EdgeInsets.only(bottom: 8.0),
-          child: configTile,
-        ),
-      );
-    }
+    // Calculate device count
+    int start = int.tryParse(_startIdxController.text) ?? 1;
+    int end = int.tryParse(_endIdxController.text) ?? 10;
+    int count = (end - start + 1).clamp(0, 99999);
 
     return SingleChildScrollView(
-      padding: EdgeInsets.all((12.0 * effect.layoutDensity).toDouble()),
+      padding: const EdgeInsets.all(12.0),
       child: Form(
         key: _formKeyBasic,
-        child: deviceConfigContent,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Scope Section
+            _buildSectionHeader(l10n.sectionDeviceScope, trailing: '${l10n.unitDevices}: $count'),
+            Card(
+              margin: const EdgeInsets.only(bottom: 16),
+              elevation: 0,
+              color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: theme.dividerColor.withOpacity(0.1))),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Expanded(child: _buildTextField(l10n.startIndex, _startIdxController, isRunning, isNumber: true, onChanged: (_) => setState(() {}))),
+                    const SizedBox(width: 12),
+                    Expanded(child: _buildTextField(l10n.endIndex, _endIdxController, isRunning, isNumber: true, onChanged: (_) => setState(() {}))),
+                  ],
+                ),
+              ),
+            ),
+
+            // Naming Section
+            _buildSectionHeader(l10n.sectionNamingAuth),
+            Card(
+              margin: const EdgeInsets.only(bottom: 16),
+              elevation: 0,
+              color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: theme.dividerColor.withOpacity(0.1))),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(child: _buildTextField(l10n.deviceName, _devicePrefixController, isRunning)),
+                        const SizedBox(width: 12),
+                        Expanded(child: _buildTextField(l10n.clientId, _clientIdPrefixController, isRunning)),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(child: _buildTextField(l10n.username, _usernamePrefixController, isRunning)),
+                        const SizedBox(width: 12),
+                        Expanded(child: _buildTextField(l10n.password, _passwordPrefixController, isRunning)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Data Config
+            _buildSectionHeader(l10n.sectionDataConfig),
+            Card(
+              margin: const EdgeInsets.only(bottom: 16),
+              elevation: 0,
+              color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: theme.dividerColor.withOpacity(0.1))),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Expanded(child: _buildTextField(l10n.interval, _intervalController, isRunning, isNumber: true)),
+                    const SizedBox(width: 12),
+                    Expanded(child: _buildTextField(l10n.dataPointCount, _dataPointController, isRunning, isNumber: true, onChanged: (_) => setState(() {}))),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        borderRadius: BorderRadius.circular(12),
+                        dropdownColor: theme.colorScheme.surface, // Use surface color
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface, 
+                          fontSize: 14 
+                        ),
+                        iconEnabledColor: theme.colorScheme.onSurface.withOpacity(0.7),
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          labelText: 'Format', // Should use l10n but format isn't in l10n params passed
+                        ),
+                        value: _format,
+                        items: [
+                          DropdownMenuItem(value: 'default', child: Text(l10n.formatDefault, style: const TextStyle(fontSize: 13))),
+                          DropdownMenuItem(value: 'tn', child: Text(l10n.formatTieNiu, style: const TextStyle(fontSize: 13))),
+                          DropdownMenuItem(value: 'tn-empty', child: Text(l10n.formatTieNiuEmpty, style: const TextStyle(fontSize: 13))),
+                        ],
+                        onChanged: isRunning ? null : (String? value) {
+                          if (value != null) {
+                            setState(() {
+                              _format = value;
+                            });
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            CustomKeysManager(
+              keys: _basicCustomKeys,
+              isLocked: isRunning,
+              maxKeys: int.tryParse(_dataPointController.text) ?? 10,
+              enableExpandedLayout: false,
+              onKeysChanged: (newKeys) => setState(() => _basicCustomKeys = newKeys),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -780,14 +810,25 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
     );
   }
   
-  Widget _buildSectionHeader(String title, {Color? color}) {
+  Widget _buildSectionHeader(String title, {Color? color, String? trailing}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10, top: 4),
-      child: Text(title, style: TextStyle(
-        fontSize: 16, 
-        fontWeight: FontWeight.bold, 
-        color: color ?? Theme.of(context).colorScheme.primary,
-      )),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(title, style: TextStyle(
+            fontSize: 16, 
+            fontWeight: FontWeight.bold, 
+            color: color ?? Theme.of(context).colorScheme.primary,
+          )),
+          if (trailing != null)
+            Text(trailing, style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            )),
+        ],
+      ),
     );
   }
 }

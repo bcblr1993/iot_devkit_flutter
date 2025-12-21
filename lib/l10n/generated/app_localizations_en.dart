@@ -405,4 +405,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get themeObsidianMono => 'Obsidian Mono';
+
+  @override
+  String get logMaximize => 'Maximize Logs';
+
+  @override
+  String get logRestore => 'Restore Logs';
+
+  @override
+  String get sectionDeviceScope => 'Device Scope';
+
+  @override
+  String get sectionNamingAuth => 'Naming & Authentication';
+
+  @override
+  String get sectionDataConfig => 'Data Configuration';
 }
