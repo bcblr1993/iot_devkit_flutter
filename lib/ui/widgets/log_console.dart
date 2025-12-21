@@ -5,8 +5,9 @@ class LogEntry {
   final String message;
   final String type;
   final String time;
+  final String? tag;
 
-  LogEntry(this.message, this.type, this.time);
+  LogEntry(this.message, this.type, this.time, {this.tag});
 }
 
 class LogConsole extends StatefulWidget {
@@ -218,6 +219,16 @@ class _LogConsoleState extends State<LogConsole> {
                                       text: '[${log.time}] ',
                                       style: const TextStyle(color: Colors.grey, fontSize: 11, fontFamily: 'Courier', height: 1.2),
                                     ),
+                                    if (log.tag != null)
+                                      TextSpan(
+                                        text: '[${log.tag}] ',
+                                        style: TextStyle(
+                                            color: _getHashColor(log.tag!),
+                                            fontSize: 11,
+                                            fontFamily: 'Courier',
+                                            fontWeight: FontWeight.bold,
+                                            height: 1.2),
+                                      ),
                                     ..._buildHighlightedText(log.message, _searchQuery, _getColor(log.type)),
                                   ],
                                 ),
@@ -275,5 +286,14 @@ class _LogConsoleState extends State<LogConsole> {
       case 'success': return Colors.lightBlueAccent;
       default: return Colors.white;
     }
+  }
+
+  Color _getHashColor(String tag) {
+    final int hash = tag.hashCode;
+    final int r = (hash & 0xFF0000) >> 16;
+    final int g = (hash & 0x00FF00) >> 8;
+    final int b = (hash & 0x0000FF);
+    // Ensure high brightness for dark background (150-255 range)
+    return Color.fromARGB(255, 150 + (r % 106), 150 + (g % 106), 150 + (b % 106));
   }
 }

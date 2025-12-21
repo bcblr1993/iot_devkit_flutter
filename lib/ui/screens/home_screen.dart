@@ -28,12 +28,12 @@ class _HomeScreenState extends State<HomeScreen> {
     // Hook up logging
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final controller = Provider.of<MqttController>(context, listen: false);
-      controller.onLog = (String message, String type) {
+      controller.onLog = (String message, String type, {String? tag}) {
         if (!mounted) return;
         setState(() {
           final now = DateTime.now();
-          final timestamp = '${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
-          _logs.add(LogEntry(message, type, timestamp));
+          final timestamp = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
+          _logs.add(LogEntry(message, type, timestamp, tag: tag));
           // Limit logs to prevent memory issues
           if (_logs.length > 2000) {
             _logs.removeRange(0, 500);

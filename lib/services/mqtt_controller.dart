@@ -34,15 +34,16 @@ class MqttController extends ChangeNotifier {
   static const int _maxReconnectDelayMs = 30000; // Max 30 seconds
   
   // Callback for logs
-  Function(String message, String type)? onLog;
+  // Callback for logs
+  Function(String message, String type, {String? tag})? onLog;
   
   int _alignedStartTime = 0;
 
-  void log(String message, {String type = 'info'}) {
+  void log(String message, {String type = 'info', String? tag}) {
     if (onLog != null) {
-      onLog!(message, type);
+      onLog!(message, type, tag: tag);
     } else {
-      debugPrint('[$type] $message');
+      debugPrint('[$type] ${tag != null ? '[$tag] ' : ''}$message');
     }
   }
 
@@ -213,21 +214,21 @@ class MqttController extends ChangeNotifier {
         _clientTimers[clientId]!.clear();
       }
       statisticsCollector.setOnlineDevices(_clients.length);
-      log('[$clientId] Disconnected, will retry...', type: 'warning');
+      log('[$clientId] Disconnected, will retry...', type: 'warning', tag: group.name);
       _scheduleReconnect(clientId);
     };
 
     try {
       await client.connect();
     } catch (e) {
-      log('[$clientId] Connection failed: $e', type: 'error');
+      log('[$clientId] Connection failed: $e', type: 'error', tag: group.name);
       statisticsCollector.incrementFailure();
       _scheduleReconnect(clientId);
       return;
     }
 
     if (client.connectionStatus!.state == MqttConnectionState.connected) {
-      log('[$clientId] Connected', type: 'success');
+      log('[$clientId] Connected', type: 'success', tag: group.name);
       _clients.add(client);
       _reconnectAttempts[clientId] = 0; // Reset retry counter on success
       statisticsCollector.setOnlineDevices(_clients.length);
@@ -255,7 +256,7 @@ class MqttController extends ChangeNotifier {
       }
       
     } else {
-      log('[$clientId] Connection failed status: ${client.connectionStatus!.state}', type: 'error');
+      log('[$clientId] Connection failed status: ${client.connectionStatus!.state}', type: 'error', tag: group.name);
       statisticsCollector.incrementFailure();
       _scheduleReconnect(clientId);
     }
@@ -294,11 +295,10 @@ class MqttController extends ChangeNotifier {
       client.publishMessage(topic, MqttQos.atLeastOnce, builder.payload!);
       statisticsCollector.incrementSuccess();
       statisticsCollector.setMessageSize(payload.length);
-      if (sendCount % 10 == 0) {
-        log('[$clientId] Full Report #$sendCount', type: 'success');
-      }
+      int bytes = utf8.encode(payload).length;
+      log('[$clientId] Full Report #$sendCount ($bytes bytes)', type: 'success', tag: group.name);
     } catch (e) {
-      log('[$clientId] Full Report error: $e', type: 'error');
+      log('[$clientId] Full Report error: $e', type: 'error', tag: group.name);
       statisticsCollector.incrementFailure();
     }
 
@@ -355,11 +355,10 @@ class MqttController extends ChangeNotifier {
     try {
       client.publishMessage(topic, MqttQos.atLeastOnce, builder.payload!);
       statisticsCollector.incrementSuccess();
-      if (sendCount % 10 == 0) {
-        log('[$clientId] Change Report #$sendCount (${data.length} keys)', type: 'info');
-      }
+      int bytes = utf8.encode(payload).length;
+      log('[$clientId] Change Report #$sendCount (${data.length} keys, $bytes bytes)', type: 'info', tag: group.name);
     } catch (e) {
-      log('[$clientId] Change Report error: $e', type: 'error');
+      log('[$clientId] Change Report error: $e', type: 'error', tag: group.name);
       statisticsCollector.incrementFailure();
     }
 
@@ -481,21 +480,21 @@ class MqttController extends ChangeNotifier {
         _clientTimers[clientId]!.clear();
       }
       statisticsCollector.setOnlineDevices(_clients.length);
-      log('[$clientId] Disconnected, will retry...', type: 'warning');
+      log('Disconnected, will retry...', type: 'warning', tag: clientId);
       _scheduleReconnect(clientId);
     };
 
     try {
       await client.connect();
     } catch (e) {
-      log('[$clientId] Connection failed: $e', type: 'error');
+      log('Connection failed: $e', type: 'error', tag: clientId);
       statisticsCollector.incrementFailure();
       _scheduleReconnect(clientId);
       return;
     }
 
     if (client.connectionStatus!.state == MqttConnectionState.connected) {
-      log('[$clientId] Connected', type: 'success');
+      log('Connected', type: 'success', tag: clientId);
       _clients.add(client);
       _reconnectAttempts[clientId] = 0; // Reset retry counter on success
       statisticsCollector.setOnlineDevices(_clients.length);
@@ -518,7 +517,7 @@ class MqttController extends ChangeNotifier {
       _addTimer(clientId, timer);
       
     } else {
-      log('[$clientId] Connection failed status: ${client.connectionStatus!.state}', type: 'error');
+      log('Connection failed status: ${client.connectionStatus!.state}', type: 'error', tag: clientId);
       statisticsCollector.incrementFailure();
       _scheduleReconnect(clientId);
     }
@@ -537,7 +536,14 @@ class MqttController extends ChangeNotifier {
     int delayMs = (_baseReconnectDelayMs * (1 << attempts.clamp(0, 5))).clamp(0, _maxReconnectDelayMs);
     _reconnectAttempts[clientId] = attempts + 1;
     
-    log('[$clientId] Reconnecting in ${delayMs ~/ 1000}s (attempt ${attempts + 1})...', type: 'info');
+    final config = _clientConfigs[clientId]!;
+    final String mode = config['mode'];
+    final String tag = mode == 'basic' ? clientId : (config['group'] as GroupConfig).name;
+    final String msg = mode == 'basic' 
+        ? 'Reconnecting in ${delayMs ~/ 1000}s (attempt ${attempts + 1})...' 
+        : '[$clientId] Reconnecting in ${delayMs ~/ 1000}s (attempt ${attempts + 1})...';
+        
+    log(msg, type: 'info', tag: tag);
     
     _reconnectTimers[clientId] = Timer(Duration(milliseconds: delayMs), () {
       if (!isRunning) return;
@@ -607,11 +613,10 @@ class MqttController extends ChangeNotifier {
       statisticsCollector.incrementSuccess();
       statisticsCollector.setMessageSize(payload.length); // Approximate
       
-      if (sendCount % 10 == 0) {
-        log('[$clientId] Sent message #$sendCount', type: 'success');
-      }
+      int bytes = utf8.encode(payload).length;
+      log('Sent message #$sendCount ($bytes bytes)', type: 'success', tag: clientId);
     } catch (e) {
-      log('[$clientId] Publish error: $e', type: 'error');
+      log('Publish error: $e', type: 'error', tag: clientId);
       statisticsCollector.incrementFailure();
     }
 
