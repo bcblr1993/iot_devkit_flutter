@@ -110,18 +110,21 @@ class _HomeScreenState extends State<HomeScreen> {
                               return themeManager.availableThemes.map((String theme) {
                                 String label;
                                 switch (theme) {
-                                  case 'vercel-light': label = l10n.themeVercelLight; break;
-                                  case 'github-dark': label = l10n.themeGithubDark; break;
-                                  case 'dracula': label = l10n.themeDracula; break;
-                                  case 'monokai-pro': label = l10n.themeMonokai; break;
-                                  case 'nordic-snow': label = l10n.themeNordic; break;
-                                  case 'solarized-dark': label = l10n.themeSolarized; break;
-                                  case 'deep-ocean': label = l10n.themeDeepOcean; break;
-                                  case 'sakura-pink': label = l10n.themeSakura; break;
+                                  case 'neon-core': label = l10n.themeNeonCore; break;
+                                  case 'phantom-violet': label = l10n.themePhantomViolet; break;
+                                  case 'aerix-amber': label = l10n.themeAerixAmber; break;
+                                  case 'vitality-lime': label = l10n.themeVitalityLime; break;
+                                  case 'azure-radiance': label = l10n.themeAzureRadiance; break;
+                                  case 'glassy-ice': label = l10n.themeGlassyIce; break;
+                                  case 'minimal-white': label = l10n.themeMinimalWhite; break;
+                                  case 'classic-dark': label = l10n.themeClassicDark; break;
+                                  case 'deep-glass': label = l10n.themeDeepGlass; break;
+                                  case 'clear-glass': label = l10n.themeClearGlass; break;
                                   default: label = theme;
                                 }
-                                return PopupMenuItem<String>(
+                                return CheckedPopupMenuItem<String>(
                                   value: theme,
+                                  checked: theme == themeManager.currentThemeName,
                                   child: Text(label),
                                 );
                               }).toList();

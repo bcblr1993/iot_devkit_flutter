@@ -116,5 +116,15 @@
   "confirmImport": "确认导入",
   "importWarning": "配置文件校验通过。\n\n导入将覆盖当前所有配置，是否确认？",
   "cancel": "取消",
-  "confirm": "确定"
+  "confirm": "确定",
+  "themeNeonCore": "霓虹核心 (Neon Core)",
+  "themePhantomViolet": "幽灵紫 (Phantom Violet)",
+  "themeAerixAmber": "琥珀工控 (Aerix Amber)",
+  "themeVitalityLime": "活力青柠 (Vitality Lime)",
+  "themeAzureRadiance": "蔚蓝光辉 (Azure Radiance)",
+  "themeGlassyIce": "冰川玻璃 (Glassy Ice)",
+  "themeMinimalWhite": "极简白 (Minimal White)",
+  "themeClassicDark": "经典黑 (Classic Dark)",
+  "themeDeepGlass": "深空磨砂 (Deep Glass)",
+  "themeClearGlass": "透亮磨砂 (Clear Glass)"
 }

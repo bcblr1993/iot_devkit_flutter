@@ -356,4 +356,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get confirm => 'Confirm';
+
+  @override
+  String get themeNeonCore => 'Neon Core (Cyberpunk)';
+
+  @override
+  String get themePhantomViolet => 'Phantom Violet';
+
+  @override
+  String get themeAerixAmber => 'Aerix Amber (Industrial)';
+
+  @override
+  String get themeVitalityLime => 'Vitality Lime';
+
+  @override
+  String get themeAzureRadiance => 'Azure Radiance';
+
+  @override
+  String get themeGlassyIce => 'Glassy Ice';
+
+  @override
+  String get themeMinimalWhite => 'Minimal White';
+
+  @override
+  String get themeClassicDark => 'Classic Dark';
+
+  @override
+  String get themeDeepGlass => 'Deep Glass';
+
+  @override
+  String get themeClearGlass => 'Clear Glass';
 }

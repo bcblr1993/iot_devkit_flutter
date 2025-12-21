@@ -1,4 +1,7 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:iot_devkit/services/theme_manager.dart';
 import '../../models/group_config.dart';
 import '../../models/custom_key_config.dart';
 import 'custom_keys_manager.dart';
@@ -101,9 +104,20 @@ class _GroupsManagerState extends State<GroupsManager> {
   Widget _buildGroupCard(int index, GroupConfig group, AppLocalizations l10n) {
     final theme = Theme.of(context);
     
+    final themeManager = Provider.of<ThemeManager>(context);
+    final isGlass = themeManager.currentThemeName.contains('glass');
+    
     return Card(
+      elevation: isGlass ? 0 : 1,
+      color: isGlass ? theme.cardColor : null, // Use transparent color from theme
       margin: const EdgeInsets.only(bottom: 8),
-      child: ExpansionTile(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16), // Match theme radius if possible
+        child: BackdropFilter(
+          filter: isGlass 
+              ? ImageFilter.blur(sigmaX: 10, sigmaY: 10) 
+              : ImageFilter.blur(sigmaX: 0, sigmaY: 0),
+          child: ExpansionTile(
         key: ValueKey(group.id),
         initiallyExpanded: group.isExpanded,
         onExpansionChanged: (expanded) {
@@ -190,6 +204,8 @@ class _GroupsManagerState extends State<GroupsManager> {
             ),
           ),
         ],
+      ),
+        ),
       ),
     );
   }

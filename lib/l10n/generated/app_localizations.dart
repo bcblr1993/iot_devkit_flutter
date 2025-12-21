@@ -793,6 +793,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Confirm'**
   String get confirm;
+
+  /// No description provided for @themeNeonCore.
+  ///
+  /// In en, this message translates to:
+  /// **'Neon Core (Cyberpunk)'**
+  String get themeNeonCore;
+
+  /// No description provided for @themePhantomViolet.
+  ///
+  /// In en, this message translates to:
+  /// **'Phantom Violet'**
+  String get themePhantomViolet;
+
+  /// No description provided for @themeAerixAmber.
+  ///
+  /// In en, this message translates to:
+  /// **'Aerix Amber (Industrial)'**
+  String get themeAerixAmber;
+
+  /// No description provided for @themeVitalityLime.
+  ///
+  /// In en, this message translates to:
+  /// **'Vitality Lime'**
+  String get themeVitalityLime;
+
+  /// No description provided for @themeAzureRadiance.
+  ///
+  /// In en, this message translates to:
+  /// **'Azure Radiance'**
+  String get themeAzureRadiance;
+
+  /// No description provided for @themeGlassyIce.
+  ///
+  /// In en, this message translates to:
+  /// **'Glassy Ice'**
+  String get themeGlassyIce;
+
+  /// No description provided for @themeMinimalWhite.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimal White'**
+  String get themeMinimalWhite;
+
+  /// No description provided for @themeClassicDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Classic Dark'**
+  String get themeClassicDark;
+
+  /// No description provided for @themeDeepGlass.
+  ///
+  /// In en, this message translates to:
+  /// **'Deep Glass'**
+  String get themeDeepGlass;
+
+  /// No description provided for @themeClearGlass.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Glass'**
+  String get themeClearGlass;
 }
 
 class _AppLocalizationsDelegate

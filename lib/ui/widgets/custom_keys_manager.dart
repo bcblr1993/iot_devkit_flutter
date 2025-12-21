@@ -22,6 +22,7 @@ class CustomKeysManager extends StatefulWidget {
 
 class _CustomKeysManagerState extends State<CustomKeysManager> {
   late List<CustomKeyConfig> _localKeys;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -96,14 +97,21 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
           ],
         ),
         const SizedBox(height: 6),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: _localKeys.length,
-          itemBuilder: (context, index) {
-            final isIgnored = index >= widget.maxKeys;
-            return _buildKeyCard(index, _localKeys[index], l10n, theme, isIgnored);
-          },
+        Container(
+          constraints: const BoxConstraints(maxHeight: 320),
+          child: Scrollbar(
+            controller: _scrollController,
+            thumbVisibility: true,
+            child: ListView.builder(
+              controller: _scrollController,
+              shrinkWrap: true,
+              itemCount: _localKeys.length,
+              itemBuilder: (context, index) {
+                final isIgnored = index >= widget.maxKeys;
+                return _buildKeyCard(index, _localKeys[index], l10n, theme, isIgnored);
+              },
+            ),
+          ),
         ),
       ],
     );

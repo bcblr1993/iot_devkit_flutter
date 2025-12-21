@@ -355,4 +355,34 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get confirm => '确定';
+
+  @override
+  String get themeNeonCore => '霓虹核心 (Neon Core)';
+
+  @override
+  String get themePhantomViolet => '幽灵紫 (Phantom Violet)';
+
+  @override
+  String get themeAerixAmber => '琥珀工控 (Aerix Amber)';
+
+  @override
+  String get themeVitalityLime => '活力青柠 (Vitality Lime)';
+
+  @override
+  String get themeAzureRadiance => '蔚蓝光辉 (Azure Radiance)';
+
+  @override
+  String get themeGlassyIce => '冰川玻璃 (Glassy Ice)';
+
+  @override
+  String get themeMinimalWhite => '极简白 (Minimal White)';
+
+  @override
+  String get themeClassicDark => '经典黑 (Classic Dark)';
+
+  @override
+  String get themeDeepGlass => '深空磨砂 (Deep Glass)';
+
+  @override
+  String get themeClearGlass => '透亮磨砂 (Clear Glass)';
 }

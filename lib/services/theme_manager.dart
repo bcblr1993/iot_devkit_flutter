@@ -11,7 +11,7 @@ class ThemeManager extends ChangeNotifier {
   String get currentThemeName => _currentThemeName;
 
   ThemeManager() {
-    _currentTheme = _themes['vercel-light']!;
+    _currentTheme = _themes['neon-core']!;
     _loadPreference();
   }
 
@@ -27,6 +27,7 @@ class ThemeManager extends ChangeNotifier {
     required Color onBackground,
     double borderRadius = 8.0,
     String? fontFamily,
+    Color? borderColor,
   }) {
     final colorScheme = ColorScheme(
       brightness: brightness,
@@ -66,7 +67,7 @@ class ThemeManager extends ChangeNotifier {
         shadowColor: Colors.black.withOpacity(0.05),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(borderRadius),
-          side: BorderSide(color: onBackground.withOpacity(0.08)), // Subtle border
+          side: BorderSide(color: borderColor ?? onBackground.withOpacity(0.08)), // Subtle border or custom
         ),
         margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 0),
       ),
@@ -185,116 +186,136 @@ class ThemeManager extends ChangeNotifier {
   }
 
   static final Map<String, ThemeData> _themes = {
-    // 1. Vercel Light (极简光)
-    // High contrast, clean, professional. Inspired by Vercel/Next.js design.
-    'vercel-light': _buildProTheme(
+    // 1. Neon Core (霓虹核心) - Cyberpunk/Industrial (Default)
+    'neon-core': _buildProTheme(
+      brightness: Brightness.dark,
+      primary: const Color(0xFF00F0FF), // Cyber Neon (Cyan)
+      secondary: const Color(0xFF7000FF), // Electric Purple
+      background: const Color(0xFF0B0E14), // Void Blue
+      surface: const Color(0xFF1A1F29), // Lighter Gunmetal for separation
+      onSurface: const Color(0xFFE2E8F0), 
+      onBackground: const Color(0xFFE2E8F0),
+      error: const Color(0xFFFF2E54), 
+      borderRadius: 12.0,
+      fontFamily: 'JetBrains Mono',
+    ),
+
+    // 2. Phantom Violet (幽灵紫) - CoinCore/Webwallet Inspired
+    'phantom-violet': _buildProTheme(
+      brightness: Brightness.dark,
+      primary: const Color(0xFFD946EF), // Fuchsia Pink
+      secondary: const Color(0xFF8B5CF6), // Violet
+      background: const Color(0xFF0F0518), // Deepest Purple Black
+      surface: const Color(0xFF251842), // Dark Violet Surface
+      onSurface: const Color(0xFFF3E8FF), // Pale Purple
+      onBackground: const Color(0xFFF3E8FF),
+      error: const Color(0xFFFF3366),
+      borderRadius: 16.0,
+    ),
+
+    // 3. Aerix Amber (琥珀工控) - Aerix Inspired
+    'aerix-amber': _buildProTheme(
+      brightness: Brightness.dark,
+      primary: const Color(0xFFFF9F1C), // Safety Orange/Amber
+      secondary: const Color(0xFF2EC4B6), // Teal
+      background: const Color(0xFF011627), // Deep Navy
+      surface: const Color(0xFF0B253A), // Lighter Navy
+      onSurface: const Color(0xFFFDFFFC), 
+      onBackground: const Color(0xFFE2E8F0),
+      error: const Color(0xFFE71D36),
+      borderRadius: 4.0, // Sharper, industrial look
+    ),
+
+    // 4. Vitality Lime (活力青柠) - Swirly Inspired
+    'vitality-lime': _buildProTheme(
       brightness: Brightness.light,
-      primary: const Color(0xFF000000), // Black primary
-      secondary: const Color(0xFF333333),
+      primary: const Color(0xFF84CC16), // Lime 500
+      secondary: const Color(0xFF10B981), // Emerald
+      background: const Color(0xFFF7FEE7), // Lime 50
+      surface: const Color(0xFFFFFFFF), 
+      onSurface: const Color(0xFF3F6212), // Dark Forest Green for readability
+      onBackground: const Color(0xFF3F6212),
+      error: const Color(0xFFEF4444),
+      borderRadius: 20.0, // Very round, organic
+    ),
+
+    // 5. Azure Radiance (蔚蓝光辉) - Sooni Inspired
+    'azure-radiance': _buildProTheme(
+      brightness: Brightness.light, // Can be light or dark, Sooni is bright blue
+      primary: const Color(0xFF2563EB), // Royal Blue
+      secondary: const Color(0xFF00C4B4), // Electric Teal accent
+      background: const Color(0xFFF8FAFC), // Very pale blue-grey
+      surface: const Color(0xFFFFFFFF),
+      onSurface: const Color(0xFF1E3A8A), // Blue 900
+      onBackground: const Color(0xFF1E3A8A),
+      error: const Color(0xFFDC2626),
+      borderRadius: 4.0, // Sharp, modern
+    ),
+
+    // 6. Glassy Ice (冰川玻璃) - One Click Apps Inspired
+    'glassy-ice': _buildProTheme(
+      brightness: Brightness.light,
+      primary: const Color(0xFF6366F1), // Indigo
+      secondary: const Color(0xFFA5B4FC), // Indigo 200
+      background: const Color(0xFFF3F4F6), // Cool Grey
+      surface: const Color(0xFFFFFFFF), // Pure white for glass effect
+      onSurface: const Color(0xFF374151), // Grey 700
+      onBackground: const Color(0xFF374151),
+      error: const Color(0xFFF87171),
+      borderRadius: 12.0,
+    ),
+
+    // 7. Minimal White (极简白) - Vercel Light
+    'minimal-white': _buildProTheme(
+      brightness: Brightness.light,
+      primary: const Color(0xFF000000), 
+      secondary: const Color(0xFF666666),
       background: const Color(0xFFFFFFFF),
-      surface: const Color(0xFFF9FAFB), // Gray 50
-      onSurface: const Color(0xFF111827), // Gray 900
-      onBackground: const Color(0xFF111827),
+      surface: const Color(0xFFFAFAFA), 
+      onSurface: const Color(0xFF000000),
+      onBackground: const Color(0xFF000000),
       error: const Color(0xFFE00000),
       borderRadius: 6.0,
     ),
 
-    // 2. GitHub Dark (GitHub 暗黑)
-    // Comfortable, developer-focused.
-    'github-dark': _buildProTheme(
+    // 8. Classic Dark (经典黑) - GitHub Dark
+    'classic-dark': _buildProTheme(
       brightness: Brightness.dark,
-      primary: const Color(0xFF58A6FF), // GitHub Blue
-      secondary: const Color(0xFF238636), // GitHub Green
-      background: const Color(0xFF0D1117), // GitHub Bg
-      surface: const Color(0xFF161B22), // GitHub Surface
-      onSurface: const Color(0xFFC9D1D9), // GitHub Text
+      primary: const Color(0xFF58A6FF), 
+      secondary: const Color(0xFF238636),
+      background: const Color(0xFF0D1117),
+      surface: const Color(0xFF161B22),
+      onSurface: const Color(0xFFC9D1D9),
       onBackground: const Color(0xFFC9D1D9),
       error: const Color(0xFFDA3633),
       borderRadius: 6.0,
     ),
-
-    // 3. Dracula (吸血鬼)
-    // High contrast, vibrant colors.
-    'dracula': _buildProTheme(
+    // 10. Deep Glass (磨砂黑) - Textured, Blurred
+    'deep-glass': _buildProTheme(
       brightness: Brightness.dark,
-      primary: const Color(0xFFBD93F9), // Purple
-      secondary: const Color(0xFFFF79C6), // Pink
-      background: const Color(0xFF282A36),
-      surface: const Color(0xFF44475A),
-      onSurface: const Color(0xFFF8F8F2),
-      onBackground: const Color(0xFFF8F8F2),
+      primary: const Color(0xFF00F0FF), // Cyber Cyan accents
+      secondary: const Color(0xFFBD93F9), // Purple accents
+      background: const Color(0xFF000000), // Pure black background
+      surface: const Color(0xFFFFFFFF).withOpacity(0.08), // Very transparent white
+      onSurface: const Color(0xFFFFFFFF),
+      onBackground: const Color(0xFFFFFFFF), 
       error: const Color(0xFFFF5555),
-      borderRadius: 8.0,
-    ),
-
-    // 4. Monokai Pro (莫诺凯)
-    // Sharp, professional coding theme.
-    'monokai-pro': _buildProTheme(
-      brightness: Brightness.dark,
-      primary: const Color(0xFFFFD866), // Yellow
-      secondary: const Color(0xFFA9DC76), // Green
-      background: const Color(0xFF2D2A2E), // Dark Grey
-      surface: const Color(0xFF403E41), 
-      onSurface: const Color(0xFFFCFCFA),
-      onBackground: const Color(0xFFFCFCFA),
-      error: const Color(0xFFFF6188), // Red
-      borderRadius: 6.0,
-    ),
-
-    // 5. Nordic Snow (北欧雪)
-    // Cool, blue-gray palette. Calming.
-    'nordic-snow': _buildProTheme(
-      brightness: Brightness.light,
-      primary: const Color(0xFF5E81AC), // Blue
-      secondary: const Color(0xFF88C0D0), // Cyan
-      background: const Color(0xFFECEFF4), // Snow storm
-      surface: const Color(0xFFE5E9F0), 
-      onSurface: const Color(0xFF2E3440), // Polar Night
-      onBackground: const Color(0xFF2E3440),
-      error: const Color(0xFFBF616A),
-      borderRadius: 12.0,
-    ),
-
-    // 6. Solarized Dark (日蚀暗)
-    // Distinctive, low contrast, easy on eyes.
-    'solarized-dark': _buildProTheme(
-      brightness: Brightness.dark,
-      primary: const Color(0xFF268BD2), // Blue
-      secondary: const Color(0xFFB58900), // Yellow
-      background: const Color(0xFF002B36), // Base03
-      surface: const Color(0xFF073642), // Base02
-      onSurface: const Color(0xFF839496), // Base0
-      onBackground: const Color(0xFF839496),
-      error: const Color(0xFFDC322F),
-      borderRadius: 4.0,
-    ),
-
-    // 7. Deep Ocean (深邃海)
-    // Modern Slate/Sky Palette (Tailwind style).
-    'deep-ocean': _buildProTheme(
-      brightness: Brightness.dark,
-      primary: const Color(0xFF38BDF8), // Sky 400
-      secondary: const Color(0xFF0EA5E9), // Sky 500
-      background: const Color(0xFF0F172A), // Slate 900
-      surface: const Color(0xFF1E293B), // Slate 800
-      onSurface: const Color(0xFFF1F5F9), // Slate 100
-      onBackground: const Color(0xFFF1F5F9),
-      error: const Color(0xFFEF4444),
-      borderRadius: 12.0,
-    ),
-
-    // 8. Sakura Pink (樱花粉)
-    // Soft, welcoming, pastel.
-    'sakura-pink': _buildProTheme(
-      brightness: Brightness.light,
-      primary: const Color(0xFFF43F5E), // Rose 500
-      secondary: const Color(0xFFFB7185), // Rose 400
-      background: const Color(0xFFFFF1F2), // Rose 50
-      surface: const Color(0xFFFFFFFF), 
-      onSurface: const Color(0xFF881337), // Rose 900
-      onBackground: const Color(0xFF881337),
-      error: const Color(0xFF9F1239),
       borderRadius: 16.0,
+      borderColor: const Color(0xFFFFFFFF).withOpacity(0.1),
+    ),
+
+    // 11. Clear Glass (磨砂白) - Icy, Blurred
+    'clear-glass': _buildProTheme(
+      brightness: Brightness.light,
+      primary: const Color(0xFF2563EB), // Royal Blue
+      secondary: const Color(0xFF3B82F6), // Sky Blue
+      background: const Color(0xFFE2E8F0), // Slate 200 background
+      surface: const Color(0xFFFFFFFF).withOpacity(0.5), // Semi-transparent white
+      onSurface: const Color(0xFF1E293B), // Slate 800
+      onBackground: const Color(0xFF1E293B),
+      error: const Color(0xFFEF4444),
+      borderRadius: 16.0,
+      borderColor: const Color(0xFFFFFFFF).withOpacity(0.4),
     ),
   };
 
@@ -319,8 +340,8 @@ class ThemeManager extends ChangeNotifier {
       notifyListeners();
     } else {
        // Force default if legacy theme found
-       _currentTheme = _themes['vercel-light']!;
-       _currentThemeName = 'vercel-light';
+       _currentTheme = _themes['neon-core']!;
+       _currentThemeName = 'neon-core';
        notifyListeners();
     }
   }
