@@ -28,6 +28,9 @@ void main() async {
   await windowManager.waitUntilReadyToShow(windowOptions, () async {
     await windowManager.show();
     await windowManager.focus();
+    await windowManager.setResizable(true);
+    await windowManager.setMinimizable(true);
+    await windowManager.setMaximizable(true);
   });
 
   runApp(const IoTDevKitApp());
