@@ -23,7 +23,7 @@ DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputDir=..\dist\
-OutputBaseFilename=IoT_DevKit_Setup_{#MyAppVersion}
+OutputBaseFilename=iot_devkit-{#MyAppVersion}-windows
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern

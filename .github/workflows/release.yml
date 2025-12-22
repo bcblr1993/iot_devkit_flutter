@@ -44,6 +44,11 @@ jobs:
           
           echo "Updating version from $CURRENT_VERSION to $NEW_VERSION"
           sed -i.bak "s/version: $CURRENT_VERSION/version: $NEW_VERSION/" pubspec.yaml
+          
+          # Also update version in installer.iss for Windows
+          if [ -f "windows/installer.iss" ]; then
+            sed -i.bak "s/#define MyAppVersion .*/#define MyAppVersion \"$NEW_VERSION\"/" windows/installer.iss
+          fi
         shell: bash
 
       - name: Setup flutter_distributor
@@ -55,15 +60,13 @@ jobs:
           choco install innosetup
         shell: pwsh
 
-      - name: Build Windows
+      - name: Build and Package Windows (flutter_distributor)
         if: matrix.os == 'windows-latest'
-        run: flutter build windows --release
-        shell: pwsh
-
-      - name: Package Windows (Inno Setup)
-        if: matrix.os == 'windows-latest'
-        run: iscc windows/installer.iss
-        shell: pwsh
+        run: |
+          # flutter_distributor will use Inno Setup if configured in distribute_options.yaml
+          export PATH="$PATH":"$HOME/.pub-cache/bin"
+          flutter_distributor release --name release --jobs windows-exe
+        shell: bash
 
       - name: Build and Package (macOS)
         if: matrix.os == 'macos-latest'
