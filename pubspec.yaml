@@ -18,14 +18,14 @@ dependencies:
   shared_preferences: ^2.2.2
   path_provider: ^2.1.1
   uuid: ^4.2.1
-  intl: ^0.18.1
+  intl: 0.18.1
   logging: ^1.2.0
   file_picker: ^8.0.0
   window_manager: ^0.3.9
 
   # UI (Optional, but useful for icons if not using material default)
   cupertino_icons: ^1.0.8
-  package_info_plus: ^8.0.2
+  package_info_plus: 8.0.2
 
 dev_dependencies:
   flutter_test:
