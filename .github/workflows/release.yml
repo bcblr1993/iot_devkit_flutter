@@ -52,11 +52,14 @@ jobs:
           choco install innosetup
         shell: pwsh
 
-      - name: Build and Package (Windows)
+      - name: Build Windows
         if: matrix.os == 'windows-latest'
-        run: |
-          $env:PATH += ";$env:AppData\Pub\Cache\bin"
-          flutter_distributor release --name release --jobs windows-exe
+        run: flutter build windows --release
+        shell: pwsh
+
+      - name: Package Windows (Inno Setup)
+        if: matrix.os == 'windows-latest'
+        run: iscc windows/installer.iss
         shell: pwsh
 
       - name: Build and Package (macOS)
