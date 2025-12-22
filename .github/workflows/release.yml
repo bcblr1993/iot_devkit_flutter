@@ -36,8 +36,8 @@ jobs:
           # Extract base version (remove everything after +)
           BASE_VERSION=$(echo $CURRENT_VERSION | cut -d+ -f1)
           
-          # Construct new version: 1.0.0+20251222
-          NEW_VERSION="${BASE_VERSION}+${BUILD_DATE}"
+          # Construct new version: 1.0.0-20251222
+          NEW_VERSION="${BASE_VERSION}-${BUILD_DATE}"
           
           echo "Updating version from $CURRENT_VERSION to $NEW_VERSION"
           sed -i.bak "s/version: $CURRENT_VERSION/version: $NEW_VERSION/" pubspec.yaml

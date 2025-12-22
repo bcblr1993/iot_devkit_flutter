@@ -18,6 +18,7 @@ releases:
           target: exe
           build_args:
             target: lib/main.dart
+          configuration_file: windows/installer.iss
 
       # Linux - Packaged as DEB
       - name: linux-deb
