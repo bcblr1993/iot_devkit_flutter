@@ -10,7 +10,6 @@ releases:
           # 'flutter build macos' creates a universal binary by default
           build_args:
             target: lib/main.dart
-            target-platform: darwin-x64,darwin-arm64
 
       # Windows - x64 packaged as EXE installer (Requires Inno Setup installed)
       - name: windows-exe
