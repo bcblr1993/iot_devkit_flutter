@@ -10,7 +10,6 @@ releases:
           # 'flutter build macos' creates a universal binary by default
           build_args:
             target: lib/main.dart
-            flavor: release
 
       # Windows - x64 packaged as EXE installer (Requires Inno Setup installed)
       - name: windows-exe
@@ -19,7 +18,6 @@ releases:
           target: exe
           build_args:
             target: lib/main.dart
-            flavor: release
 
       # Linux - Packaged as DEB
       - name: linux-deb
@@ -28,4 +26,3 @@ releases:
           target: deb
           build_args:
             target: lib/main.dart
-            flavor: release
