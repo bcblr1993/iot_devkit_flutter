@@ -1,4 +1,4 @@
-name: Build and Release
+name: Build and Release Professional Artifacts
 
 on:
   push:
@@ -23,55 +23,40 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Enable Desktop support
-        run: |
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            flutter config --enable-windows-desktop
-          else
-            flutter config --enable-macos-desktop
-          fi
-        shell: bash
-
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build App
-        run: |
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            flutter build windows --release
-          else
-            flutter build macos --release
-          fi
-        shell: bash
+      - name: Setup flutter_distributor
+        run: dart pub global activate flutter_distributor
 
-      - name: Prepare Artifact (Windows)
+      - name: Build and Package (Windows)
         if: matrix.os == 'windows-latest'
-        uses: thedoctor0/zip-release@main
-        with:
-          type: 'zip'
-          filename: 'iot-devkit-windows.zip'
-          directory: 'build/windows/x64/runner/Release'
+        run: |
+          $env:PATH += ";$env:AppData\Pub\Cache\bin"
+          flutter_distributor release --name release --jobs windows-exe
+        shell: pwsh
 
-      - name: Prepare Artifact (macOS)
+      - name: Build and Package (macOS)
         if: matrix.os == 'macos-latest'
         run: |
-          cd build/macos/Build/Products/Release
-          zip -r ../../../../../iot-devkit-macos.zip iot_devkit.app
+          brew install create-dmg
+          export PATH="$PATH":"$HOME/.pub-cache/bin"
+          # Build universal binary to support both ARM and Intel
+          flutter_distributor release --name release --jobs macos-dmg
+        shell: bash
 
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            iot-devkit-windows.zip
-            iot-devkit-macos.zip
+            dist/*/release/*/*.exe
+            dist/*/release/*/*.dmg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Artifact (Backup)
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.os }}-artifact
-          path: |
-            iot-devkit-windows.zip
-            iot-devkit-macos.zip
+          name: ${{ matrix.os }}-packages
+          path: dist/
