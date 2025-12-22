@@ -52,7 +52,7 @@ jobs:
       - name: Build and Package (macOS)
         if: matrix.os == 'macos-latest'
         run: |
-          brew install create-dmg
+          npm install -g appdmg
           export PATH="$PATH":"$HOME/.pub-cache/bin"
           # Build universal binary to support both ARM and Intel
           flutter_distributor release --name release --jobs macos-dmg
