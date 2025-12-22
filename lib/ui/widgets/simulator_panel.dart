@@ -153,14 +153,12 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
                     AnimatedSize(
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeInOut,
-                      child: !isRunning
-                          ? Column(
-                              children: [
-                                _buildMqttSection(isRunning, l10n, effect),
-                                SizedBox(height: 12 * effect.layoutDensity),
-                              ],
-                            )
-                          : const SizedBox.shrink(),
+                      child: Column(
+                        children: [
+                          _buildMqttSection(isRunning, l10n, effect),
+                          SizedBox(height: 12 * effect.layoutDensity),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -263,28 +261,22 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
           l10n.mqttBroker, 
           color: useFeaturedStyle ? colorScheme.onPrimaryContainer : null,
         ),
-        AnimatedCrossFade(
-          firstChild: Padding(
-            padding: const EdgeInsets.only(top: 5),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(flex: 3, child: _buildTextField(l10n.host, _hostController, isRunning, customColor: useFeaturedStyle ? colorScheme.onPrimaryContainer : null)),
-                    const SizedBox(width: 8),
-                    Expanded(flex: 1, child: _buildTextField(l10n.port, _portController, isRunning, isNumber: true, customColor: useFeaturedStyle ? colorScheme.onPrimaryContainer : null)),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                _buildTextField(l10n.topic, _topicController, isRunning, customColor: useFeaturedStyle ? colorScheme.onPrimaryContainer : null),
-              ],
-            ),
+        Padding(
+          padding: const EdgeInsets.only(top: 5),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(flex: 3, child: _buildTextField(l10n.host, _hostController, isRunning, customColor: useFeaturedStyle ? colorScheme.onPrimaryContainer : null)),
+                  const SizedBox(width: 8),
+                  Expanded(flex: 1, child: _buildTextField(l10n.port, _portController, isRunning, isNumber: true, customColor: useFeaturedStyle ? colorScheme.onPrimaryContainer : null)),
+                ],
+              ),
+              const SizedBox(height: 8),
+              _buildTextField(l10n.topic, _topicController, isRunning, customColor: useFeaturedStyle ? colorScheme.onPrimaryContainer : null),
+            ],
           ),
-          secondChild: const SizedBox(width: double.infinity),
-          crossFadeState: isRunning ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-          duration: const Duration(milliseconds: 300),
-          sizeCurve: Curves.easeInOut,
         ),
       ],
     );

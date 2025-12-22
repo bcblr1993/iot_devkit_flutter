@@ -31,11 +31,15 @@ jobs:
       - name: Set Build Date and Version
         run: |
           BUILD_DATE=$(date +'%Y%m%d')
-          # Get the current version from pubspec.yaml (e.g., 1.0.0+1)
+          # Get current version (e.g., 1.0.0+1)
           CURRENT_VERSION=$(grep 'version: ' pubspec.yaml | sed 's/version: //')
-          # Append date to version (e.g., 1.0.0-20231027+1)
-          NEW_VERSION="${CURRENT_VERSION/+/-$BUILD_DATE+}"
-          echo "Updating version to $NEW_VERSION"
+          # Extract base version (remove everything after +)
+          BASE_VERSION=$(echo $CURRENT_VERSION | cut -d+ -f1)
+          
+          # Construct new version: 1.0.0+20251222
+          NEW_VERSION="${BASE_VERSION}+${BUILD_DATE}"
+          
+          echo "Updating version from $CURRENT_VERSION to $NEW_VERSION"
           sed -i.bak "s/version: $CURRENT_VERSION/version: $NEW_VERSION/" pubspec.yaml
         shell: bash
 
