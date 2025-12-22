@@ -32,7 +32,7 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^3.0.1
   flutter_launcher_icons: ^0.13.1
-  flutter_distributor: ^0.1.1
+  flutter_distributor: ^0.3.1
 
 flutter_launcher_icons:
   android: false
