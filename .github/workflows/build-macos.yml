@@ -19,7 +19,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.19.0' # Matches Windows version
+          # Use latest stable
 
       - name: Enable macOS support
         run: flutter config --enable-macos-desktop

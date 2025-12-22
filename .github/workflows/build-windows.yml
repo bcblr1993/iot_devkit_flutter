@@ -19,7 +19,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.19.0' # Or your project version
+          # Use latest stable to avoid SDK version conflicts
 
       - name: Enable Windows support
         run: flutter config --enable-windows-desktop
