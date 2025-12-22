@@ -60,13 +60,15 @@ jobs:
           choco install innosetup
         shell: pwsh
 
-      - name: Build and Package Windows (flutter_distributor)
+      - name: Build Windows
         if: matrix.os == 'windows-latest'
-        run: |
-          # flutter_distributor will use Inno Setup if configured in distribute_options.yaml
-          export PATH="$PATH":"$HOME/.pub-cache/bin"
-          flutter_distributor release --name release --jobs windows-exe
-        shell: bash
+        run: flutter build windows --release
+        shell: pwsh
+
+      - name: Package Windows (Inno Setup)
+        if: matrix.os == 'windows-latest'
+        run: iscc windows/installer.iss
+        shell: pwsh
 
       - name: Build and Package (macOS)
         if: matrix.os == 'macos-latest'
