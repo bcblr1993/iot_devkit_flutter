@@ -919,6 +919,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Data Configuration'**
   String get sectionDataConfig;
+
+  /// No description provided for @statSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent'**
+  String get statSent;
+
+  /// No description provided for @statSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Success'**
+  String get statSuccess;
+
+  /// No description provided for @statFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get statFailed;
 }
 
 class _AppLocalizationsDelegate

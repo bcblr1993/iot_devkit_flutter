@@ -418,4 +418,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sectionDataConfig => '数据配置';
+
+  @override
+  String get statSent => '已发送';
+
+  @override
+  String get statSuccess => '成功数';
+
+  @override
+  String get statFailed => '失败数';
 }

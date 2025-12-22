@@ -420,4 +420,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sectionDataConfig => 'Data Configuration';
+
+  @override
+  String get statSent => 'Sent';
+
+  @override
+  String get statSuccess => 'Success';
+
+  @override
+  String get statFailed => 'Failed';
 }
