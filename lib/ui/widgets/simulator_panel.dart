@@ -317,27 +317,8 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Scope Section
-            _buildSectionHeader(l10n.sectionDeviceScope, trailing: '${l10n.unitDevices}: $count'),
-            Card(
-              margin: const EdgeInsets.only(bottom: 16),
-              elevation: 0,
-              color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: theme.dividerColor.withOpacity(0.1))),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    Expanded(child: _buildTextField(l10n.startIndex, _startIdxController, isRunning, isNumber: true, onChanged: (_) => setState(() {}))),
-                    const SizedBox(width: 12),
-                    Expanded(child: _buildTextField(l10n.endIndex, _endIdxController, isRunning, isNumber: true, onChanged: (_) => setState(() {}))),
-                  ],
-                ),
-              ),
-            ),
-
-            // Naming Section
-            _buildSectionHeader(l10n.sectionNamingAuth),
+            // Unified Device Configuration Section
+            _buildSectionHeader(l10n.deviceConfig, trailing: '${l10n.unitDevices}: $count'),
             Card(
               margin: const EdgeInsets.only(bottom: 16),
               elevation: 0,
@@ -346,7 +327,19 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Row 1: Range
+                    Row(
+                      children: [
+                        Expanded(child: _buildTextField(l10n.startIndex, _startIdxController, isRunning, isNumber: true, onChanged: (_) => setState(() {}))),
+                        const SizedBox(width: 12),
+                        Expanded(child: _buildTextField(l10n.endIndex, _endIdxController, isRunning, isNumber: true, onChanged: (_) => setState(() {}))),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    
+                    // Row 2: Identity
                     Row(
                       children: [
                         Expanded(child: _buildTextField(l10n.deviceName, _devicePrefixController, isRunning)),
@@ -355,6 +348,8 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
                       ],
                     ),
                     const SizedBox(height: 12),
+                    
+                    // Row 3: Auth
                     Row(
                       children: [
                         Expanded(child: _buildTextField(l10n.username, _usernamePrefixController, isRunning)),
@@ -362,55 +357,46 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
                         Expanded(child: _buildTextField(l10n.password, _passwordPrefixController, isRunning)),
                       ],
                     ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Data Config
-            _buildSectionHeader(l10n.sectionDataConfig),
-            Card(
-              margin: const EdgeInsets.only(bottom: 16),
-              elevation: 0,
-              color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: theme.dividerColor.withOpacity(0.1))),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    Expanded(child: _buildTextField(l10n.interval, _intervalController, isRunning, isNumber: true)),
-                    const SizedBox(width: 12),
-                    Expanded(child: _buildTextField(l10n.dataPointCount, _dataPointController, isRunning, isNumber: true, onChanged: (_) => setState(() {}))),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        borderRadius: BorderRadius.circular(12),
-                        dropdownColor: theme.colorScheme.surface, // Use surface color
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface, 
-                          fontSize: 14 
+                    const SizedBox(height: 12),
+                    
+                    // Row 4: Data
+                    Row(
+                      children: [
+                        Expanded(child: _buildTextField(l10n.interval, _intervalController, isRunning, isNumber: true)),
+                        const SizedBox(width: 12),
+                        Expanded(child: _buildTextField(l10n.dataPointCount, _dataPointController, isRunning, isNumber: true, onChanged: (_) => setState(() {}))),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            borderRadius: BorderRadius.circular(12),
+                            dropdownColor: theme.colorScheme.surface, // Use surface color
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface, 
+                              fontSize: 14 
+                            ),
+                            iconEnabledColor: theme.colorScheme.onSurface.withOpacity(0.7),
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                              labelText: 'Format', // Should use l10n but format isn't in l10n params passed
+                            ),
+                            value: _format,
+                            items: [
+                              DropdownMenuItem(value: 'default', child: Text(l10n.formatDefault, style: const TextStyle(fontSize: 13))),
+                              DropdownMenuItem(value: 'tn', child: Text(l10n.formatTieNiu, style: const TextStyle(fontSize: 13))),
+                              DropdownMenuItem(value: 'tn-empty', child: Text(l10n.formatTieNiuEmpty, style: const TextStyle(fontSize: 13))),
+                            ],
+                            onChanged: isRunning ? null : (String? value) {
+                              if (value != null) {
+                                setState(() {
+                                  _format = value;
+                                });
+                              }
+                            },
+                          ),
                         ),
-                        iconEnabledColor: theme.colorScheme.onSurface.withOpacity(0.7),
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          isDense: true,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                          labelText: 'Format', // Should use l10n but format isn't in l10n params passed
-                        ),
-                        value: _format,
-                        items: [
-                          DropdownMenuItem(value: 'default', child: Text(l10n.formatDefault, style: const TextStyle(fontSize: 13))),
-                          DropdownMenuItem(value: 'tn', child: Text(l10n.formatTieNiu, style: const TextStyle(fontSize: 13))),
-                          DropdownMenuItem(value: 'tn-empty', child: Text(l10n.formatTieNiuEmpty, style: const TextStyle(fontSize: 13))),
-                        ],
-                        onChanged: isRunning ? null : (String? value) {
-                          if (value != null) {
-                            setState(() {
-                              _format = value;
-                            });
-                          }
-                        },
-                      ),
+                      ],
                     ),
                   ],
                 ),

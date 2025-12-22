@@ -95,97 +95,101 @@ class _LogConsoleState extends State<LogConsole> {
     return Column(
       children: [
         // Toolbar
-        Container(
-          height: 40,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          color: Theme.of(context).cardColor,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(logTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  if (widget.headerContent != null) ...[
-                    const SizedBox(width: 12),
-                    Container(
-                      width: 1, 
-                      height: 16, 
-                      color: Theme.of(context).dividerColor
-                    ),
-                    const SizedBox(width: 12),
-                    widget.headerContent!,
-                  ],
-                ],
-              ),
-              Row(
-                children: [
-                  if (widget.isExpanded) ...[
-                    // Search toggle
-                    IconButton(
-                      iconSize: 18,
-                      icon: Icon(_isSearchVisible ? Icons.search_off : Icons.search),
-                      onPressed: () {
-                        setState(() {
-                          _isSearchVisible = !_isSearchVisible;
-                          if (!_isSearchVisible) {
-                            _searchQuery = '';
-                            _searchController.clear();
-                          }
-                        });
-                      },
-                      tooltip: 'Search',
-                    ),
-                    TextButton.icon(
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        visualDensity: VisualDensity.compact,
+        GestureDetector(
+          onTap: widget.onToggle,
+          behavior: HitTestBehavior.opaque,
+          child: Container(
+            height: 40,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            color: Theme.of(context).cardColor,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(logTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    if (widget.headerContent != null) ...[
+                      const SizedBox(width: 12),
+                      Container(
+                        width: 1, 
+                        height: 16, 
+                        color: Theme.of(context).dividerColor
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _autoScroll = !_autoScroll;
-                          if (_autoScroll) _scrollToBottom();
-                        });
-                      },
-                      icon: Icon(_autoScroll ? Icons.lock_clock : Icons.lock_open, size: 16),
-                      label: Text(_autoScroll ? autoScrollOn : autoScrollOff, style: const TextStyle(fontSize: 12)),
-                    ),
-                    const SizedBox(width: 4),
-                    IconButton(
-                      iconSize: 18,
-                      icon: const Icon(Icons.delete_sweep),
-                      onPressed: widget.onClear,
-                      tooltip: clear,
-                    ),
-                    const SizedBox(width: 4),
-                    const SizedBox(width: 4),
+                      const SizedBox(width: 12),
+                      widget.headerContent!,
+                    ],
+                  ],
+                ),
+                Row(
+                  children: [
+                    if (widget.isExpanded) ...[
+                      // Search toggle
+                      IconButton(
+                        iconSize: 18,
+                        icon: Icon(_isSearchVisible ? Icons.search_off : Icons.search),
+                        onPressed: () {
+                          setState(() {
+                            _isSearchVisible = !_isSearchVisible;
+                            if (!_isSearchVisible) {
+                              _searchQuery = '';
+                              _searchController.clear();
+                            }
+                          });
+                        },
+                        tooltip: 'Search',
+                      ),
+                      TextButton.icon(
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _autoScroll = !_autoScroll;
+                            if (_autoScroll) _scrollToBottom();
+                          });
+                        },
+                        icon: Icon(_autoScroll ? Icons.lock_clock : Icons.lock_open, size: 16),
+                        label: Text(_autoScroll ? autoScrollOn : autoScrollOff, style: const TextStyle(fontSize: 12)),
+                      ),
+                      const SizedBox(width: 4),
+                      IconButton(
+                        iconSize: 18,
+                        icon: const Icon(Icons.delete_sweep),
+                        onPressed: widget.onClear,
+                        tooltip: clear,
+                      ),
+                      const SizedBox(width: 4),
+                      const SizedBox(width: 4),
+                      IconButton(
+                        iconSize: 18,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        icon: Icon(widget.isMaximized ? Icons.close_fullscreen : Icons.open_in_full),
+                        onPressed: widget.onMaximize,
+                        tooltip: widget.isMaximized 
+                            ? (l10n?.logRestore ?? 'Restore Logs') 
+                            : (l10n?.logMaximize ?? 'Maximize Logs'),
+                      ),
+                      const SizedBox(width: 4),
+                    ],
                     IconButton(
                       iconSize: 18,
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
-                      icon: Icon(widget.isMaximized ? Icons.close_fullscreen : Icons.open_in_full),
-                      onPressed: widget.onMaximize,
-                      tooltip: widget.isMaximized 
-                          ? (l10n?.logRestore ?? 'Restore Logs') 
-                          : (l10n?.logMaximize ?? 'Maximize Logs'),
+                      icon: AnimatedRotation(
+                        turns: widget.isExpanded ? 0 : -0.25,
+                        duration: const Duration(milliseconds: 200),
+                        child: const Icon(Icons.keyboard_arrow_down),
+                      ),
+                      onPressed: widget.onToggle,
+                      tooltip: widget.isExpanded ? collapseTooltip : expandTooltip,
                     ),
-                    const SizedBox(width: 4),
                   ],
-                  IconButton(
-                    iconSize: 18,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    icon: AnimatedRotation(
-                      turns: widget.isExpanded ? 0 : -0.25,
-                      duration: const Duration(milliseconds: 200),
-                      child: const Icon(Icons.keyboard_arrow_down),
-                    ),
-                    onPressed: widget.onToggle,
-                    tooltip: widget.isExpanded ? collapseTooltip : expandTooltip,
-                  ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ),
         // Search input row
