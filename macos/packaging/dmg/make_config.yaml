@@ -1,14 +1,4 @@
 title: IoT DevKit
-icon: assets/icon/original_icon.png
-window:
-  size:
-    width: 600
-    height: 400
-  position:
-    x: 200
-    y: 200
-background:
-  color: "#333333"
 contents:
   - x: 150
     y: 200
