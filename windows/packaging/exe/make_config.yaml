@@ -1,0 +1,7 @@
+appId: 77A8C8C7-82K1-4321-AB12-DT7890123456
+appName: IoT DevKit
+displayName: IoT DevKit
+publisher: ChenXu
+publisherUrl: https://github.com/bcblr1993/iot_devkit_flutter
+startMenu:
+  folder: IoT DevKit
