@@ -473,28 +473,30 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
             ),
           ),
           
-          Container(
-             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-             margin: const EdgeInsets.only(top: 12),
-             decoration: BoxDecoration(
-               color: _statusColor.withOpacity(0.1),
-               borderRadius: BorderRadius.circular(8),
-               border: Border.all(color: _statusColor.withOpacity(0.3)),
-             ),
-             child: Row(
-               children: [
-                 Icon(Icons.info_outline, size: 16, color: _statusColor),
-                 const SizedBox(width: 8),
-                 Expanded(
-                   child: Text(
-                     _statusMessage,
-                     style: TextStyle(color: _statusColor, fontWeight: FontWeight.bold, fontSize: 13),
-                     maxLines: 1,
-                     overflow: TextOverflow.ellipsis,
+          SingleChildScrollView(
+            child: Container(
+               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+               margin: const EdgeInsets.only(top: 12),
+               decoration: BoxDecoration(
+                 color: _statusColor.withOpacity(0.1),
+                 borderRadius: BorderRadius.circular(8),
+                 border: Border.all(color: _statusColor.withOpacity(0.3)),
+               ),
+               child: Row(
+                 children: [
+                   Icon(Icons.info_outline, size: 16, color: _statusColor),
+                   const SizedBox(width: 8),
+                   Expanded(
+                     child: Text(
+                       _statusMessage,
+                       style: TextStyle(color: _statusColor, fontWeight: FontWeight.bold, fontSize: 13),
+                       maxLines: 1,
+                       overflow: TextOverflow.ellipsis,
+                     ),
                    ),
-                 ),
-               ],
-             ),
+                 ],
+               ),
+            ),
           ),
         ],
       ),

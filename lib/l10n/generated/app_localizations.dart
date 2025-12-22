@@ -830,65 +830,53 @@ abstract class AppLocalizations {
   /// **'Ignored'**
   String get ignored;
 
-  /// No description provided for @themeRivloDark.
+  /// No description provided for @themeMatrixEmerald.
   ///
   /// In en, this message translates to:
-  /// **'Rivlo Dark'**
-  String get themeRivloDark;
+  /// **'Matrix Emerald'**
+  String get themeMatrixEmerald;
 
-  /// No description provided for @themeSalesFlowCoral.
+  /// No description provided for @themeForestMint.
   ///
   /// In en, this message translates to:
-  /// **'SalesFlow Coral'**
-  String get themeSalesFlowCoral;
+  /// **'Forest Mint'**
+  String get themeForestMint;
 
-  /// No description provided for @themeRydexRacing.
+  /// No description provided for @themeArcticBlue.
   ///
   /// In en, this message translates to:
-  /// **'Rydex Racing'**
-  String get themeRydexRacing;
+  /// **'Arctic Blue'**
+  String get themeArcticBlue;
 
-  /// No description provided for @themeFinFlowBlue.
+  /// No description provided for @themeDeepOcean.
   ///
   /// In en, this message translates to:
-  /// **'FinFlow Blue'**
-  String get themeFinFlowBlue;
+  /// **'Deep Ocean'**
+  String get themeDeepOcean;
 
-  /// No description provided for @themeVercelWhite.
+  /// No description provided for @themeCrimsonNight.
   ///
   /// In en, this message translates to:
-  /// **'Vercel White'**
-  String get themeVercelWhite;
+  /// **'Crimson Night'**
+  String get themeCrimsonNight;
 
-  /// No description provided for @themeNotionMilk.
+  /// No description provided for @themeRubyElegance.
   ///
   /// In en, this message translates to:
-  /// **'Notion Milk'**
-  String get themeNotionMilk;
+  /// **'Ruby Elegance'**
+  String get themeRubyElegance;
 
-  /// No description provided for @themeAppleFrost.
+  /// No description provided for @themeVoidBlack.
   ///
   /// In en, this message translates to:
-  /// **'Apple Frost'**
-  String get themeAppleFrost;
+  /// **'Void Black'**
+  String get themeVoidBlack;
 
-  /// No description provided for @themeCarbonBlack.
+  /// No description provided for @themeGraphitePro.
   ///
   /// In en, this message translates to:
-  /// **'Carbon Black'**
-  String get themeCarbonBlack;
-
-  /// No description provided for @themeMidnightZen.
-  ///
-  /// In en, this message translates to:
-  /// **'Midnight Zen'**
-  String get themeMidnightZen;
-
-  /// No description provided for @themeObsidianMono.
-  ///
-  /// In en, this message translates to:
-  /// **'Obsidian Mono'**
-  String get themeObsidianMono;
+  /// **'Graphite Pro'**
+  String get themeGraphitePro;
 
   /// No description provided for @logMaximize.
   ///
@@ -901,6 +889,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Restore Logs'**
   String get logRestore;
+
+  /// No description provided for @copyJson.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy JSON'**
+  String get copyJson;
+
+  /// No description provided for @jsonCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'JSON copied to clipboard'**
+  String get jsonCopied;
 
   /// No description provided for @sectionDeviceScope.
   ///
@@ -937,6 +937,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed'**
   String get statFailed;
+
+  /// No description provided for @enableSsl.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable SSL/TLS'**
+  String get enableSsl;
+
+  /// No description provided for @caCertificate.
+  ///
+  /// In en, this message translates to:
+  /// **'CA Certificate'**
+  String get caCertificate;
+
+  /// No description provided for @clientCertificate.
+  ///
+  /// In en, this message translates to:
+  /// **'Client Certificate'**
+  String get clientCertificate;
+
+  /// No description provided for @privateKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Private Key'**
+  String get privateKey;
+
+  /// No description provided for @previewPayload.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview Payload'**
+  String get previewPayload;
+
+  /// No description provided for @payloadPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Payload Preview'**
+  String get payloadPreview;
+
+  /// No description provided for @selectFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Select File'**
+  String get selectFile;
+
+  /// No description provided for @previewAndStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview & Start'**
+  String get previewAndStart;
+
+  /// No description provided for @startNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Simulation'**
+  String get startNow;
+
+  /// No description provided for @confirmStartHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Click Confirm to start simulation with this payload structure.'**
+  String get confirmStartHint;
 }
 
 class _AppLocalizationsDelegate

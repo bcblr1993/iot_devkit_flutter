@@ -233,49 +233,58 @@ class _LogConsoleState extends State<LogConsole> {
           ),
         if (widget.isExpanded)
           Expanded(
-            child: Column(
-              children: [
-                const Divider(height: 1),
-                Expanded(
-                  child: Container(
-                    color: Colors.black87,
-                        child: ListView.builder(
-                          controller: _scrollController,
-                          itemCount: _filteredLogs.length,
-                          itemBuilder: (context, index) {
-                            final log = _filteredLogs[index];
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                              child: Text.rich(
-                                TextSpan(
-                                  children: [
-                                    TextSpan(
-                                      text: '[${log.time}] ',
-                                      style: const TextStyle(color: Colors.grey, fontSize: 11, fontFamily: 'Courier', height: 1.2),
-                                    ),
-                                    if (log.tag != null)
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // Prevent overflow during animation when constraints.maxHeight is very small
+                if (constraints.maxHeight < 20) return const SizedBox.shrink();
+                
+                return ClipRect(
+                  child: Column(
+                    children: [
+                      const Divider(height: 1),
+                      Expanded(
+                        child: Container(
+                          color: Colors.black87,
+                          child: ListView.builder(
+                            controller: _scrollController,
+                            itemCount: _filteredLogs.length,
+                            itemBuilder: (context, index) {
+                              final log = _filteredLogs[index];
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                child: Text.rich(
+                                  TextSpan(
+                                    children: [
                                       TextSpan(
-                                        text: '[${log.tag}] ',
-                                        style: TextStyle(
-                                            color: _getHashColor(log.tag!),
-                                            fontSize: 11,
-                                            fontFamily: 'Courier',
-                                            fontWeight: FontWeight.bold,
-                                            height: 1.2),
+                                        text: '[${log.time}] ',
+                                        style: const TextStyle(color: Colors.grey, fontSize: 11, fontFamily: 'Courier', height: 1.2),
                                       ),
-                                    ..._buildHighlightedText(log.message, _searchQuery, _getColor(log.type)),
-                                  ],
+                                      if (log.tag != null)
+                                        TextSpan(
+                                          text: '[${log.tag}] ',
+                                          style: TextStyle(
+                                              color: _getHashColor(log.tag!),
+                                              fontSize: 11,
+                                              fontFamily: 'Courier',
+                                              fontWeight: FontWeight.bold,
+                                              height: 1.2),
+                                        ),
+                                      ..._buildHighlightedText(log.message, _searchQuery, _getColor(log.type)),
+                                    ],
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            );
-                          },
+                              );
+                            },
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                );
+              },
+            ),
           ),
       ],
     );

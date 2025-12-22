@@ -377,40 +377,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ignored => 'Ignored';
 
   @override
-  String get themeRivloDark => 'Rivlo Dark';
+  String get themeMatrixEmerald => 'Matrix Emerald';
 
   @override
-  String get themeSalesFlowCoral => 'SalesFlow Coral';
+  String get themeForestMint => 'Forest Mint';
 
   @override
-  String get themeRydexRacing => 'Rydex Racing';
+  String get themeArcticBlue => 'Arctic Blue';
 
   @override
-  String get themeFinFlowBlue => 'FinFlow Blue';
+  String get themeDeepOcean => 'Deep Ocean';
 
   @override
-  String get themeVercelWhite => 'Vercel White';
+  String get themeCrimsonNight => 'Crimson Night';
 
   @override
-  String get themeNotionMilk => 'Notion Milk';
+  String get themeRubyElegance => 'Ruby Elegance';
 
   @override
-  String get themeAppleFrost => 'Apple Frost';
+  String get themeVoidBlack => 'Void Black';
 
   @override
-  String get themeCarbonBlack => 'Carbon Black';
-
-  @override
-  String get themeMidnightZen => 'Midnight Zen';
-
-  @override
-  String get themeObsidianMono => 'Obsidian Mono';
+  String get themeGraphitePro => 'Graphite Pro';
 
   @override
   String get logMaximize => 'Maximize Logs';
 
   @override
   String get logRestore => 'Restore Logs';
+
+  @override
+  String get copyJson => 'Copy JSON';
+
+  @override
+  String get jsonCopied => 'JSON copied to clipboard';
 
   @override
   String get sectionDeviceScope => 'Device Scope';
@@ -429,4 +429,35 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get statFailed => 'Failed';
+
+  @override
+  String get enableSsl => 'Enable SSL/TLS';
+
+  @override
+  String get caCertificate => 'CA Certificate';
+
+  @override
+  String get clientCertificate => 'Client Certificate';
+
+  @override
+  String get privateKey => 'Private Key';
+
+  @override
+  String get previewPayload => 'Preview Payload';
+
+  @override
+  String get payloadPreview => 'Payload Preview';
+
+  @override
+  String get selectFile => 'Select File';
+
+  @override
+  String get previewAndStart => 'Preview & Start';
+
+  @override
+  String get startNow => 'Start Simulation';
+
+  @override
+  String get confirmStartHint =>
+      'Click Confirm to start simulation with this payload structure.';
 }

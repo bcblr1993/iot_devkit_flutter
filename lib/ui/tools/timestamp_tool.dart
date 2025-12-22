@@ -83,20 +83,24 @@ class _TimestampToolState extends State<TimestampTool> {
   }
   
   Future<void> _loadState() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (mounted) {
-      setState(() {
-        _tsController.text = prefs.getString(_kTsInput) ?? '';
-        _dateController.text = prefs.getString(_kDateInput) ?? '';
-        _selectedTsTz = prefs.getString(_kTsTz) ?? 'Asia/Shanghai';
-        _selectedDtTz = prefs.getString(_kDateTz) ?? 'Asia/Shanghai';
-        _conversionResultDate = prefs.getString(_kResDate) ?? '';
-        _conversionResultTs = prefs.getString(_kResTs) ?? '';
-        
-        // Validate timezone values just in case
-        if (!_timezones.any((t) => t['value'] == _selectedTsTz)) _selectedTsTz = 'Asia/Shanghai';
-        if (!_timezones.any((t) => t['value'] == _selectedDtTz)) _selectedDtTz = 'Asia/Shanghai';
-      });
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (mounted) {
+        setState(() {
+          _tsController.text = prefs.getString(_kTsInput) ?? '';
+          _dateController.text = prefs.getString(_kDateInput) ?? '';
+          _selectedTsTz = prefs.getString(_kTsTz) ?? 'Asia/Shanghai';
+          _selectedDtTz = prefs.getString(_kDateTz) ?? 'Asia/Shanghai';
+          _conversionResultDate = prefs.getString(_kResDate) ?? '';
+          _conversionResultTs = prefs.getString(_kResTs) ?? '';
+          
+          // Validate timezone values just in case
+          if (!_timezones.any((t) => t['value'] == _selectedTsTz)) _selectedTsTz = 'Asia/Shanghai';
+          if (!_timezones.any((t) => t['value'] == _selectedDtTz)) _selectedDtTz = 'Asia/Shanghai';
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading TimestampTool state: $e');
     }
   }
   
@@ -233,7 +237,7 @@ class _TimestampToolState extends State<TimestampTool> {
     final effect = theme.extension<AppThemeEffect>() ?? 
                    const AppThemeEffect(animationCurve: Curves.easeInOut, layoutDensity: 1.0, icons: AppIcons.standard);
 
-    return Padding(
+    return SingleChildScrollView(
       padding: EdgeInsets.all(16.0 * effect.layoutDensity),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -245,118 +249,142 @@ class _TimestampToolState extends State<TimestampTool> {
              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
              child: Padding(
                padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 32.0),
-               child: Row(
-                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                 children: [
-                   Column(
-                     crossAxisAlignment: CrossAxisAlignment.start,
+               child: LayoutBuilder(
+                 builder: (context, constraints) {
+                   final bool isNarrow = constraints.maxWidth < 600;
+                   
+                   if (isNarrow) {
+                     return Column(
+                       children: [
+                         _buildHeaderItem(
+                           l10n.currentDate, 
+                           _format.format(_now), 
+                           colorScheme, 
+                           effect, 
+                           isEnd: false,
+                           onCopy: () => _copy(_format.format(_now)),
+                           copyTooltip: l10n.copyDate,
+                         ),
+                         Padding(
+                           padding: const EdgeInsets.symmetric(vertical: 16),
+                           child: Divider(color: colorScheme.onPrimaryContainer.withOpacity(0.1), height: 1),
+                         ),
+                         _buildHeaderItem(
+                           l10n.currentTimestamp, 
+                           _now.millisecondsSinceEpoch.toString(), 
+                           colorScheme, 
+                           effect, 
+                           isEnd: true,
+                           onCopy: () => _copy(_now.millisecondsSinceEpoch.toString()),
+                           copyTooltip: l10n.copyTimestamp,
+                         ),
+                       ],
+                     );
+                   }
+
+                   return Row(
+                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                      children: [
-                       Text(l10n.currentDate.toUpperCase(), style: TextStyle(color: colorScheme.onPrimaryContainer.withOpacity(0.6), letterSpacing: 1.2, fontSize: 12, fontWeight: FontWeight.bold)),
-                       const SizedBox(height: 8),
-                       Row(
-                         mainAxisSize: MainAxisSize.min,
-                         children: [
-                           SelectableText(_format.format(_now), style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: colorScheme.onPrimaryContainer, fontFamily: 'Monospace')),
-                           const SizedBox(width: 8),
-                           IconButton(
-                             onPressed: () => _copy(_format.format(_now)),
-                             icon: Icon(effect.icons.copy, color: colorScheme.onPrimaryContainer.withOpacity(0.7), size: 18),
-                             tooltip: l10n.copyDate,
-                           ),
-                         ],
+                       _buildHeaderItem(
+                         l10n.currentDate, 
+                         _format.format(_now), 
+                         colorScheme, 
+                         effect, 
+                         isEnd: false,
+                         onCopy: () => _copy(_format.format(_now)),
+                         copyTooltip: l10n.copyDate,
+                       ),
+                       Container(width: 2, height: 60, color: colorScheme.onPrimaryContainer.withOpacity(0.2)),
+                       _buildHeaderItem(
+                         l10n.currentTimestamp, 
+                         _now.millisecondsSinceEpoch.toString(), 
+                         colorScheme, 
+                         effect, 
+                         isEnd: true,
+                         onCopy: () => _copy(_now.millisecondsSinceEpoch.toString()),
+                         copyTooltip: l10n.copyTimestamp,
                        ),
                      ],
-                   ),
-                   Container(width: 2, height: 60, color: colorScheme.onPrimaryContainer.withOpacity(0.2)),
-                   Column(
-                     crossAxisAlignment: CrossAxisAlignment.end,
-                     children: [
-                       Text(l10n.currentTimestamp.toUpperCase(), style: TextStyle(color: colorScheme.onPrimaryContainer.withOpacity(0.6), letterSpacing: 1.2, fontSize: 12, fontWeight: FontWeight.bold)),
-                       const SizedBox(height: 8),
-                       Row(
-                         mainAxisSize: MainAxisSize.min,
-                         children: [
-                           SelectableText(_now.millisecondsSinceEpoch.toString(), style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: colorScheme.onPrimaryContainer, fontFamily: 'Monospace')),
-                           const SizedBox(width: 8),
-                           IconButton(
-                             onPressed: () => _copy(_now.millisecondsSinceEpoch.toString()),
-                             icon: Icon(effect.icons.copy, color: colorScheme.onPrimaryContainer.withOpacity(0.7), size: 18),
-                             tooltip: l10n.copyTimestamp,
-                           ),
-                         ],
-                       ),
-                     ],
-                   ),
-                 ],
+                   );
+                 }
                ),
              ),
            ),
            const SizedBox(height: 20),
            
-           // 2. Converters Row
-           Expanded(
-             child: Row(
-               crossAxisAlignment: CrossAxisAlignment.start,
-               children: [
-                 // TS -> Date Panel
-                 Expanded(
-                   child: _buildConverterPanel(
-                     context,
-                     title: l10n.timestampToDate,
-                     icon: effect.icons.time,
-                     effect: effect,
-                     inputWidget: TextField(
-                        controller: _tsController,
-                        decoration: InputDecoration(
-                          labelText: l10n.timestampInput,
-                          border: const OutlineInputBorder(),
-                          suffixIcon: IconButton(
-                            icon: const Icon(Icons.history),
-                            tooltip: l10n.useCurrentTime,
-                            onPressed: _fillCurrentTs,
-                          )
-                        ),
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        onSubmitted: (_) => _convertTsToDate(),
-                     ),
-                     timezoneValue: _selectedTsTz,
-                     onTimezoneChanged: (v) { setState(() => _selectedTsTz = v!); _saveState(); },
-                     onConvert: _convertTsToDate,
-                     resultValue: _conversionResultDate,
-                     isPlaceholder: _conversionResultDate.isEmpty,
+           // 2. Converters
+           LayoutBuilder(
+             builder: (context, constraints) {
+               final bool isNarrow = constraints.maxWidth < 800;
+               final children = [
+                 _buildConverterPanel(
+                   context,
+                   title: l10n.timestampToDate,
+                   icon: effect.icons.time,
+                   effect: effect,
+                   inputWidget: TextField(
+                      controller: _tsController,
+                      decoration: InputDecoration(
+                        labelText: l10n.timestampInput,
+                        border: const OutlineInputBorder(),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.history),
+                          tooltip: l10n.useCurrentTime,
+                          onPressed: _fillCurrentTs,
+                        )
+                      ),
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      onSubmitted: (_) => _convertTsToDate(),
                    ),
+                   timezoneValue: _selectedTsTz,
+                   onTimezoneChanged: (v) { setState(() => _selectedTsTz = v!); _saveState(); },
+                   onConvert: _convertTsToDate,
+                   resultValue: _conversionResultDate,
+                   isPlaceholder: _conversionResultDate.isEmpty,
                  ),
-                 const SizedBox(width: 20),
-                 // Date -> TS Panel
-                 Expanded(
-                   child: _buildConverterPanel(
-                     context,
-                     title: l10n.dateToTimestamp,
-                     icon: effect.icons.calendar,
-                     effect: effect,
-                     inputWidget: TextField(
-                        controller: _dateController,
-                        decoration: InputDecoration(
-                          labelText: l10n.dateInput,
-                          hintText: l10n.dateInputHint,
-                          border: const OutlineInputBorder(),
-                          suffixIcon: IconButton(
-                            icon: const Icon(Icons.history),
-                            tooltip: l10n.useCurrentTime,
-                            onPressed: _fillCurrentDate,
-                          )
-                        ),
-                        onSubmitted: (_) => _convertDateToTs(),
-                     ),
-                     timezoneValue: _selectedDtTz,
-                     onTimezoneChanged: (v) { setState(() => _selectedDtTz = v!); _saveState(); },
-                     onConvert: _convertDateToTs,
-                     resultValue: _conversionResultTs,
-                     isPlaceholder: _conversionResultTs.isEmpty,
+                 if (isNarrow) const SizedBox(height: 20) else const SizedBox(width: 20),
+                 _buildConverterPanel(
+                   context,
+                   title: l10n.dateToTimestamp,
+                   icon: effect.icons.calendar,
+                   effect: effect,
+                   inputWidget: TextField(
+                      controller: _dateController,
+                      decoration: InputDecoration(
+                        labelText: l10n.dateInput,
+                        hintText: l10n.dateInputHint,
+                        border: const OutlineInputBorder(),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.history),
+                          tooltip: l10n.useCurrentTime,
+                          onPressed: _fillCurrentDate,
+                        )
+                      ),
+                      onSubmitted: (_) => _convertDateToTs(),
                    ),
+                   timezoneValue: _selectedDtTz,
+                   onTimezoneChanged: (v) { setState(() => _selectedDtTz = v!); _saveState(); },
+                   onConvert: _convertDateToTs,
+                   resultValue: _conversionResultTs,
+                   isPlaceholder: _conversionResultTs.isEmpty,
                  ),
-               ],
-             ),
+               ];
+
+               if (isNarrow) {
+                 return Column(children: children);
+               }
+               
+               return IntrinsicHeight(
+                 child: Row(
+                   crossAxisAlignment: CrossAxisAlignment.stretch,
+                   children: [
+                     Expanded(child: children[0]),
+                     children[1],
+                     Expanded(child: children[2]),
+                   ],
+                 ),
+               );
+             },
            ),
            
            // 3. Status Bar (Bottom)
@@ -385,6 +413,35 @@ class _TimestampToolState extends State<TimestampTool> {
            ),
         ],
       ),
+    );
+  }
+
+  Widget _buildHeaderItem(
+    String label, 
+    String value, 
+    ColorScheme colorScheme, 
+    AppThemeEffect effect, 
+    {required bool isEnd, required VoidCallback onCopy, required String copyTooltip}
+  ) {
+    return Column(
+      crossAxisAlignment: isEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(label.toUpperCase(), style: TextStyle(color: colorScheme.onPrimaryContainer.withOpacity(0.6), letterSpacing: 1.2, fontSize: 12, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SelectableText(value, style: TextStyle(fontSize: 32 * effect.layoutDensity, fontWeight: FontWeight.bold, color: colorScheme.onPrimaryContainer, fontFamily: 'Monospace')),
+            const SizedBox(width: 8),
+            IconButton(
+              onPressed: onCopy,
+              icon: Icon(effect.icons.copy, color: colorScheme.onPrimaryContainer.withOpacity(0.7), size: 18),
+              tooltip: copyTooltip,
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -441,39 +498,37 @@ class _TimestampToolState extends State<TimestampTool> {
               ),
             ),
             const SizedBox(height: 32),
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: colorScheme.outlineVariant),
-                ),
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(l10n.conversionResult, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12, letterSpacing: 1.5, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 16),
-                    SelectableText(
-                      isPlaceholder ? '---' : resultValue,
-                      style: TextStyle(
-                        fontSize: 28, 
-                        fontWeight: FontWeight.bold,
-                        color: isPlaceholder || resultValue == 'Error' ? colorScheme.onSurfaceVariant : colorScheme.primary,
-                        fontFamily: 'Monospace'
-                      ),
-                      textAlign: TextAlign.center,
+            Container(
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: colorScheme.outlineVariant),
+              ),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(l10n.conversionResult, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12, letterSpacing: 1.5, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 16),
+                  SelectableText(
+                    isPlaceholder ? '---' : resultValue,
+                    style: TextStyle(
+                      fontSize: 28, 
+                      fontWeight: FontWeight.bold,
+                      color: isPlaceholder || resultValue == 'Error' ? colorScheme.onSurfaceVariant : colorScheme.primary,
+                      fontFamily: 'Monospace'
                     ),
-                    if (!isPlaceholder && resultValue != 'Error') ...[
-                      const SizedBox(height: 16),
-                      TextButton.icon(
-                        onPressed: () => _copy(resultValue),
-                        icon: const Icon(Icons.copy, size: 18),
-                        label: Text(l10n.copyAction),
-                      )
-                    ]
-                  ],
-                ),
+                    textAlign: TextAlign.center,
+                  ),
+                  if (!isPlaceholder && resultValue != 'Error') ...[
+                    const SizedBox(height: 16),
+                    TextButton.icon(
+                      onPressed: () => _copy(resultValue),
+                      icon: const Icon(Icons.copy, size: 18),
+                      label: Text(l10n.copyAction),
+                    )
+                  ]
+                ],
               ),
             ),
           ],

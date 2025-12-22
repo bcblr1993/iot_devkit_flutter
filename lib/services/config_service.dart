@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
+import 'package:logging/logging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/group_config.dart';
 import '../models/custom_key_config.dart';
 
 class ConfigService {
+  static final _logger = Logger('ConfigService');
   static const String _storageKey = 'simulator_config';
   static const String _appSignature = 'iot_devkit_flutter_v1';
 
@@ -24,6 +26,7 @@ class ConfigService {
     try {
       return jsonDecode(data);
     } catch (e) {
+      _logger.warning('Failed to load local config', e);
       return null;
     }
   }
@@ -52,7 +55,7 @@ class ConfigService {
       }
       return (success: false, error: null, cancelled: true);
     } catch (e) {
-      print('Export error: $e');
+      _logger.severe('Export error', e);
       return (success: false, error: e.toString(), cancelled: false);
     }
   }
@@ -87,7 +90,7 @@ class ConfigService {
         return (config: parsed, error: null);
       }
     } catch (e) {
-      print('Import error: $e');
+      _logger.severe('Import error', e);
       return (config: null, error: '导入失败：文件格式错误或已损坏。');
     }
     return (config: null, error: null); // User cancelled

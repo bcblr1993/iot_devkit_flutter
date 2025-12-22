@@ -6,13 +6,13 @@ class ThemeManager extends ChangeNotifier {
   static const String _kInfoTheme = 'app-theme';
   
   late ThemeData _currentTheme;
-  String _currentThemeName = 'vercel-light';
+  String _currentThemeName = 'forest-mint';
   
   ThemeData get currentTheme => _currentTheme;
   String get currentThemeName => _currentThemeName;
 
   ThemeManager() {
-    _currentTheme = _themes['vercel-white']!;
+    _currentTheme = _themes['forest-mint']!;
     _loadPreference();
   }
 
@@ -226,108 +226,44 @@ class ThemeManager extends ChangeNotifier {
   }
 
   static final Map<String, ThemeData> _themes = {
-    // Adminix Emerald (翡翠之都) - Clean SaaS Style
-    'adminix-emerald': _buildProTheme(
-      brightness: Brightness.light,
-      primary: const Color(0xFF108953), // Adminix Emerald Green
-      secondary: const Color(0xFFC5DC6B), // Adminix Lime Green
-      background: const Color(0xFFF4F5F2), // Off-white Background
-      surface: const Color(0xFFFFFFFF),
-      onSurface: const Color(0xFF1A1A1A),
-      onBackground: const Color(0xFF1A1A1A),
-      error: const Color(0xFFE11D48),
-      borderRadius: 20.0, // High roundness from the Adminix image
-      borderColor: const Color(0xFFE5E7EB),
-      primaryContainer: const Color(0xFF108953).withOpacity(0.1),
-      onPrimaryContainer: const Color(0xFF108953),
-      effect: const AppThemeEffect(
-        animationCurve: Curves.easeOutQuart,
-        layoutDensity: 1.0,
-        icons: AppIcons.rounded,
-        useGlassEffect: false, // Standard clean UI
-      ),
-    ),
-
-    // Rivlo Dark (幻夜绿光) - Premium Dark with Neon Accents
-    'rivlo-dark': _buildProTheme(
+    // 🟢 GREEN THEMES
+    
+    // Matrix Emerald (矩阵翡翠) - Dark Green Mech Style
+    'matrix-emerald': _buildProTheme(
       brightness: Brightness.dark,
-      primary: const Color(0xFFA3FF4D), // Neon Lime
-      secondary: const Color(0xFFB1A2FF), // Lavender
-      background: const Color(0xFF0F0F0F), // Deep Black
-      surface: const Color(0xFF1C1C1E), // Dark Grey Card
-      onSurface: const Color(0xFFFFFFFF),
-      onBackground: const Color(0xFFECECEC),
-      error: const Color(0xFFFF4D4D),
-      borderRadius: 24.0, // High roundness from the Rivlo image
-      borderColor: const Color(0xFF2C2C2E),
-      primaryContainer: const Color(0xFFA3FF4D).withOpacity(0.12),
-      onPrimaryContainer: const Color(0xFFA3FF4D),
+      primary: const Color(0xFF00FF41), // Matrix Neon Green
+      secondary: const Color(0xFF0D0208), 
+      background: const Color(0xFF0D0208), // Pitch Black
+      surface: const Color(0xFF1A1A1D), // Dark Grey Card
+      onSurface: const Color(0xFF00FF41),
+      onBackground: const Color(0xFF00FF41),
+      error: const Color(0xFFFF3131),
+      borderRadius: 12.0,
+      borderColor: const Color(0xFF00FF41).withOpacity(0.3),
+      primaryContainer: const Color(0xFF00FF41).withOpacity(0.1),
+      onPrimaryContainer: const Color(0xFF00FF41),
       effect: const AppThemeEffect(
-        animationCurve: Curves.easeInOutExpo,
+        animationCurve: Curves.easeInCirc,
         layoutDensity: 1.0,
-        icons: AppIcons.standard,
-        useGlassEffect: false,
-      ),
-    ),
-
-    // SalesFlow Coral (熔岩珊瑩) - Warm Dark with Coral Accents
-    'salesflow-coral': _buildProTheme(
-      brightness: Brightness.dark,
-      primary: const Color(0xFFFF6B4A), // Coral Orange
-      secondary: const Color(0xFFE8A87C), // Warm Peach
-      background: const Color(0xFF121212), // Deep Black
-      surface: const Color(0xFF1E1E1E), // Dark Card
-      onSurface: const Color(0xFFFFFFFF),
-      onBackground: const Color(0xFFE5E5E5),
-      error: const Color(0xFFFF5252),
-      borderRadius: 16.0, // Modern rounded corners
-      borderColor: const Color(0xFF2A2A2A),
-      primaryContainer: const Color(0xFFFF6B4A).withOpacity(0.15),
-      onPrimaryContainer: const Color(0xFFFF6B4A),
-      effect: const AppThemeEffect(
-        animationCurve: Curves.easeOutCubic,
-        layoutDensity: 1.0,
-        icons: AppIcons.standard,
-        useGlassEffect: false,
-      ),
-    ),
-
-    // Rydex Racing (竞速赤焰) - Sport Black with Racing Red
-    'rydex-racing': _buildProTheme(
-      brightness: Brightness.dark,
-      primary: const Color(0xFFE63946), // Racing Red
-      secondary: const Color(0xFFC0C0C0), // Silver Metal
-      background: const Color(0xFF0A0A0A), // Pure Black
-      surface: const Color(0xFF181818), // Dark Grey Card
-      onSurface: const Color(0xFFFFFFFF),
-      onBackground: const Color(0xFFF0F0F0),
-      error: const Color(0xFFFF3333),
-      borderRadius: 8.0, // Sharp, sporty corners
-      borderColor: const Color(0xFF2A2A2A),
-      primaryContainer: const Color(0xFFE63946).withOpacity(0.12),
-      onPrimaryContainer: const Color(0xFFE63946),
-      effect: const AppThemeEffect(
-        animationCurve: Curves.fastOutSlowIn,
-        layoutDensity: 0.95, // Compact sporty feel
         icons: AppIcons.sharp,
         useGlassEffect: false,
       ),
     ),
 
-    // FinFlow Blue (金融蜻篮) - Clean Finance Light Theme
-    'finflow-blue': _buildProTheme(
+    // Forest Mint (森林薄荷) - Clean White Green
+    'forest-mint': _buildProTheme(
       brightness: Brightness.light,
-      primary: const Color(0xFF2196F3), // Material Blue
-      secondary: const Color(0xFF22C55E), // Success Green
-      background: const Color(0xFFF8F9FC), // Light Grey Background
-      surface: const Color(0xFFFFFFFF), // Pure White Cards
-      onSurface: const Color(0xFF1A1A2E),
-      onBackground: const Color(0xFF1A1A2E),
+      primary: const Color(0xFF10B981), // Emerald Green
+      secondary: const Color(0xFFD1FAE5),
+      background: const Color(0xFFF0FDF4), // Mint White
+      surface: const Color(0xFFFFFFFF),
+      onSurface: const Color(0xFF065F46),
+      onBackground: const Color(0xFF064E3B),
       error: const Color(0xFFEF4444),
-      borderRadius: 12.0, // Professional rounded corners
-      borderColor: const Color(0xFFE5E7EB),
-      primaryContainer: const Color(0xFF2196F3).withOpacity(0.08),
-      onPrimaryContainer: const Color(0xFF1976D2),
+      borderRadius: 16.0,
+      borderColor: const Color(0xFFD1FAE5),
+      primaryContainer: const Color(0xFF10B981).withOpacity(0.1),
+      onPrimaryContainer: const Color(0xFF047857),
       effect: const AppThemeEffect(
         animationCurve: Curves.easeInOut,
         layoutDensity: 1.0,
@@ -336,141 +272,139 @@ class ThemeManager extends ChangeNotifier {
       ),
     ),
 
-    // =======================
-    // ✨ Minimal / White Themes
-    // =======================
+    // 🔵 BLUE THEMES
 
-    // Vercel White - 极简专业
-    'vercel-white': _buildProTheme(
+    // Arctic Blue (极地冰蓝) - Clean Professional Blue
+    'arctic-blue': _buildProTheme(
       brightness: Brightness.light,
-      primary: const Color(0xFF000000),
-      secondary: const Color(0xFF6B7280),
-      background: const Color(0xFFFAFAFA),
+      primary: const Color(0xFF0EA5E9), // Sky Blue
+      secondary: const Color(0xFFE0F2FE),
+      background: const Color(0xFFF8FAFC), // Ice White
       surface: const Color(0xFFFFFFFF),
-      onSurface: const Color(0xFF111827),
-      onBackground: const Color(0xFF111827),
+      onSurface: const Color(0xFF0F172A),
+      onBackground: const Color(0xFF1E293B),
       error: const Color(0xFFEF4444),
       borderRadius: 14.0,
-      borderColor: const Color(0xFFE5E7EB),
-      primaryContainer: const Color(0xFF000000).withOpacity(0.06),
-      onPrimaryContainer: const Color(0xFF000000),
+      borderColor: const Color(0xFFE2E8F0),
+      primaryContainer: const Color(0xFF0EA5E9).withOpacity(0.1),
+      onPrimaryContainer: const Color(0xFF0369A1),
       effect: const AppThemeEffect(
         animationCurve: Curves.easeOut,
         layoutDensity: 1.0,
-        icons: AppIcons.standard,
-        useGlassEffect: false,
-      ),
-    ),
-
-    // Notion Milk - 柔白文档风
-    'notion-milk': _buildProTheme(
-      brightness: Brightness.light,
-      primary: const Color(0xFF4F46E5),
-      secondary: const Color(0xFF64748B),
-      background: const Color(0xFFF7F7F5),
-      surface: const Color(0xFFFFFFFF),
-      onSurface: const Color(0xFF1F2937),
-      onBackground: const Color(0xFF1F2937),
-      error: const Color(0xFFDC2626),
-      borderRadius: 12.0,
-      borderColor: const Color(0xFFE4E4E7),
-      primaryContainer: const Color(0xFF4F46E5).withOpacity(0.08),
-      onPrimaryContainer: const Color(0xFF4F46E5),
-      effect: const AppThemeEffect(
-        animationCurve: Curves.easeInOut,
-        layoutDensity: 1.0,
         icons: AppIcons.rounded,
         useGlassEffect: false,
       ),
     ),
 
-    // Apple Frost - 苹果系白
-    'apple-frost': _buildProTheme(
-      brightness: Brightness.light,
-      primary: const Color(0xFF007AFF),
-      secondary: const Color(0xFF34C759),
-      background: const Color(0xFFF2F2F7),
-      surface: const Color(0xFFFFFFFF),
-      onSurface: const Color(0xFF1C1C1E),
-      onBackground: const Color(0xFF1C1C1E),
-      error: const Color(0xFFFF3B30),
-      borderRadius: 18.0,
-      borderColor: const Color(0xFFD1D1D6),
-      primaryContainer: const Color(0xFF007AFF).withOpacity(0.1),
-      onPrimaryContainer: const Color(0xFF007AFF),
-      effect: const AppThemeEffect(
-        animationCurve: Curves.easeOutCubic,
-        layoutDensity: 1.0,
-        icons: AppIcons.rounded,
-        useGlassEffect: false,
-      ),
-    ),
-
-    // =======================
-    // 🌙 Dark / Black Themes
-    // =======================
-
-    // Carbon Black - 高级暗色
-    'carbon-black': _buildProTheme(
+    // Deep Ocean (深海蔚蓝) - Tech Dark Blue
+    'deep-ocean': _buildProTheme(
       brightness: Brightness.dark,
-      primary: const Color(0xFF38BDF8),
-      secondary: const Color(0xFF94A3B8),
-      background: const Color(0xFF0B0B0E),
-      surface: const Color(0xFF16161A),
-      onSurface: const Color(0xFFFFFFFF),
-      onBackground: const Color(0xFFE5E7EB),
-      error: const Color(0xFFF87171),
-      borderRadius: 14.0,
-      borderColor: const Color(0xFF262626),
-      primaryContainer: const Color(0xFF38BDF8).withOpacity(0.15),
-      onPrimaryContainer: const Color(0xFF38BDF8),
-      effect: const AppThemeEffect(
-        animationCurve: Curves.easeInOut,
-        layoutDensity: 1.0,
-        icons: AppIcons.standard,
-        useGlassEffect: false,
-      ),
-    ),
-
-    // Midnight Zen - 深蓝护眼
-    'midnight-zen': _buildProTheme(
-      brightness: Brightness.dark,
-      primary: const Color(0xFF22C55E),
-      secondary: const Color(0xFF64748B),
-      background: const Color(0xFF0F172A),
-      surface: const Color(0xFF1E293B),
-      onSurface: const Color(0xFFF8FAFC),
+      primary: const Color(0xFF3B82F6), // Royal Blue
+      secondary: const Color(0xFF1E3A8A),
+      background: const Color(0xFF0C1222), // Deep Ocean Black
+      surface: const Color(0xFF1E293B), // Navy Card
+      onSurface: const Color(0xFFF1F5F9),
       onBackground: const Color(0xFFE2E8F0),
-      error: const Color(0xFFF43F5E),
+      error: const Color(0xFFF87171),
       borderRadius: 16.0,
       borderColor: const Color(0xFF334155),
-      primaryContainer: const Color(0xFF22C55E).withOpacity(0.15),
-      onPrimaryContainer: const Color(0xFF22C55E),
+      primaryContainer: const Color(0xFF3B82F6).withOpacity(0.15),
+      onPrimaryContainer: const Color(0xFF3B82F6),
       effect: const AppThemeEffect(
-        animationCurve: Curves.easeInOut,
+        animationCurve: Curves.easeInOutCubic,
         layoutDensity: 1.0,
         icons: AppIcons.standard,
         useGlassEffect: false,
       ),
     ),
 
-    // Obsidian Mono - 极简纯黑
-    'obsidian-mono': _buildProTheme(
+    // 🔴 RED THEMES
+
+    // Crimson Night (深红暗夜) - Gaming Dark Red
+    'crimson-night': _buildProTheme(
       brightness: Brightness.dark,
-      primary: const Color(0xFFFFFFFF),
-      secondary: const Color(0xFF9CA3AF),
-      background: const Color(0xFF000000),
-      surface: const Color(0xFF111111),
+      primary: const Color(0xFFDC2626), // Deep Red
+      secondary: const Color(0xFF7F1D1D),
+      background: const Color(0xFF0A0A0A), // Pure Black
+      surface: const Color(0xFF1C1C1C), // Carbon Card
+      onSurface: const Color(0xFFFEE2E2),
+      onBackground: const Color(0xFFF9FAFB),
+      error: const Color(0xFFFF4D4D),
+      borderRadius: 8.0, // Sharp corners for gaming feel
+      borderColor: const Color(0xFF262626),
+      primaryContainer: const Color(0xFFDC2626).withOpacity(0.12),
+      onPrimaryContainer: const Color(0xFFDC2626),
+      effect: const AppThemeEffect(
+        animationCurve: Curves.fastOutSlowIn,
+        layoutDensity: 0.95,
+        icons: AppIcons.sharp,
+        useGlassEffect: false,
+      ),
+    ),
+
+    // Ruby Elegance (红宝石雅致) - Luxury Dark Red
+    'ruby-elegance': _buildProTheme(
+      brightness: Brightness.dark,
+      primary: const Color(0xFFE11D48), // Rose Red
+      secondary: const Color(0xFF881337),
+      background: const Color(0xFF18181B), // Graphite Background
+      surface: const Color(0xFF27272A), // Concrete Card
+      onSurface: const Color(0xFFFFF1F2),
+      onBackground: const Color(0xFFF4F4F5),
+      error: const Color(0xFFFB7185),
+      borderRadius: 20.0, // Smooth luxury corners
+      borderColor: const Color(0xFF3F3F46),
+      primaryContainer: const Color(0xFFE11D48).withOpacity(0.1),
+      onPrimaryContainer: const Color(0xFFE11D48),
+      effect: const AppThemeEffect(
+        animationCurve: Curves.easeOutQuart,
+        layoutDensity: 1.0,
+        icons: AppIcons.rounded,
+        useGlassEffect: false,
+      ),
+    ),
+
+    // ⚫ BLACK THEMES
+
+    // Void Black (虚空纯黑) - OLED Minimalist
+    'void-black': _buildProTheme(
+      brightness: Brightness.dark,
+      primary: const Color(0xFFFFFFFF), // Pure White
+      secondary: const Color(0xFF404040),
+      background: const Color(0xFF000000), // OLED Black
+      surface: const Color(0xFF0A0A0A), // Near Black Card
       onSurface: const Color(0xFFFFFFFF),
       onBackground: const Color(0xFFE5E5E5),
       error: const Color(0xFFEF4444),
       borderRadius: 10.0,
-      borderColor: const Color(0xFF222222),
-      primaryContainer: const Color(0xFFFFFFFF).withOpacity(0.1),
+      borderColor: const Color(0xFF262626),
+      primaryContainer: const Color(0xFFFFFFFF).withOpacity(0.08),
       onPrimaryContainer: const Color(0xFFFFFFFF),
       effect: const AppThemeEffect(
         animationCurve: Curves.linear,
-        layoutDensity: 0.95,
+        layoutDensity: 1.0,
+        icons: AppIcons.standard,
+        useGlassEffect: false,
+      ),
+    ),
+
+    // Graphite Pro (石墨专业版) - Developer Grey
+    'graphite-pro': _buildProTheme(
+      brightness: Brightness.dark,
+      primary: const Color(0xFF06B6D4), // Cyan Accent
+      secondary: const Color(0xFF3F3F46),
+      background: const Color(0xFF18181B), // Zinc Black
+      surface: const Color(0xFF27272A), // Zinc Gray Card
+      onSurface: const Color(0xFFF4F4F5),
+      onBackground: const Color(0xFFD1D1D6),
+      error: const Color(0xFFEF4444),
+      borderRadius: 12.0,
+      borderColor: const Color(0xFF3F3F46),
+      primaryContainer: const Color(0xFF06B6D4).withOpacity(0.12),
+      onPrimaryContainer: const Color(0xFF22D3EE),
+      effect: const AppThemeEffect(
+        animationCurve: Curves.easeInOut,
+        layoutDensity: 1.0,
         icons: AppIcons.standard,
         useGlassEffect: false,
       ),
@@ -496,9 +430,9 @@ class ThemeManager extends ChangeNotifier {
       _currentThemeName = savedTheme;
       notifyListeners();
     } else {
-       // Reset to Vercel White
-       _currentTheme = _themes['vercel-white']!;
-       _currentThemeName = 'vercel-white';
+       // Reset to Forest Mint
+       _currentTheme = _themes['forest-mint']!;
+       _currentThemeName = 'forest-mint';
        notifyListeners();
     }
   }

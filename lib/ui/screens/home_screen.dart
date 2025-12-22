@@ -30,6 +30,12 @@ class _HomeScreenState extends State<HomeScreen> {
       final controller = Provider.of<MqttController>(context, listen: false);
       controller.onLog = (String message, String type, {String? tag}) {
         if (!mounted) return;
+        
+        // Check for critical errors to show in Status Banner
+        if (type == 'error' && message.contains('Max reconnect attempts')) {
+           Provider.of<StatusRegistry>(context, listen: false).setStatus(message, Theme.of(context).colorScheme.error);
+        }
+        
         setState(() {
           final now = DateTime.now();
           final timestamp = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
@@ -140,17 +146,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                 return themeManager.availableThemes.map((String theme) {
                                   String label;
                                   switch (theme) {
-                                    case 'adminix-emerald': label = l10n.themeAdminixEmerald; break;
-                                    case 'rivlo-dark': label = l10n.themeRivloDark; break;
-                                    case 'salesflow-coral': label = l10n.themeSalesFlowCoral; break;
-                                    case 'rydex-racing': label = l10n.themeRydexRacing; break;
-                                    case 'finflow-blue': label = l10n.themeFinFlowBlue; break;
-                                    case 'vercel-white': label = l10n.themeVercelWhite; break;
-                                    case 'notion-milk': label = l10n.themeNotionMilk; break;
-                                    case 'apple-frost': label = l10n.themeAppleFrost; break;
-                                    case 'carbon-black': label = l10n.themeCarbonBlack; break;
-                                    case 'midnight-zen': label = l10n.themeMidnightZen; break;
-                                    case 'obsidian-mono': label = l10n.themeObsidianMono; break;
+                                    case 'matrix-emerald': label = l10n.themeMatrixEmerald; break;
+                                    case 'forest-mint': label = l10n.themeForestMint; break;
+                                    case 'arctic-blue': label = l10n.themeArcticBlue; break;
+                                    case 'deep-ocean': label = l10n.themeDeepOcean; break;
+                                    case 'crimson-night': label = l10n.themeCrimsonNight; break;
+                                    case 'ruby-elegance': label = l10n.themeRubyElegance; break;
+                                    case 'void-black': label = l10n.themeVoidBlack; break;
+                                    case 'graphite-pro': label = l10n.themeGraphitePro; break;
                                     default: label = theme;
                                   }
                                   return CheckedPopupMenuItem<String>(

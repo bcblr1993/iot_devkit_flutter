@@ -375,40 +375,40 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ignored => '已忽略';
 
   @override
-  String get themeRivloDark => '幻夜绿光 (Rivlo)';
+  String get themeMatrixEmerald => '矩阵翡翠 (Matrix)';
 
   @override
-  String get themeSalesFlowCoral => '熔岩珊瑩 (SalesFlow)';
+  String get themeForestMint => '森林薄荷 (Forest)';
 
   @override
-  String get themeRydexRacing => '竞速赤焰 (Rydex)';
+  String get themeArcticBlue => '极地冰蓝 (Arctic)';
 
   @override
-  String get themeFinFlowBlue => '金融蜻篮 (FinFlow)';
+  String get themeDeepOcean => '深海蔚蓝 (Ocean)';
 
   @override
-  String get themeVercelWhite => '极简专业 (Vercel)';
+  String get themeCrimsonNight => '深红暗夜 (Crimson)';
 
   @override
-  String get themeNotionMilk => '柔白文档 (Notion)';
+  String get themeRubyElegance => '红宝石雅致 (Ruby)';
 
   @override
-  String get themeAppleFrost => '苹果系白 (Apple)';
+  String get themeVoidBlack => '虚空纯黑 (Void)';
 
   @override
-  String get themeCarbonBlack => '煤热深空 (Carbon)';
-
-  @override
-  String get themeMidnightZen => '深蓝护眼 (Midnight)';
-
-  @override
-  String get themeObsidianMono => '极简纯黑 (Obsidian)';
+  String get themeGraphitePro => '石墨专业版 (Graphite)';
 
   @override
   String get logMaximize => '最大化日志';
 
   @override
   String get logRestore => '还原日志';
+
+  @override
+  String get copyJson => '复制 JSON';
+
+  @override
+  String get jsonCopied => 'JSON 已复制到剪贴板';
 
   @override
   String get sectionDeviceScope => '设备范围';
@@ -427,4 +427,34 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get statFailed => '失败数';
+
+  @override
+  String get enableSsl => '启用 SSL/TLS';
+
+  @override
+  String get caCertificate => 'CA 证书';
+
+  @override
+  String get clientCertificate => '客户端证书';
+
+  @override
+  String get privateKey => '私钥';
+
+  @override
+  String get previewPayload => '预览数据';
+
+  @override
+  String get payloadPreview => '数据预览';
+
+  @override
+  String get selectFile => '选择文件';
+
+  @override
+  String get previewAndStart => '预览并启动';
+
+  @override
+  String get startNow => '开始模拟';
+
+  @override
+  String get confirmStartHint => '点击确认以使用此数据结构开始模拟。';
 }

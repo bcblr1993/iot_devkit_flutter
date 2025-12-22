@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:ui';
+import 'dart:convert';
 import 'package:provider/provider.dart';
+import '../../services/data_generator.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../services/mqtt_controller.dart';
 import '../../utils/statistics_collector.dart';
@@ -12,6 +15,7 @@ import '../../services/config_service.dart';
 import '../../services/status_registry.dart';
 import 'log_console.dart';
 import '../styles/app_theme_effect.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../services/theme_manager.dart';
 
 class SimulatorPanel extends StatefulWidget {
@@ -42,6 +46,13 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
   final _hostController = TextEditingController(text: 'localhost');
   final _portController = TextEditingController(text: '1883');
   final _topicController = TextEditingController(text: 'v1/devices/me/telemetry');
+  
+  // SSL Config
+  bool _enableSsl = false;
+  final _caPathController = TextEditingController();
+  final _certPathController = TextEditingController();
+  final _keyPathController = TextEditingController();
+
   bool _isStatsExpanded = true;
   bool _isBasicConfigExpanded = true;
   final _startIdxController = TextEditingController(text: '1');
@@ -87,6 +98,10 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
         _hostController.text = config['mqtt']['host'] ?? 'localhost';
         _portController.text = (config['mqtt']['port'] ?? 1883).toString();
         _topicController.text = config['mqtt']['topic'] ?? 'v1/devices/me/telemetry';
+        _enableSsl = config['mqtt']['enable_ssl'] ?? false;
+        _caPathController.text = config['mqtt']['ca_path'] ?? '';
+        _certPathController.text = config['mqtt']['cert_path'] ?? '';
+        _keyPathController.text = config['mqtt']['key_path'] ?? '';
       }
 
       if (config['mode'] == 'advanced') {
@@ -275,6 +290,42 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
               ),
               const SizedBox(height: 8),
               _buildTextField(l10n.topic, _topicController, isRunning, customColor: useFeaturedStyle ? colorScheme.onPrimaryContainer : null),
+              
+              // SSL/TLS Toggle
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                   SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: Checkbox(
+                      value: _enableSsl,
+                      side: BorderSide(color: useFeaturedStyle ? colorScheme.onPrimaryContainer.withOpacity(0.7) : colorScheme.onSurfaceVariant),
+                      checkColor: useFeaturedStyle ? colorScheme.surface : colorScheme.onPrimary,
+                      activeColor: useFeaturedStyle ? colorScheme.onPrimaryContainer : colorScheme.primary,
+                      onChanged: isRunning ? null : (v) => setState(() => _enableSsl = v ?? false),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    l10n.enableSsl, 
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      color: useFeaturedStyle ? colorScheme.onPrimaryContainer : colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+              
+              // SSL Fields
+              if (_enableSsl) ...[
+                const SizedBox(height: 8),
+                _buildSslField(l10n.caCertificate, _caPathController, isRunning, useFeaturedStyle ? colorScheme.onPrimaryContainer : null, l10n),
+                const SizedBox(height: 4),
+                _buildSslField(l10n.clientCertificate, _certPathController, isRunning, useFeaturedStyle ? colorScheme.onPrimaryContainer : null, l10n),
+                const SizedBox(height: 4),
+                _buildSslField(l10n.privateKey, _keyPathController, isRunning, useFeaturedStyle ? colorScheme.onPrimaryContainer : null, l10n),
+              ],
             ],
           ),
         ),
@@ -285,7 +336,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
       return Container(
         padding: EdgeInsets.fromLTRB(
           16 * effect.layoutDensity, 
-          32 * effect.layoutDensity, 
+          24 * effect.layoutDensity, // Reduced top padding
           16 * effect.layoutDensity, 
           16 * effect.layoutDensity
         ),
@@ -300,6 +351,36 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
     }
 
     return content;
+  }
+
+  Widget _buildSslField(String label, TextEditingController controller, bool isLocked, Color? customColor, AppLocalizations l10n) {
+    return Row(
+      children: [
+        Expanded(
+          child: SizedBox(
+            height: 40, // More compact height
+            child: _buildTextField(label, controller, isLocked, customColor: customColor),
+          ),
+        ),
+        const SizedBox(width: 8),
+        IconButton(
+          onPressed: isLocked ? null : () => _pickFile(controller),
+          icon: Icon(Icons.folder_open, size: 20, color: customColor ?? Theme.of(context).colorScheme.primary), // Smaller icon
+          tooltip: l10n.selectFile,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _pickFile(TextEditingController controller) async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles();
+    if (result != null) {
+      setState(() {
+        controller.text = result.files.single.path!;
+      });
+    }
   }
 
   Widget _buildBasicTab(MqttController controller, bool isRunning, AppLocalizations l10n) {
@@ -473,6 +554,19 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
           ),
         ),
         const SizedBox(height: 12),
+        // Preview Button
+        _AnimatedTactileButton(
+           onPressed: isRunning ? null : _handlePreview,
+           child: OutlinedButton.icon(
+             onPressed: isRunning ? null : () {},
+             icon: Icon(Icons.remove_red_eye, size: 18),
+             label: Text(l10n.previewPayload),
+             style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 40),
+             ),
+           ),
+        ),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
@@ -501,24 +595,178 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
       ],
     );
   }
-  
-  // Handlers
-  
+
+  // Shared Helper to Generate Data
+  Map<String, dynamic>? _generatePreviewData({required bool isBasic}) {
+    final theme = Theme.of(context);
+    try {
+      if (isBasic) {
+        if (_format == 'tn') {
+          return DataGenerator.generateTnPayload(int.tryParse(_dataPointController.text) ?? 10);
+        } else if (_format == 'tn-empty') {
+          return DataGenerator.generateTnEmptyPayload();
+        } else {
+          return DataGenerator.generateBatteryStatus(
+            int.tryParse(_dataPointController.text) ?? 10,
+            customKeys: _basicCustomKeys,
+            clientId: 'preview_client',
+          );
+        }
+      } else {
+        // Advanced Mode
+        if (_groups.isEmpty) {
+           _setStatus('No groups configured', Colors.orange);
+           return null;
+        }
+        final group = _groups.first;
+        if (group.format == 'tn') {
+          return DataGenerator.generateTnPayload(group.totalKeyCount);
+        } else if (group.format == 'tn-empty') {
+          return DataGenerator.generateTnEmptyPayload();
+        } else {
+          return DataGenerator.generateBatteryStatus(
+            group.totalKeyCount,
+            customKeys: group.customKeys,
+            clientId: '${group.clientIdPrefix}preview',
+          );
+        }
+      }
+    } catch (e) {
+      _setStatus('Error generating preview: $e', theme.colorScheme.error);
+      return null;
+    }
+  }
+
+  // Unified Dialog
+  void _showUnifiedPreviewDialog({
+    required Map<String, dynamic> data, 
+    VoidCallback? onConfirm
+  }) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final jsonStr = const JsonEncoder.withIndent('  ').convert(data);
+    final isConfirmMode = onConfirm != null;
+
+    showDialog(
+      context: context, 
+      barrierDismissible: !isConfirmMode,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.preview_rounded, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            Text(isConfirmMode ? l10n.previewAndStart : l10n.payloadPreview),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
+                  ),
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.7,
+                    minWidth: 500,
+                    maxWidth: 800,
+                  ),
+                  child: SingleChildScrollView(
+                    child: SelectableText(jsonStr, style: TextStyle(
+                      fontFamily: 'monospace', 
+                      fontSize: 13,
+                      color: theme.colorScheme.onSurface,
+                    )),
+                  ),
+                ),
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: IconButton(
+                    icon: const Icon(Icons.copy_rounded, size: 20),
+                    tooltip: l10n.copyJson,
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: jsonStr));
+                      _setStatus(l10n.jsonCopied, Colors.green);
+                      // Use a snackbar as well for visibility if needed, but _setStatus is already used in this app
+                    },
+                    style: IconButton.styleFrom(
+                      backgroundColor: theme.colorScheme.surface.withOpacity(0.8),
+                      foregroundColor: theme.colorScheme.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (isConfirmMode) ...[
+              const SizedBox(height: 12),
+              Text(
+                l10n.confirmStartHint,
+                style: TextStyle(fontSize: 12, color: theme.colorScheme.outline),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(), 
+            child: Text(isConfirmMode ? l10n.cancel : l10n.close)
+          ),
+          if (isConfirmMode)
+            FilledButton.icon(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                onConfirm();
+              },
+              icon: const Icon(Icons.play_arrow, size: 16),
+              label: Text(l10n.startNow),
+            ),
+        ],
+      ),
+    );
+  }
+
   // Handlers
   void _handleStartBasic(MqttController controller) {
     if (_formKeyBasic.currentState!.validate()) {
+       // Validate Config First
        final config = _getCompleteConfig();
        ConfigService.saveToLocalStorage(config);
-       controller.start(config);
-       widget.onSimulationStarted?.call();
+       
+       // Show Preview Dialog before starting
+       _showPreviewAndStart(controller, config, isBasic: true);
     }
   }
 
   void _handleStartAdvanced(MqttController controller) {
      final config = _getCompleteConfig();
+     
+     // Validate groups
+     if ((config['groups'] as List).isEmpty) {
+       _setStatus('No groups configured', Colors.orange);
+       return;
+     }
+
      ConfigService.saveToLocalStorage(config);
-     controller.start(config);
-     widget.onSimulationStarted?.call();
+     _showPreviewAndStart(controller, config, isBasic: false);
+  }
+
+  void _showPreviewAndStart(MqttController controller, Map<String, dynamic> config, {required bool isBasic}) {
+     final data = _generatePreviewData(isBasic: isBasic);
+     if (data != null) {
+       _showUnifiedPreviewDialog(
+         data: data, 
+         onConfirm: () {
+            controller.start(config);
+            widget.onSimulationStarted?.call();
+         }
+       );
+     }
   }
 
   void _setStatus(String msg, Color color) {
@@ -603,6 +851,14 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
     _setStatus(l10n.configImported, Colors.green);
   }
 
+  void _handlePreview() {
+    final isBasic = _tabController.index == 0;
+    final data = _generatePreviewData(isBasic: isBasic);
+    if (data != null) {
+      _showUnifiedPreviewDialog(data: data, onConfirm: null);
+    }
+  }
+
   Map<String, dynamic> _getCompleteConfig() {
     return {
       'mode': _tabController.index == 0 ? 'basic' : 'advanced',
@@ -610,6 +866,10 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
         'host': _hostController.text,
         'port': int.tryParse(_portController.text) ?? 1883,
         'topic': _topicController.text,
+        'enable_ssl': _enableSsl,
+        'ca_path': _caPathController.text,
+        'cert_path': _certPathController.text,
+        'key_path': _keyPathController.text,
       },
       'device_start_number': int.tryParse(_startIdxController.text) ?? 1,
       'device_end_number': int.tryParse(_endIdxController.text) ?? 10,

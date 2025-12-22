@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'l10n/generated/app_localizations.dart';
@@ -14,6 +15,16 @@ import 'package:window_manager/window_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Logging
+  Logger.root.level = Level.ALL; // Defaults to Level.INFO
+  Logger.root.onRecord.listen((record) {
+    debugPrint('${record.level.name}: ${record.time}: ${record.loggerName}: ${record.message}');
+    if (record.error != null) {
+      debugPrint('Error: ${record.error}');
+    }
+  });
+
   await windowManager.ensureInitialized();
 
   WindowOptions windowOptions = const WindowOptions(
