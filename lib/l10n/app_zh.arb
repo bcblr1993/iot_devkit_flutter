@@ -140,5 +140,8 @@
   "logRestore": "还原日志",
   "sectionDeviceScope": "设备范围",
   "sectionNamingAuth": "命名与认证",
-  "sectionDataConfig": "数据配置"
+  "sectionDataConfig": "数据配置",
+  "statSent": "已发送",
+  "statSuccess": "成功数",
+  "statFailed": "失败数"
 }

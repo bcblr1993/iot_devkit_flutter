@@ -140,6 +140,9 @@
   "logRestore": "Restore Logs",
   "sectionDeviceScope": "Device Scope",
   "sectionNamingAuth": "Naming & Authentication",
-  "sectionDataConfig": "Data Configuration"
+  "sectionDataConfig": "Data Configuration",
+  "statSent": "Sent",
+  "statSuccess": "Success",
+  "statFailed": "Failed"
 }
 

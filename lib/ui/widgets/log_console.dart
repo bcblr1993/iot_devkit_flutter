@@ -15,9 +15,10 @@ class LogConsole extends StatefulWidget {
   final VoidCallback onClear;
   final bool isExpanded;
   final VoidCallback onToggle;
-
   final bool isMaximized;
   final VoidCallback onMaximize;
+
+  final Widget? headerContent;
 
   const LogConsole({
     super.key,
@@ -27,6 +28,7 @@ class LogConsole extends StatefulWidget {
     required this.onToggle,
     this.isMaximized = false,
     required this.onMaximize,
+    this.headerContent,
   });
 
   @override
@@ -100,7 +102,22 @@ class _LogConsoleState extends State<LogConsole> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(logTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(logTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  if (widget.headerContent != null) ...[
+                    const SizedBox(width: 12),
+                    Container(
+                      width: 1, 
+                      height: 16, 
+                      color: Theme.of(context).dividerColor
+                    ),
+                    const SizedBox(width: 12),
+                    widget.headerContent!,
+                  ],
+                ],
+              ),
               Row(
                 children: [
                   if (widget.isExpanded) ...[

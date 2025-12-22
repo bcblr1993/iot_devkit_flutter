@@ -162,7 +162,6 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
                             )
                           : const SizedBox.shrink(),
                     ),
-                    _buildStats(l10n, effect),
                   ],
                 ),
               ),
@@ -241,6 +240,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
               onClear: widget.onClearLog,
               isMaximized: _isLogMaximized,
               onMaximize: () => setState(() => _isLogMaximized = !_isLogMaximized),
+              headerContent: _buildLogToolbarStats(l10n),
             ),
           ),
         ),
@@ -649,140 +649,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
     };
   }
 
-  Widget _buildStats(AppLocalizations l10n, AppThemeEffect effect) {
-    return Consumer<StatisticsCollector>(
-      builder: (context, stats, child) {
-        final s = stats.getSnapshot();
-        final theme = Theme.of(context);
-        final colorScheme = theme.colorScheme;
-        
-        // Check if we should use the "Featured Highlight" style
-        final bool useFeaturedStyle = colorScheme.primaryContainer != colorScheme.surface && 
-                                     colorScheme.primaryContainer != colorScheme.background;
 
-        Widget content = Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10, top: 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(l10n.dataStatistics, style: TextStyle(
-                    fontSize: 16, 
-                    fontWeight: FontWeight.bold, 
-                    color: useFeaturedStyle ? colorScheme.onPrimaryContainer : theme.colorScheme.primary,
-                  )),
-                  IconButton(
-                    icon: Icon(_isStatsExpanded ? Icons.expand_less : Icons.expand_more, 
-                      color: useFeaturedStyle ? colorScheme.onPrimaryContainer : theme.colorScheme.primary
-                    ),
-                    onPressed: () => setState(() => _isStatsExpanded = !_isStatsExpanded),
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    iconSize: 20,
-                  ),
-                ],
-              ),
-            ),
-            AnimatedCrossFade(
-              firstChild: Row(
-                children: [
-                  Expanded(child: _statBox('📱', '${l10n.online}', '${s['onlineDevices']} / ${s['totalDevices']} ${l10n.unitDevices}', colorScheme.primary, useFeaturedStyle)),
-                  const SizedBox(width: 8),
-                  Expanded(child: _statBox('📨', '发送', '${s['totalMessages']} ${l10n.unitMessages}', colorScheme.secondary, useFeaturedStyle)),
-                  const SizedBox(width: 8),
-                  Expanded(child: _statBox('✅', '成功', '${s['successCount']} (${s['successRate']}%)', Colors.green, useFeaturedStyle)), // Keep green for success semantics
-                  const SizedBox(width: 8),
-                  Expanded(child: _statBox('❌', '失败', '${s['failureCount']} ${l10n.unitMessages}', colorScheme.error, useFeaturedStyle)),
-                  const SizedBox(width: 8),
-                  Expanded(child: _statBox('⏱️', '延迟', '${s['avgLatency']} ms', colorScheme.tertiary ?? Colors.orange, useFeaturedStyle)),
-                ],
-              ),
-              secondChild: const SizedBox(width: double.infinity),
-              crossFadeState: _isStatsExpanded ? CrossFadeState.showFirst : CrossFadeState.showSecond,
-              duration: const Duration(milliseconds: 300),
-              sizeCurve: Curves.easeInOut,
-            ),
-          ],
-        );
-
-        if (useFeaturedStyle) {
-          return Container(
-            padding: EdgeInsets.all(16 * effect.layoutDensity),
-            decoration: BoxDecoration(
-              color: colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(theme.cardTheme.shape is RoundedRectangleBorder 
-                ? (theme.cardTheme.shape as RoundedRectangleBorder).borderRadius.resolve(Directionality.of(context)).topLeft.x
-                : 16),
-            ),
-            child: content,
-          );
-        }
-        
-        // Return without Container in standard modes (to avoid double padding issue if parent has padding)
-        // But since we removed Card wrap, we should probably ensure it visually groups if not highlighted.
-        // The original code returned a Card. If we remove Card, we might lose visual grouping in standard themes.
-        // Let's stick to the requested "Same as MQTT Agent" style which does simple Column if not highlighted.
-        return content;
-      },
-    );
-  }
-
-  Widget _statBox(String icon, String label, String value, Color color, bool isInverse) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    
-    // In "Featured" mode (e.g. Terminal Green), the background IS primaryContainer.
-    // So inner boxes should probably be slightly different or transparent to look good.
-    // If isInverse is true, we are on a colored background.
-    
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: isInverse ? Colors.black.withOpacity(0.1) : color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: isInverse ? colorScheme.onPrimaryContainer.withOpacity(0.2) : color.withOpacity(0.3)
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(icon, style: const TextStyle(fontSize: 14)),
-          const SizedBox(width: 4),
-          Expanded( // Prevent overflow
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label, 
-                  style: TextStyle(
-                    fontSize: 10, 
-                    color: isInverse ? colorScheme.onPrimaryContainer.withOpacity(0.8) : color, 
-                    fontWeight: FontWeight.w500
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  value, 
-                  style: TextStyle(
-                    fontSize: 12, 
-                    fontWeight: FontWeight.bold,
-                    color: isInverse ? colorScheme.onPrimaryContainer : null,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildTextField(String label, TextEditingController controller, bool isLocked, {bool isNumber = false, Function(String)? onChanged, Color? customColor}) {
     final theme = Theme.of(context);
@@ -827,6 +694,42 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
               fontWeight: FontWeight.w500,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLogToolbarStats(AppLocalizations l10n) {
+    return Consumer<StatisticsCollector>(
+      builder: (context, stats, child) {
+        final s = stats.getSnapshot();
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _compactStatItem(Icons.devices, '${s['onlineDevices']}/${s['totalDevices']}', Colors.blue, l10n.online),
+            const SizedBox(width: 12),
+            _compactStatItem(Icons.send, '${s['totalMessages']}', Colors.indigo, l10n.statSent),
+            const SizedBox(width: 12),
+            _compactStatItem(Icons.check_circle, '${s['successCount']}', Colors.green, l10n.statSuccess),
+            const SizedBox(width: 12),
+            _compactStatItem(Icons.error, '${s['failureCount']}', Colors.red, l10n.statFailed),
+            const SizedBox(width: 12),
+            _compactStatItem(Icons.timer, '${s['avgLatency']} ms', Colors.orange, l10n.latency),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _compactStatItem(IconData icon, String text, Color color, String tooltip) {
+    return Tooltip(
+      message: tooltip,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 4),
+          Text(text, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
         ],
       ),
     );
