@@ -387,13 +387,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get themeDeepOcean => '深海蔚蓝 (Ocean)';
 
   @override
-  String get themeSolarFlare => '暖阳白昼 (Solar)';
+  String get themeCrimsonNight => '深红暗夜 (Crimson)';
 
   @override
-  String get themeGlacialIce => '冰川极白 (Glacial)';
+  String get themeRubyElegance => '红宝石雅致 (Ruby)';
 
   @override
-  String get themeCottonCloud => '云朵纯白 (Cotton)';
+  String get themeVoidBlack => '虚空纯黑 (Void)';
+
+  @override
+  String get themeGraphitePro => '石墨专业版 (Graphite)';
 
   @override
   String get logMaximize => '最大化日志';

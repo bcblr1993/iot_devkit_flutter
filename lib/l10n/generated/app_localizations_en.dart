@@ -389,13 +389,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeDeepOcean => 'Deep Ocean';
 
   @override
-  String get themeSolarFlare => 'Solar Flare (Warm)';
+  String get themeCrimsonNight => 'Crimson Night';
 
   @override
-  String get themeGlacialIce => 'Glacial Ice (Cool)';
+  String get themeRubyElegance => 'Ruby Elegance';
 
   @override
-  String get themeCottonCloud => 'Cotton Cloud (Soft)';
+  String get themeVoidBlack => 'Void Black';
+
+  @override
+  String get themeGraphitePro => 'Graphite Pro';
 
   @override
   String get logMaximize => 'Maximize Logs';

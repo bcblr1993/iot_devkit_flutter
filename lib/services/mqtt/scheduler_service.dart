@@ -15,6 +15,7 @@ class SchedulerService {
 
   int _alignedStartTime = 0;
   final Map<String, List<Timer>> _clientTimers = {};
+  final Map<String, int> _clientVersions = {};
 
   SchedulerService({
     required this.statisticsCollector,
@@ -51,16 +52,24 @@ class SchedulerService {
       onLog('Restarting scheduler for $clientId (cleaning up cleaning previous timers)', 'warning');
       stopPublishing(clientId);
     }
+    
+    // STRICT FIX: Initialize list BEFORE starting.
+    // _addTimer now requires this list to exist.
+    _clientTimers[clientId] = [];
+    
+    // VERSIONING: Increment session version. Zombies from old sessions will fail the version check.
+    int currentVersion = (_clientVersions[clientId] ?? 0) + 1;
+    _clientVersions[clientId] = currentVersion;
 
     if (context is BasicSimulationContext) {
-      _startBasicPublishing(client, clientId, context);
+      _startBasicPublishing(client, clientId, context, currentVersion);
     } else if (context is AdvancedSimulationContext) {
-      _startAdvancedPublishing(client, clientId, context);
+      _startAdvancedPublishing(client, clientId, context, currentVersion);
     }
   }
 
   // --- Basic Mode Logic ---
-  void _startBasicPublishing(MqttServerClient client, String clientId, BasicSimulationContext context) {
+  void _startBasicPublishing(MqttServerClient client, String clientId, BasicSimulationContext context, int version) {
     int intervalSeconds = context.intervalSeconds;
     int intervalMs = intervalSeconds * 1000;
     
@@ -71,7 +80,7 @@ class SchedulerService {
 
     int sendCount = 0;
     Timer timer = Timer(Duration(milliseconds: initialDelay), () {
-      _scheduleNextBasicPublish(client, clientId, context, intervalMs, sendCount);
+      _scheduleNextBasicPublish(client, clientId, context, intervalMs, sendCount, version);
     });
     _addTimer(clientId, timer);
   }
@@ -81,9 +90,11 @@ class SchedulerService {
     String clientId, 
     BasicSimulationContext context,
     int intervalMs, 
-    int sendCount
+    int sendCount,
+    int version,
   ) {
     if (!_clientTimers.containsKey(clientId)) return; // Stopped
+    if (_clientVersions[clientId] != version) return; // Wrong Session
 
     final String topic = context.topic;
     final String format = context.format;
@@ -107,13 +118,13 @@ class SchedulerService {
     
     // 2. Schedule Next
     sendCount++;
-    _scheduleNext(clientId, intervalMs, sendCount, (actualCount) {
-      _scheduleNextBasicPublish(client, clientId, context, intervalMs, actualCount);
+    _scheduleNext(clientId, intervalMs, sendCount, version, (actualCount) {
+      _scheduleNextBasicPublish(client, clientId, context, intervalMs, actualCount, version);
     });
   }
 
   // --- Advanced Mode Logic ---
-  void _startAdvancedPublishing(MqttServerClient client, String clientId, AdvancedSimulationContext context) {
+  void _startAdvancedPublishing(MqttServerClient client, String clientId, AdvancedSimulationContext context, int version) {
     final GroupConfig group = context.group;
     final String topic = context.topic;
     
@@ -125,7 +136,7 @@ class SchedulerService {
     int fullIntervalMs = group.fullIntervalSeconds * 1000;
     int fullSendCount = 0;
     Timer fullTimer = Timer(Duration(milliseconds: initialDelay), () {
-      _scheduleFullReport(client, clientId, topic, group, fullIntervalMs, fullSendCount);
+      _scheduleFullReport(client, clientId, topic, group, fullIntervalMs, fullSendCount, version);
     });
     _addTimer(clientId, fullTimer);
 
@@ -134,7 +145,7 @@ class SchedulerService {
       int changeIntervalMs = group.changeIntervalSeconds * 1000;
       int changeSendCount = 0;
       Timer changeTimer = Timer(Duration(milliseconds: initialDelay), () {
-        _scheduleChangeReport(client, clientId, topic, group, changeIntervalMs, changeSendCount);
+        _scheduleChangeReport(client, clientId, topic, group, changeIntervalMs, changeSendCount, version);
       });
       _addTimer(clientId, changeTimer);
     }
@@ -147,8 +158,10 @@ class SchedulerService {
     GroupConfig group,
     int intervalMs,
     int sendCount,
+    int version,
   ) {
     if (!_clientTimers.containsKey(clientId)) return;
+    if (_clientVersions[clientId] != version) return; // Wrong Session
 
     int payloadTimestamp = _alignedStartTime + (sendCount * intervalMs);
     Map<String, dynamic> data;
@@ -168,8 +181,8 @@ class SchedulerService {
     _publish(client, topic, payload, group.name, 'success', '[$clientId] Full Report #$sendCount');
 
     sendCount++;
-    _scheduleNext(clientId, intervalMs, sendCount, (actualCount) {
-      _scheduleFullReport(client, clientId, topic, group, intervalMs, actualCount);
+    _scheduleNext(clientId, intervalMs, sendCount, version, (actualCount) {
+      _scheduleFullReport(client, clientId, topic, group, intervalMs, actualCount, version);
     });
   }
 
@@ -180,8 +193,10 @@ class SchedulerService {
     GroupConfig group,
     int intervalMs,
     int sendCount,
+    int version,
   ) {
     if (!_clientTimers.containsKey(clientId)) return;
+    if (_clientVersions[clientId] != version) return; // Wrong Session
 
     int payloadTimestamp = _alignedStartTime + (sendCount * intervalMs);
     
@@ -197,8 +212,8 @@ class SchedulerService {
       // onLog('[$clientId] Skipped Change Report (Coincides with Full Report)', 'info', tag: group.name);
       
       sendCount++;
-      _scheduleNext(clientId, intervalMs, sendCount, (actualCount) {
-        _scheduleChangeReport(client, clientId, topic, group, intervalMs, actualCount);
+      _scheduleNext(clientId, intervalMs, sendCount, version, (actualCount) {
+        _scheduleChangeReport(client, clientId, topic, group, intervalMs, actualCount, version);
       });
       return; 
     }
@@ -225,8 +240,8 @@ class SchedulerService {
     _publish(client, topic, payload, group.name, 'info', '[$clientId] Change Report #$sendCount (${data.length} keys)');
 
     sendCount++;
-    _scheduleNext(clientId, intervalMs, sendCount, (actualCount) {
-      _scheduleChangeReport(client, clientId, topic, group, intervalMs, actualCount);
+    _scheduleNext(clientId, intervalMs, sendCount, version, (actualCount) {
+      _scheduleChangeReport(client, clientId, topic, group, intervalMs, actualCount, version);
     });
   }
 
@@ -248,7 +263,11 @@ class SchedulerService {
     }
   }
 
-  void _scheduleNext(String clientId, int intervalMs, int sendCount, Function(int) callback) {
+  void _scheduleNext(String clientId, int intervalMs, int sendCount, int version, Function(int) callback) {
+    // Safety check BEFORE scheduling
+    if (!_clientTimers.containsKey(clientId)) return;
+    if (_clientVersions[clientId] != version) return;
+
     int nextTarget = _alignedStartTime + (sendCount * intervalMs);
     int now = DateTime.now().millisecondsSinceEpoch;
     int delay = nextTarget - now;
@@ -281,8 +300,12 @@ class SchedulerService {
   }
 
   void _addTimer(String clientId, Timer t) {
+    // STRICT FIX: If the client is not in the map, it means we stopped publishing.
+    // Do NOT re-create the list. Instead, cancel the zombie timer immediately.
     if (!_clientTimers.containsKey(clientId)) {
-      _clientTimers[clientId] = [];
+      t.cancel();
+      // onLog('[$clientId] Zombie timer killed', 'warning');
+      return;
     }
     _clientTimers[clientId]!.add(t);
   }

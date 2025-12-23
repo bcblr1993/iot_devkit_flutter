@@ -854,23 +854,29 @@ abstract class AppLocalizations {
   /// **'Deep Ocean'**
   String get themeDeepOcean;
 
-  /// No description provided for @themeSolarFlare.
+  /// No description provided for @themeCrimsonNight.
   ///
   /// In en, this message translates to:
-  /// **'Solar Flare (Warm)'**
-  String get themeSolarFlare;
+  /// **'Crimson Night'**
+  String get themeCrimsonNight;
 
-  /// No description provided for @themeGlacialIce.
+  /// No description provided for @themeRubyElegance.
   ///
   /// In en, this message translates to:
-  /// **'Glacial Ice (Cool)'**
-  String get themeGlacialIce;
+  /// **'Ruby Elegance'**
+  String get themeRubyElegance;
 
-  /// No description provided for @themeCottonCloud.
+  /// No description provided for @themeVoidBlack.
   ///
   /// In en, this message translates to:
-  /// **'Cotton Cloud (Soft)'**
-  String get themeCottonCloud;
+  /// **'Void Black'**
+  String get themeVoidBlack;
+
+  /// No description provided for @themeGraphitePro.
+  ///
+  /// In en, this message translates to:
+  /// **'Graphite Pro'**
+  String get themeGraphitePro;
 
   /// No description provided for @logMaximize.
   ///
