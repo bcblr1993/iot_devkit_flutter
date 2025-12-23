@@ -67,16 +67,19 @@ class MqttClientManager {
 
     // Ensure old client is cleaned up if it exists
     // Ensure old client is cleaned up if it exists
+    // Fix: Remove from map first to prevent _handleDisconnect from scheduling a reconnect
+    _reconnectTimers[clientId]?.cancel();
+    _reconnectTimers.remove(clientId);
+
     if (_clients.containsKey(clientId)) {
       _logger.info('[$clientId] Force replacing existing client');
+      final oldClient = _clients.remove(clientId); // Remove first
       try {
-        _clients[clientId]?.disconnect();
+        oldClient?.disconnect(); // This triggers _handleDisconnect, but map is empty/different
       } catch (_) {}
       
-      // CRITICAL FIX: Manually trigger cleanup because _handleDisconnect checks for map presence,
-      // which we are about to remove. We must ensure onDisconnected is called to stop Schedulers.
-      onDisconnected(clientId);
-      _clients.remove(clientId);
+      // Ensure UI knows it's disconnected (though we are about to reconnect)
+      // onDisconnected(clientId); 
     }
 
     final client = MqttServerClient(host, clientId);
@@ -142,11 +145,14 @@ class MqttClientManager {
   }
 
   void _handleDisconnect(String clientId, MqttServerClient client) {
-    if (_clients.containsKey(clientId)) {
+    // Identity Check: Only handle if THIS client is the currently active one
+    if (_clients[clientId] == client) {
       _clients.remove(clientId);
       onDisconnected(clientId);
       onLog('[$clientId] Disconnected, will retry...', 'warning', tag: _getTag(clientId));
       _scheduleReconnect(clientId);
+    } else {
+      // Logic: Client mismatch (replaced or removed already). Do not reconnect.
     }
   }
 

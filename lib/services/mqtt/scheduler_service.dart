@@ -83,11 +83,8 @@ class SchedulerService {
     if (initialDelay < 0) initialDelay = 0;
 
     // FIX: Calculate sendCount based on elapsed time to support seamless resumption
-    int elapsedMs = now - _alignedStartTime;
+    // Resumption Disabled: Always start from 0
     int sendCount = 0;
-    if (elapsedMs > 0) {
-      sendCount = (elapsedMs / intervalMs).floor();
-    }
     Timer timer = Timer(Duration(milliseconds: initialDelay), () {
       _scheduleNextBasicPublish(client, clientId, context, intervalMs, sendCount, version);
     });
@@ -145,11 +142,8 @@ class SchedulerService {
     // 1. Full Report
     int fullIntervalMs = group.fullIntervalSeconds * 1000;
     // FIX: Calculate sendCount for resumption
-    int elapsedMs = now - _alignedStartTime;
+    // Resumption Disabled: Always start from 0
     int fullSendCount = 0;
-    if (elapsedMs > 0) {
-      fullSendCount = (elapsedMs / fullIntervalMs).floor();
-    }
     Timer fullTimer = Timer(Duration(milliseconds: initialDelay), () {
       _scheduleFullReport(client, clientId, topic, group, fullIntervalMs, fullSendCount, version);
     });
@@ -159,9 +153,6 @@ class SchedulerService {
     if (group.changeRatio > 0 && group.changeIntervalSeconds < group.fullIntervalSeconds) {
       int changeIntervalMs = group.changeIntervalSeconds * 1000;
       int changeSendCount = 0;
-      if (elapsedMs > 0) {
-        changeSendCount = (elapsedMs / changeIntervalMs).floor();
-      }
       Timer changeTimer = Timer(Duration(milliseconds: initialDelay), () {
         _scheduleChangeReport(client, clientId, topic, group, changeIntervalMs, changeSendCount, version);
       });
@@ -311,9 +302,9 @@ class SchedulerService {
     builder.addString(payload);
     
     try {
-      // FIX: Use QoS 1 (atLeastOnce) to ensure delivery.
-      // QoS 0 (atMostOnce) causes data loss under high load as packets are dropped.
-      client.publishMessage(topic, MqttQos.atLeastOnce, builder.payload!);
+    // FIX: QoS 0 (atMostOnce) for maximum throughput as requested.
+    // User priority: Real-time frequency > Guaranteed delivery.
+    client.publishMessage(topic, MqttQos.atMostOnce, builder.payload!);
       statisticsCollector.incrementSuccess();
       statisticsCollector.setMessageSize(payload.length);
       
