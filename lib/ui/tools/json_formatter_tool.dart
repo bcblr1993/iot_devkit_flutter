@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Import
 import '../widgets/json_tree_view.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../utils/app_toast.dart';
 
 class JsonFormatterTool extends StatefulWidget {
   const JsonFormatterTool({super.key});
@@ -18,8 +19,6 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   
-  String _statusMessage = '';
-  Color _statusColor = Colors.grey;
   String _searchQuery = '';
   
   // Search Navigation
@@ -45,9 +44,6 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_statusMessage.isEmpty) {
-      _statusMessage = AppLocalizations.of(context)?.ready ?? 'Ready';
-    }
   }
   
   @override
@@ -238,11 +234,17 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
     });
   }
 
+  // 使用AppToast显示消息通知
   void _setStatus(String msg, Color color) {
-    setState(() {
-      _statusMessage = msg;
-      _statusColor = color;
-    });
+    if (color == Colors.green) {
+      AppToast.success(context, msg);
+    } else if (color == Colors.orange) {
+      AppToast.warning(context, msg);
+    } else if (color == Theme.of(context).colorScheme.error || color == Colors.red) {
+      AppToast.error(context, msg);
+    } else if (color != Colors.grey) {
+      AppToast.info(context, msg);
+    }
   }
   
   void _toggleExpansion() {
@@ -470,32 +472,6 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
                   ),
                 ),
               ],
-            ),
-          ),
-          
-          SingleChildScrollView(
-            child: Container(
-               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-               margin: const EdgeInsets.only(top: 12),
-               decoration: BoxDecoration(
-                 color: _statusColor.withOpacity(0.1),
-                 borderRadius: BorderRadius.circular(8),
-                 border: Border.all(color: _statusColor.withOpacity(0.3)),
-               ),
-               child: Row(
-                 children: [
-                   Icon(Icons.info_outline, size: 16, color: _statusColor),
-                   const SizedBox(width: 8),
-                   Expanded(
-                     child: Text(
-                       _statusMessage,
-                       style: TextStyle(color: _statusColor, fontWeight: FontWeight.bold, fontSize: 13),
-                       maxLines: 1,
-                       overflow: TextOverflow.ellipsis,
-                     ),
-                   ),
-                 ],
-               ),
             ),
           ),
         ],

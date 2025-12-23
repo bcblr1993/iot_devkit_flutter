@@ -7,6 +7,8 @@ import '../../services/data_generator.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../services/mqtt_controller.dart';
 import '../../utils/statistics_collector.dart';
+import '../../utils/app_dialog_helper.dart';
+import '../../utils/app_toast.dart';
 import '../../models/group_config.dart';
 import '../../models/custom_key_config.dart';
 import 'groups_manager.dart';
@@ -15,6 +17,7 @@ import '../../services/config_service.dart';
 import '../../services/status_registry.dart';
 import 'log_console.dart';
 import '../styles/app_theme_effect.dart';
+import '../styles/app_constants.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../services/theme_manager.dart';
 
@@ -225,7 +228,11 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
                   ),
                 ),
               ),
-              const Divider(height: 1),
+              Divider(
+                height: 1,
+                thickness: 1,
+                color: theme.colorScheme.primary.withOpacity(0.08),
+              ),
               
               // Persistent Action Buttons
               Padding(
@@ -274,7 +281,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     
-    // Check if we should use the "Featured Highlight" style (Green card in Elegant Forest)
+    // Check if we should use the "Featured Highlight" style
     final bool useFeaturedStyle = colorScheme.primaryContainer != colorScheme.surface && 
                                  colorScheme.primaryContainer != colorScheme.background;
 
@@ -290,21 +297,21 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 第一行: Host/Port/SSL开关
               Row(
                 children: [
-                  Expanded(flex: 3, child: _buildTextField(l10n.host, _hostController, isRunning, customColor: useFeaturedStyle ? colorScheme.onPrimaryContainer : null)),
+                  Expanded(
+                    flex: 3,
+                    child: _buildTextField(l10n.host, _hostController, isRunning, customColor: useFeaturedStyle ? colorScheme.onPrimaryContainer : null),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    flex: 1,
+                    child: _buildTextField(l10n.port, _portController, isRunning, isNumber: true, customColor: useFeaturedStyle ? colorScheme.onPrimaryContainer : null),
+                  ),
                   const SizedBox(width: 8),
-                  Expanded(flex: 1, child: _buildTextField(l10n.port, _portController, isRunning, isNumber: true, customColor: useFeaturedStyle ? colorScheme.onPrimaryContainer : null)),
-                ],
-              ),
-              const SizedBox(height: 8),
-              _buildTextField(l10n.topic, _topicController, isRunning, customColor: useFeaturedStyle ? colorScheme.onPrimaryContainer : null),
-              
-              // SSL/TLS Toggle
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                   SizedBox(
+                  // SSL开关
+                  SizedBox(
                     height: 24,
                     width: 24,
                     child: Checkbox(
@@ -315,25 +322,34 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
                       onChanged: isRunning ? null : (v) => setState(() => _enableSsl = v ?? false),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Text(
-                    l10n.enableSsl, 
+                    l10n.enableSsl,
                     style: TextStyle(
+                      fontSize: 13,
                       fontWeight: FontWeight.w500,
                       color: useFeaturedStyle ? colorScheme.onPrimaryContainer : colorScheme.onSurface,
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: 8),
               
-              // SSL Fields
+              // 第二行: Topic
+              _buildTextField(l10n.topic, _topicController, isRunning, customColor: useFeaturedStyle ? colorScheme.onPrimaryContainer : null),
+              
+              // SSL证书字段(仅在启用SSL时显示) - 一行三列
               if (_enableSsl) ...[
                 const SizedBox(height: 8),
-                _buildSslField(l10n.caCertificate, _caPathController, isRunning, useFeaturedStyle ? colorScheme.onPrimaryContainer : null, l10n),
-                const SizedBox(height: 4),
-                _buildSslField(l10n.clientCertificate, _certPathController, isRunning, useFeaturedStyle ? colorScheme.onPrimaryContainer : null, l10n),
-                const SizedBox(height: 4),
-                _buildSslField(l10n.privateKey, _keyPathController, isRunning, useFeaturedStyle ? colorScheme.onPrimaryContainer : null, l10n),
+                Row(
+                  children: [
+                    Expanded(child: _buildSslField(l10n.caCertificate, _caPathController, isRunning, useFeaturedStyle ? colorScheme.onPrimaryContainer : null, l10n)),
+                    const SizedBox(width: 6),
+                    Expanded(child: _buildSslField(l10n.clientCertificate, _certPathController, isRunning, useFeaturedStyle ? colorScheme.onPrimaryContainer : null, l10n)),
+                    const SizedBox(width: 6),
+                    Expanded(child: _buildSslField(l10n.privateKey, _keyPathController, isRunning, useFeaturedStyle ? colorScheme.onPrimaryContainer : null, l10n)),
+                  ],
+                ),
               ],
             ],
           ),
@@ -344,10 +360,10 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
     if (useFeaturedStyle) {
       return Container(
         padding: EdgeInsets.fromLTRB(
-          16 * effect.layoutDensity, 
-          24 * effect.layoutDensity, // Reduced top padding
-          16 * effect.layoutDensity, 
-          16 * effect.layoutDensity
+          14 * effect.layoutDensity, 
+          18 * effect.layoutDensity, 
+          14 * effect.layoutDensity, 
+          14 * effect.layoutDensity
         ),
         decoration: BoxDecoration(
           color: colorScheme.primaryContainer,
@@ -374,7 +390,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
         const SizedBox(width: 8),
         IconButton(
           onPressed: isLocked ? null : () => _pickFile(controller),
-          icon: Icon(Icons.folder_open, size: 20, color: customColor ?? Theme.of(context).colorScheme.primary), // Smaller icon
+          icon: Icon(Icons.folder_open, size: AppIconSize.md, color: customColor ?? Theme.of(context).colorScheme.primary),
           tooltip: l10n.selectFile,
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(),
@@ -409,84 +425,84 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
           children: [
             // Unified Device Configuration Section
             _buildSectionHeader(l10n.deviceConfig, trailing: '${l10n.unitDevices}: $count'),
-            Card(
-              margin: const EdgeInsets.only(bottom: 16),
-              elevation: 0,
-              color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: theme.dividerColor.withOpacity(0.1))),
+            Container(
+              margin: const EdgeInsets.only(bottom: AppSpacing.lg),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    theme.colorScheme.surfaceVariant.withOpacity(0.4),
+                    theme.colorScheme.surfaceVariant.withOpacity(0.2),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(
+                  color: theme.dividerColor.withOpacity(0.15),
+                  width: 1,
+                ),
+              ),
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(AppSpacing.md),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Row 1: Range
+                    // Row 1: 起始/结束/设备名/ClientID
                     Row(
                       children: [
                         Expanded(child: _buildTextField(l10n.startIndex, _startIdxController, isRunning, isNumber: true, onChanged: (_) => setState(() {}))),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
                         Expanded(child: _buildTextField(l10n.endIndex, _endIdxController, isRunning, isNumber: true, onChanged: (_) => setState(() {}))),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    
-                    // Row 2: Identity
-                    Row(
-                      children: [
+                        const SizedBox(width: 8),
                         Expanded(child: _buildTextField(l10n.deviceName, _devicePrefixController, isRunning)),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
                         Expanded(child: _buildTextField(l10n.clientId, _clientIdPrefixController, isRunning)),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     
-                    // Row 3: Auth
+                    // Row 2: 用户名/密码/间隔/数据点数
                     Row(
                       children: [
                         Expanded(child: _buildTextField(l10n.username, _usernamePrefixController, isRunning)),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
                         Expanded(child: _buildTextField(l10n.password, _passwordPrefixController, isRunning)),
+                        const SizedBox(width: 8),
+                        Expanded(child: _buildTextField(l10n.interval, _intervalController, isRunning, isNumber: true)),
+                        const SizedBox(width: 8),
+                        Expanded(child: _buildTextField(l10n.dataPointCount, _dataPointController, isRunning, isNumber: true, onChanged: (_) => setState(() {}))),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     
-                    // Row 4: Data
-                    Row(
-                      children: [
-                        Expanded(child: _buildTextField(l10n.interval, _intervalController, isRunning, isNumber: true)),
-                        const SizedBox(width: 12),
-                        Expanded(child: _buildTextField(l10n.dataPointCount, _dataPointController, isRunning, isNumber: true, onChanged: (_) => setState(() {}))),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            borderRadius: BorderRadius.circular(12),
-                            dropdownColor: theme.colorScheme.surface, // Use surface color
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurface, 
-                              fontSize: 14 
-                            ),
-                            iconEnabledColor: theme.colorScheme.onSurface.withOpacity(0.7),
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              isDense: true,
-                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                              labelText: 'Format', // Should use l10n but format isn't in l10n params passed
-                            ),
-                            value: _format,
-                            items: [
-                              DropdownMenuItem(value: 'default', child: Text(l10n.formatDefault, style: const TextStyle(fontSize: 13))),
-                              DropdownMenuItem(value: 'tn', child: Text(l10n.formatTieNiu, style: const TextStyle(fontSize: 13))),
-                              DropdownMenuItem(value: 'tn-empty', child: Text(l10n.formatTieNiuEmpty, style: const TextStyle(fontSize: 13))),
-                            ],
-                            onChanged: isRunning ? null : (String? value) {
-                              if (value != null) {
-                                setState(() {
-                                  _format = value;
-                                });
-                              }
-                            },
-                          ),
-                        ),
+                    // Row 3: 数据格式单独一行
+                    DropdownButtonFormField<String>(
+                      borderRadius: BorderRadius.circular(8),
+                      dropdownColor: theme.colorScheme.surface,
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface, 
+                        fontSize: 14 
+                      ),
+                      iconEnabledColor: theme.colorScheme.onSurface.withOpacity(0.7),
+                      decoration: InputDecoration(
+                        border: const OutlineInputBorder(),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        labelText: l10n.dataFormat,
+                      ),
+                      value: _format,
+                      items: [
+                        DropdownMenuItem(value: 'default', child: Text(l10n.formatDefault, style: const TextStyle(fontSize: 13))),
+                        DropdownMenuItem(value: 'tn', child: Text(l10n.formatTieNiu, style: const TextStyle(fontSize: 13))),
+                        DropdownMenuItem(value: 'tn-empty', child: Text(l10n.formatTieNiuEmpty, style: const TextStyle(fontSize: 13))),
                       ],
+                      onChanged: isRunning ? null : (String? value) {
+                        if (value != null) {
+                          setState(() {
+                            _format = value;
+                          });
+                        }
+                      },
                     ),
                   ],
                 ),
@@ -532,6 +548,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
 
     return Column(
       children: [
+        // 主操作按钮 - 开始/停止
         _AnimatedTactileButton(
           onPressed: isRunning 
             ? () => controller.stop()
@@ -549,9 +566,12 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
               width: double.infinity,
               height: 48,
               child: FilledButton.icon(
-                onPressed: () {}, // Dummy to keep button in "enabled" visual state
-                icon: Icon(isRunning ? effect.icons.stop : effect.icons.play),
-                label: Text(isRunning ? l10n.stopSimulation : l10n.startSimulation),
+                onPressed: () {}, 
+                icon: Icon(isRunning ? effect.icons.stop : effect.icons.play, size: AppIconSize.xl),
+                label: Text(
+                  isRunning ? l10n.stopSimulation : l10n.startSimulation,
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                ),
                 style: FilledButton.styleFrom(
                   backgroundColor: isRunning ? errorColor : primaryColor,
                   foregroundColor: isRunning ? theme.colorScheme.onError : theme.colorScheme.onPrimary,
@@ -562,40 +582,58 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
             ),
           ),
         ),
-        const SizedBox(height: 12),
-        // Preview Button
-        _AnimatedTactileButton(
-           onPressed: isRunning ? null : _handlePreview,
-           child: OutlinedButton.icon(
-             onPressed: isRunning ? null : () {},
-             icon: Icon(Icons.remove_red_eye, size: 18),
-             label: Text(l10n.previewPayload),
-             style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 40),
-             ),
-           ),
-        ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
+        
+        // 次要操作按钮 - 预览/导入/导出一行排列
         Row(
           children: [
             Expanded(
               child: _AnimatedTactileButton(
-                onPressed: isRunning ? null : _handleExport,
+                onPressed: isRunning ? null : _handlePreview,
                 child: OutlinedButton.icon(
-                  onPressed: isRunning ? null : () {}, // Reflect correct enabled/disabled state
-                  icon: Icon(effect.icons.download, size: 18),
-                  label: Text(l10n.exportConfig),
+                  onPressed: isRunning ? null : () {},
+                  icon: Icon(Icons.remove_red_eye_outlined, size: AppIconSize.sm),
+                  label: Text(
+                    l10n.previewPayload,
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             Expanded(
               child: _AnimatedTactileButton(
                 onPressed: isRunning ? null : _handleImport,
                 child: OutlinedButton.icon(
-                  onPressed: isRunning ? null : () {}, // Reflect correct enabled/disabled state
-                  icon: Icon(effect.icons.upload, size: 18),
-                  label: Text(l10n.importConfig),
+                  onPressed: isRunning ? null : () {},
+                  icon: Icon(effect.icons.upload, size: AppIconSize.sm),
+                  label: Text(
+                    l10n.importConfig,
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _AnimatedTactileButton(
+                onPressed: isRunning ? null : _handleExport,
+                child: OutlinedButton.icon(
+                  onPressed: isRunning ? null : () {},
+                  icon: Icon(effect.icons.download, size: AppIconSize.sm),
+                  label: Text(
+                    l10n.exportConfig,
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
                 ),
               ),
             ),
@@ -646,98 +684,32 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
     }
   }
 
-  // Unified Dialog
+  // Unified Dialog - 使用统一对话框样式
   void _showUnifiedPreviewDialog({
     required Map<String, dynamic> data, 
     VoidCallback? onConfirm
-  }) {
+  }) async {
     final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
     final jsonStr = const JsonEncoder.withIndent('  ').convert(data);
     final isConfirmMode = onConfirm != null;
 
-    showDialog(
-      context: context, 
-      barrierDismissible: !isConfirmMode,
-      builder: (ctx) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.preview_rounded, color: theme.colorScheme.primary),
-            const SizedBox(width: 8),
-            Text(isConfirmMode ? l10n.previewAndStart : l10n.payloadPreview),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
-                  ),
-                  constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(context).size.height * 0.7,
-                    minWidth: 500,
-                    maxWidth: 800,
-                  ),
-                  child: SingleChildScrollView(
-                    child: SelectableText(jsonStr, style: TextStyle(
-                      fontFamily: 'monospace', 
-                      fontSize: 13,
-                      color: theme.colorScheme.onSurface,
-                    )),
-                  ),
-                ),
-                Positioned(
-                  top: 4,
-                  right: 4,
-                  child: IconButton(
-                    icon: const Icon(Icons.copy_rounded, size: 20),
-                    tooltip: l10n.copyJson,
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: jsonStr));
-                      _setStatus(l10n.jsonCopied, Colors.green);
-                      // Use a snackbar as well for visibility if needed, but _setStatus is already used in this app
-                    },
-                    style: IconButton.styleFrom(
-                      backgroundColor: theme.colorScheme.surface.withOpacity(0.8),
-                      foregroundColor: theme.colorScheme.primary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            if (isConfirmMode) ...[
-              const SizedBox(height: 12),
-              Text(
-                l10n.confirmStartHint,
-                style: TextStyle(fontSize: 12, color: theme.colorScheme.outline),
-              ),
-            ],
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(), 
-            child: Text(isConfirmMode ? l10n.cancel : l10n.close)
-          ),
-          if (isConfirmMode)
-            FilledButton.icon(
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                onConfirm();
-              },
-              icon: const Icon(Icons.play_arrow, size: 16),
-              label: Text(l10n.startNow),
-            ),
-        ],
-      ),
+    final result = await AppDialogHelper.showCodePreview(
+      context: context,
+      title: isConfirmMode ? l10n.previewAndStart : l10n.payloadPreview,
+      code: jsonStr,
+      icon: Icons.preview_rounded,
+      onCopy: () {
+        Clipboard.setData(ClipboardData(text: jsonStr));
+        _setStatus(l10n.jsonCopied, Colors.green);
+      },
+      showConfirmButton: isConfirmMode,
+      confirmText: l10n.startNow,
+      cancelText: isConfirmMode ? l10n.cancel : l10n.close,
     );
+    
+    if (result == true && onConfirm != null) {
+      onConfirm();
+    }
   }
 
   // Handlers
@@ -778,9 +750,19 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
      }
   }
 
+  // 使用AppToast显示消息通知
   void _setStatus(String msg, Color color) {
     if (mounted) {
-      Provider.of<StatusRegistry>(context, listen: false).setStatus(msg, color);
+      // 根据颜色判断通知类型
+      if (color == Colors.green) {
+        AppToast.success(context, msg);
+      } else if (color == Colors.orange) {
+        AppToast.warning(context, msg);
+      } else if (color == Theme.of(context).colorScheme.error || color == Colors.red) {
+        AppToast.error(context, msg);
+      } else {
+        AppToast.info(context, msg);
+      }
     }
   }
 
@@ -813,43 +795,27 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
       return;
     }
     
-    // Step 2: Show error if validation failed
+    // Step 2: Show error if validation failed - 使用统一对话框样式
     if (result.error != null) {
       if (mounted) {
-        showDialog(
+        await AppDialogHelper.showError(
           context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text(l10n.importFailed),
-            content: Text('${l10n.invalidJson}: ${result.error}'),
-            actions: [
-              FilledButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: Text(l10n.confirm),
-              ),
-            ],
-          ),
+          title: l10n.importFailed,
+          message: '${l10n.invalidJson}: ${result.error}',
+          buttonText: l10n.confirm,
         );
       }
       return;
     }
     
-    // Step 3: Validation passed - show confirmation dialog
-    final confirmed = await showDialog<bool>(
+    // Step 3: Validation passed - show confirmation dialog - 使用统一对话框样式
+    final confirmed = await AppDialogHelper.showConfirm(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.confirmImport),
-        content: Text(l10n.importWarning),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.confirmImport),
-          ),
-        ],
-      ),
+      title: l10n.confirmImport,
+      message: l10n.importWarning,
+      confirmText: l10n.confirmImport,
+      cancelText: l10n.cancel,
+      icon: Icons.upload_file_rounded,
     );
     
     if (confirmed != true) return;
@@ -974,7 +940,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: color),
+          Icon(icon, size: AppIconSize.xs, color: color),
           const SizedBox(width: 4),
           Text(text, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
         ],

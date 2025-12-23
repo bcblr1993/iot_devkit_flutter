@@ -728,6 +728,12 @@ abstract class AppLocalizations {
   /// **'Collapse Logs'**
   String get collapseLogs;
 
+  /// No description provided for @dataFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Data Format'**
+  String get dataFormat;
+
   /// No description provided for @formatDefault.
   ///
   /// In en, this message translates to:
@@ -788,10 +794,28 @@ abstract class AppLocalizations {
   /// **'A powerful MQTT Device Simulator for IoT development.\nBuilt with Flutter & Dart.'**
   String get aboutDescription;
 
+  /// No description provided for @author.
+  ///
+  /// In en, this message translates to:
+  /// **'Author'**
+  String get author;
+
+  /// No description provided for @authorName.
+  ///
+  /// In en, this message translates to:
+  /// **'ChenYanNan'**
+  String get authorName;
+
+  /// No description provided for @releaseDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Release Date'**
+  String get releaseDate;
+
   /// No description provided for @aboutFooter.
   ///
   /// In en, this message translates to:
-  /// **'Copyright © 2025 Chen Xu & Antigravity'**
+  /// **'Copyright © 2025 ChenYanNan'**
   String get aboutFooter;
 
   /// No description provided for @close.
@@ -877,6 +901,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Graphite Pro'**
   String get themeGraphitePro;
+
+  /// No description provided for @themeMidnightBlue.
+  ///
+  /// In en, this message translates to:
+  /// **'Midnight Blue'**
+  String get themeMidnightBlue;
 
   /// No description provided for @logMaximize.
   ///

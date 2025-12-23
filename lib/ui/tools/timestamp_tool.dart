@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../styles/app_theme_effect.dart';
+import '../../utils/app_toast.dart';
 
 class TimestampTool extends StatefulWidget {
   const TimestampTool({super.key});
@@ -29,10 +30,6 @@ class _TimestampToolState extends State<TimestampTool> {
   static const String _kDateTz = 'timestamp_tool_date_tz';
   static const String _kResDate = 'timestamp_tool_res_date';
   static const String _kResTs = 'timestamp_tool_res_ts';
-
-  // Status Bar State
-  String _statusMessage = '';
-  Color _statusColor = Colors.grey;
   
   // Timezones from original JS
   final List<Map<String, dynamic>> _timezones = [
@@ -68,9 +65,6 @@ class _TimestampToolState extends State<TimestampTool> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_statusMessage.isEmpty) {
-      _statusMessage = AppLocalizations.of(context)?.ready ?? 'Ready';
-    }
   }
   
   @override
@@ -129,11 +123,17 @@ class _TimestampToolState extends State<TimestampTool> {
     });
   }
 
+  // 使用AppToast显示消息通知
   void _setStatus(String msg, Color color) {
-    setState(() {
-      _statusMessage = msg;
-      _statusColor = color;
-    });
+    if (color == Colors.green) {
+      AppToast.success(context, msg);
+    } else if (color == Colors.orange) {
+      AppToast.warning(context, msg);
+    } else if (color == Theme.of(context).colorScheme.error || color == Colors.red) {
+      AppToast.error(context, msg);
+    } else if (color != Colors.grey) {
+      AppToast.info(context, msg);
+    }
   }
 
   void _convertTsToDate() {
@@ -385,31 +385,6 @@ class _TimestampToolState extends State<TimestampTool> {
                  ),
                );
              },
-           ),
-           
-           // 3. Status Bar (Bottom)
-           Container(
-             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-             margin: const EdgeInsets.only(top: 12),
-             decoration: BoxDecoration(
-               color: _statusColor.withOpacity(0.1),
-               borderRadius: BorderRadius.circular(8),
-               border: Border.all(color: _statusColor.withOpacity(0.3)),
-             ),
-             child: Row(
-               children: [
-                 Icon(Icons.info_outline, size: 16, color: _statusColor),
-                 const SizedBox(width: 8),
-                 Expanded(
-                   child: Text(
-                     _statusMessage,
-                     style: TextStyle(color: _statusColor, fontWeight: FontWeight.bold, fontSize: 13),
-                     maxLines: 1,
-                     overflow: TextOverflow.ellipsis,
-                   ),
-                 ),
-               ],
-             ),
            ),
         ],
       ),

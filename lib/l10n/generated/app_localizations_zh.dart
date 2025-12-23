@@ -324,6 +324,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get collapseLogs => '折叠日志';
 
   @override
+  String get dataFormat => '数据格式';
+
+  @override
   String get formatDefault => '默认格式';
 
   @override
@@ -354,7 +357,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aboutDescription => '物联网开发工具箱 - MQTT 模拟 & 时间转换等工具集。';
 
   @override
-  String get aboutFooter => '版权所有 © 2025 Chen YanNan';
+  String get author => '作者';
+
+  @override
+  String get authorName => 'ChenYanNan';
+
+  @override
+  String get releaseDate => '发布日期';
+
+  @override
+  String get aboutFooter => '版权所有 © 2025 ChenYanNan';
 
   @override
   String get close => '关闭';
@@ -397,6 +409,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get themeGraphitePro => '石墨专业版 (Graphite)';
+
+  @override
+  String get themeMidnightBlue => '深夜蓝调 (Midnight)';
 
   @override
   String get logMaximize => '最大化日志';

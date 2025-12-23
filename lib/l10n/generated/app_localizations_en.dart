@@ -324,6 +324,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get collapseLogs => 'Collapse Logs';
 
   @override
+  String get dataFormat => 'Data Format';
+
+  @override
   String get formatDefault => 'Default Format';
 
   @override
@@ -356,7 +359,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'A powerful MQTT Device Simulator for IoT development.\nBuilt with Flutter & Dart.';
 
   @override
-  String get aboutFooter => 'Copyright © 2025 Chen Xu & Antigravity';
+  String get author => 'Author';
+
+  @override
+  String get authorName => 'ChenYanNan';
+
+  @override
+  String get releaseDate => 'Release Date';
+
+  @override
+  String get aboutFooter => 'Copyright © 2025 ChenYanNan';
 
   @override
   String get close => 'Close';
@@ -399,6 +411,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get themeGraphitePro => 'Graphite Pro';
+
+  @override
+  String get themeMidnightBlue => 'Midnight Blue';
 
   @override
   String get logMaximize => 'Maximize Logs';

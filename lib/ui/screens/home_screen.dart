@@ -6,6 +6,7 @@ import '../../services/mqtt_controller.dart';
 import '../../services/language_provider.dart';
 import '../../services/status_registry.dart';
 import '../../services/theme_manager.dart';
+import '../../utils/about_dialog_helper.dart';
 import '../widgets/simulator_panel.dart';
 import '../widgets/log_console.dart';
 import '../tools/timestamp_tool.dart';
@@ -175,6 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     case 'matrix-emerald': label = l10n.themeMatrixEmerald; break;
                                     case 'forest-mint': label = l10n.themeForestMint; break;
                                     case 'arctic-blue': label = l10n.themeArcticBlue; break;
+                                    case 'midnight-blue': label = l10n.themeMidnightBlue; break;
                                     case 'deep-ocean': label = l10n.themeDeepOcean; break;
                                     case 'crimson-night': label = l10n.themeCrimsonNight; break;
                                     case 'ruby-elegance': label = l10n.themeRubyElegance; break;
@@ -214,6 +216,32 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           );
                         },
+                      ),
+                      const SizedBox(height: 8),
+                      // About Button (for Windows/Linux - macOS has menu bar)
+                      Tooltip(
+                        message: l10n.menuAbout,
+                        child: InkWell(
+                          onTap: () {
+                            AboutDialogHelper.showAboutDialog(context);
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.info_outline, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                                const SizedBox(height: 2),
+                                Text('?', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),

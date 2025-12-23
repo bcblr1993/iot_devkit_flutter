@@ -1,9 +1,13 @@
 {
-  "mode": "basic",
+  "mode": "advanced",
   "mqtt": {
-    "host": "localhost",
+    "host": "",
     "port": 1883,
-    "topic": "v1/devices/me/telemetry"
+    "topic": "",
+    "enable_ssl": false,
+    "ca_path": "",
+    "cert_path": "",
+    "key_path": ""
   },
   "device_start_number": 1,
   "device_end_number": 1,
@@ -18,7 +22,7 @@
   },
   "custom_keys": [
     {
-      "id": "07114f76-457a-4a10-b4ae-16c722bd5e29",
+      "id": "b15a0b9d-32d7-492a-b6d4-07339eb3b65c",
       "name": "key_custom_1",
       "type": "integer",
       "mode": "random",
@@ -27,7 +31,7 @@
       "static_value": ""
     },
     {
-      "id": "76c67ef0-3870-42d9-9944-418d1ede5591",
+      "id": "62903abe-0e8d-491a-8edc-4ddf8bab91ca",
       "name": "key_custom_2",
       "type": "integer",
       "mode": "random",
@@ -36,35 +40,8 @@
       "static_value": ""
     },
     {
-      "id": "67914ca2-db98-488f-bafe-83b70021ecd5",
+      "id": "2fb35329-8f19-4226-bcc5-bad69894adf5",
       "name": "key_custom_3",
-      "type": "integer",
-      "mode": "random",
-      "min": 0.0,
-      "max": 100.0,
-      "static_value": ""
-    },
-    {
-      "id": "9b5c1699-e4fd-4ed1-902d-20757bac8f74",
-      "name": "key_custom_4",
-      "type": "integer",
-      "mode": "random",
-      "min": 0.0,
-      "max": 100.0,
-      "static_value": ""
-    },
-    {
-      "id": "5e9c2e1a-ff47-495e-a7ab-bdb9854b589e",
-      "name": "key_custom_5",
-      "type": "integer",
-      "mode": "random",
-      "min": 0.0,
-      "max": 100.0,
-      "static_value": ""
-    },
-    {
-      "id": "d93d590e-0940-43ba-8d32-b3cf41ad03da",
-      "name": "key_custom_6",
       "type": "integer",
       "mode": "random",
       "min": 0.0,
@@ -74,8 +51,8 @@
   ],
   "groups": [
     {
-      "id": "a302c094-4bd5-4618-b287-4d713e1ded3e",
-      "name": "Group A",
+      "id": "cf8046d0-83eb-4f07-8f0e-6889cdaf9382",
+      "name": "分组 A",
       "startDeviceNumber": 1,
       "endDeviceNumber": 10,
       "devicePrefix": "device",
@@ -91,5 +68,5 @@
     }
   ],
   "_app_signature": "iot_devkit_flutter_v1",
-  "_export_time": "2025-12-21T17:01:13.664622"
+  "_export_time": "2025-12-23T18:48:14.551966"
 }
