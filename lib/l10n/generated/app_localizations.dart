@@ -1027,6 +1027,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Click Confirm to start simulation with this payload structure.'**
   String get confirmStartHint;
+
+  /// No description provided for @performanceMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Performance Mode (Disable Logs)'**
+  String get performanceMode;
 }
 
 class _AppLocalizationsDelegate

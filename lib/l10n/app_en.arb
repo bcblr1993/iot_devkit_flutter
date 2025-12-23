@@ -158,6 +158,7 @@
   "selectFile": "Select File",
   "previewAndStart": "Preview & Start",
   "startNow": "Start Simulation",
-  "confirmStartHint": "Click Confirm to start simulation with this payload structure."
+  "confirmStartHint": "Click Confirm to start simulation with this payload structure.",
+  "performanceMode": "Performance Mode (Disable Logs)"
 }
 

@@ -23,6 +23,20 @@ class MqttController extends ChangeNotifier {
 
   // Callback for logs (UI)
   Function(String message, String type, {String? tag})? onLog;
+  
+  // Performance: Global Log Switch
+  bool _enableDetailedLogs = true;
+  bool get enableDetailedLogs => _enableDetailedLogs;
+
+  void toggleDetailedLogs(bool value) {
+    if (_enableDetailedLogs == value) return;
+    _enableDetailedLogs = value;
+    _schedulerService.enableLogs = value;
+    
+    // Log visible only in console/system log, not UI if disabled (optional, but keep system log generally)
+    log('Detailed logging ${value ? 'ENABLED' : 'DISABLED'}', 'info');
+    notifyListeners();
+  }
 
   MqttController() {
     _clientManager = MqttClientManager(
@@ -56,8 +70,8 @@ class MqttController extends ChangeNotifier {
     final String msg = tag != null ? '[$tag] $message' : message;
     _logger.log(level, msg);
 
-    // 2. Notify UI
-    if (onLog != null) {
+    // 2. Notify UI (Only if enabled)
+    if (onLog != null && _enableDetailedLogs) {
       onLog!(message, type, tag: tag);
     }
   }

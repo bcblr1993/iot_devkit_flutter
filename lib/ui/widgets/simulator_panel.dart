@@ -164,7 +164,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final effect = theme.extension<AppThemeEffect>() ?? 
-                   const AppThemeEffect(animationCurve: Curves.easeInOut, layoutDensity: 1.0, icons: AppIcons.standard);
+                   const AppThemeEffect(animationCurve: Curves.easeInOut, layoutDensity: 1.0, borderRadius: 8.0, icons: AppIcons.standard);
 
     return Stack(
       children: [
@@ -525,7 +525,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
   Widget _buildAdvancedTab(MqttController controller, bool isRunning, AppLocalizations l10n) {
     final theme = Theme.of(context);
     final effect = theme.extension<AppThemeEffect>() ?? 
-                   const AppThemeEffect(animationCurve: Curves.easeInOut, layoutDensity: 1.0, icons: AppIcons.standard);
+                   const AppThemeEffect(animationCurve: Curves.easeInOut, layoutDensity: 1.0, borderRadius: 8.0, icons: AppIcons.standard);
                    
     Widget content = GroupsManager(
       groups: _groups,
@@ -548,6 +548,8 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
 
     return Column(
       children: [
+
+
         // 主操作按钮 - 开始/停止
         _AnimatedTactileButton(
           onPressed: isRunning 
@@ -705,6 +707,62 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
       showConfirmButton: isConfirmMode,
       confirmText: l10n.startNow,
       cancelText: isConfirmMode ? l10n.cancel : l10n.close,
+      // NEW: Performance Mode Toggle in Dialog
+      extraWidget: isConfirmMode ? StatefulBuilder(
+        builder: (context, setState) {
+          final controller = Provider.of<MqttController>(context, listen: false);
+          final theme = Theme.of(context);
+          // Note: controller.enableDetailedLogs is true by default (Logs ON).
+          // Performance Mode = Logs OFF.
+          // So: Toggle ON (High Perf) -> Logs OFF (false)
+          //     Toggle OFF (Normal) -> Logs ON (true)
+          bool isPerformanceMode = !controller.enableDetailedLogs;
+
+          return Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.speed_rounded, color: theme.colorScheme.primary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.performanceMode ?? 'High Performance Mode',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      Text(
+                        l10n.performanceMode ?? 'Disables logs for maximum speed', // Fallback hint
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: isPerformanceMode,
+                  onChanged: (val) {
+                    setState(() {
+                      controller.toggleDetailedLogs(!val);
+                    });
+                  },
+                ),
+              ],
+            ),
+          );
+        }
+      ) : null,
     );
     
     if (result == true && onConfirm != null) {

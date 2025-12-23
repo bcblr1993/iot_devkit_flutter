@@ -233,6 +233,7 @@ class AppDialogHelper {
     String? confirmText,
     String? cancelText,
     bool showConfirmButton = false,
+    Widget? extraWidget, // For custom content below code
   }) {
     final theme = Theme.of(context);
     final primaryColor = theme.colorScheme.primary;
@@ -329,6 +330,13 @@ class AppDialogHelper {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
+                    
+                    if (extraWidget != null) ...[
+                      const SizedBox(height: 16),
+                      const Divider(),
+                      const SizedBox(height: 8),
+                      extraWidget,
+                    ],
                   ],
                 ),
               ),

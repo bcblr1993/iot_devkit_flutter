@@ -99,6 +99,7 @@ class AppIcons {
 class AppThemeEffect extends ThemeExtension<AppThemeEffect> {
   final Curve animationCurve;
   final double layoutDensity; // 1.0 = standard, 0.8 = compact, 1.2 = spacious
+  final double borderRadius;
   final AppIcons icons;
   final bool useGlassEffect;
   final BoxShadow? innerShadow; // Simulate depth if needed
@@ -106,6 +107,7 @@ class AppThemeEffect extends ThemeExtension<AppThemeEffect> {
   const AppThemeEffect({
     required this.animationCurve,
     required this.layoutDensity,
+    required this.borderRadius,
     required this.icons,
     this.useGlassEffect = false,
     this.innerShadow,
@@ -115,12 +117,14 @@ class AppThemeEffect extends ThemeExtension<AppThemeEffect> {
   AppThemeEffect copyWith({
     Curve? animationCurve,
     double? layoutDensity,
+    double? borderRadius,
     AppIcons? icons,
     BoxShadow? innerShadow,
   }) {
     return AppThemeEffect(
       animationCurve: animationCurve ?? this.animationCurve,
       layoutDensity: layoutDensity ?? this.layoutDensity,
+      borderRadius: borderRadius ?? this.borderRadius,
       useGlassEffect: useGlassEffect ?? this.useGlassEffect,
       icons: icons ?? this.icons,
       innerShadow: innerShadow ?? this.innerShadow,
@@ -137,6 +141,7 @@ class AppThemeEffect extends ThemeExtension<AppThemeEffect> {
       animationCurve: t < 0.5 ? animationCurve : other.animationCurve,
       // Snap layoutDensity and glass effect at 50%
       layoutDensity: t < 0.5 ? layoutDensity : other.layoutDensity,
+      borderRadius: t < 0.5 ? borderRadius : other.borderRadius,
       useGlassEffect: t < 0.5 ? useGlassEffect : other.useGlassEffect,
       icons: t < 0.5 ? icons : other.icons,
       innerShadow: BoxShadow.lerp(innerShadow, other.innerShadow, t),

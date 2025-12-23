@@ -235,7 +235,7 @@ class _TimestampToolState extends State<TimestampTool> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final effect = theme.extension<AppThemeEffect>() ?? 
-                   const AppThemeEffect(animationCurve: Curves.easeInOut, layoutDensity: 1.0, icons: AppIcons.standard);
+                   const AppThemeEffect(animationCurve: Curves.easeInOut, layoutDensity: 1.0, borderRadius: 8.0, icons: AppIcons.standard);
 
     return SingleChildScrollView(
       padding: EdgeInsets.all(16.0 * effect.layoutDensity),

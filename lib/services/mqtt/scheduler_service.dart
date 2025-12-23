@@ -7,6 +7,8 @@ import '../../services/data_generator.dart';
 import '../../utils/statistics_collector.dart';
 import '../../models/group_config.dart';
 import '../../models/custom_key_config.dart';
+import 'package:flutter/foundation.dart'; // For compute
+import '../../utils/isolate_worker.dart';
 import '../../models/simulation_context.dart';
 
 class SchedulerService {
@@ -16,6 +18,9 @@ class SchedulerService {
   int _alignedStartTime = 0;
   final Map<String, List<Timer>> _clientTimers = {};
   final Map<String, int> _clientVersions = {};
+  
+  // Performance Mode: Disable logs to save CPU
+  bool enableLogs = true;
 
   SchedulerService({
     required this.statisticsCollector,
@@ -152,7 +157,7 @@ class SchedulerService {
     }
   }
 
-  void _scheduleFullReport(
+  Future<void> _scheduleFullReport(
     MqttServerClient client,
     String clientId,
     String topic,
@@ -160,26 +165,58 @@ class SchedulerService {
     int intervalMs,
     int sendCount,
     int version,
-  ) {
+  ) async {
     if (!_clientTimers.containsKey(clientId)) return;
     if (_clientVersions[clientId] != version) return; // Wrong Session
 
     int payloadTimestamp = _alignedStartTime + (sendCount * intervalMs);
-    Map<String, dynamic> data;
-    if (group.format == 'tn') {
-      data = DataGenerator.generateTnPayload(group.totalKeyCount, timestamp: payloadTimestamp);
+    String payload;
+
+    // OPTIMIZATION: Use Isolate for massive data points (> 1000) or if enabled
+    bool useIsolate = group.totalKeyCount > 1000;
+
+    if (group.format == 'tn') { // TN format not optimized yet (usually small)
+      Map<String, dynamic> data = DataGenerator.generateTnPayload(group.totalKeyCount, timestamp: payloadTimestamp);
+      payload = jsonEncode(data);
     } else if (group.format == 'tn-empty') {
-      data = DataGenerator.generateTnEmptyPayload(timestamp: payloadTimestamp);
+      Map<String, dynamic> data = DataGenerator.generateTnEmptyPayload(timestamp: payloadTimestamp);
+      payload = jsonEncode(data);
     } else {
-      data = DataGenerator.generateBatteryStatus(
-        group.totalKeyCount,
-        clientId: clientId,
-        customKeys: group.customKeys,
-      );
-      data = DataGenerator.wrapWithTimestamp(data, payloadTimestamp);
+      // Standard Format
+      if (useIsolate) {
+        // 1. Prepare State (Main Thread)
+        int key1 = DataGenerator.getKey1Value(clientId);
+        Map<String, dynamic> customValues = DataGenerator.generateCustomKeys(group.customKeys);
+        
+        // 2. Offload work to Isolate
+        try {
+          payload = await compute(generatePayloadJson, WorkerInput(
+            count: group.totalKeyCount,
+            clientId: clientId,
+            timestamp: payloadTimestamp,
+            key1Value: key1,
+            customKeyValues: customValues,
+          ));
+        } catch (e) {
+          onLog('Isolate Error: $e', 'error', tag: clientId);
+          return; // Skip on error
+        }
+      } else {
+        // Standard Sync Generation
+        Map<String, dynamic> data = DataGenerator.generateBatteryStatus(
+          group.totalKeyCount,
+          clientId: clientId,
+          customKeys: group.customKeys,
+        );
+        data = DataGenerator.wrapWithTimestamp(data, payloadTimestamp);
+        payload = jsonEncode(data);
+      }
     }
     
-    String payload = jsonEncode(data);
+    // Check cancellation again after await
+    if (!_clientTimers.containsKey(clientId)) return;
+    if (_clientVersions[clientId] != version) return;
+
     _publish(client, topic, payload, group.name, 'success', '[$clientId] Full Report #$sendCount');
 
     sendCount++;
@@ -188,7 +225,7 @@ class SchedulerService {
     });
   }
 
-  void _scheduleChangeReport(
+  Future<void> _scheduleChangeReport(
     MqttServerClient client,
     String clientId,
     String topic,
@@ -196,7 +233,7 @@ class SchedulerService {
     int intervalMs,
     int sendCount,
     int version,
-  ) {
+  ) async {
     if (!_clientTimers.containsKey(clientId)) return;
     if (_clientVersions[clientId] != version) return; // Wrong Session
 
@@ -220,27 +257,71 @@ class SchedulerService {
       return; 
     }
 
-    Map<String, dynamic> data;
+    // OPTIMIZATION: Use Isolate for massive data points (> 1000)
     int totalChangeCount = (group.totalKeyCount * group.changeRatio).floor();
+    bool useIsolate = totalChangeCount > 1000;
     
+    Map<String, dynamic> data;
+    String payload;
+
     if (group.format == 'tn') {
       data = DataGenerator.generateTnPayload(group.totalKeyCount, timestamp: payloadTimestamp);
+      payload = jsonEncode(data);
     } else if (group.format == 'tn-empty') {
       data = DataGenerator.generateTnEmptyPayload(timestamp: payloadTimestamp);
+      payload = jsonEncode(data);
     } else {
-      int customCount = group.customKeys.length;
-      int randomChangeCount = (totalChangeCount - customCount).clamp(0, group.totalKeyCount);
-      data = DataGenerator.generateBatteryStatus(
-        randomChangeCount + customCount,
-        clientId: clientId,
-        customKeys: group.customKeys,
-      );
-      data = DataGenerator.wrapWithTimestamp(data, payloadTimestamp);
+      // Standard Format
+      if (useIsolate) {
+         // 1. Prepare State (Main Thread)
+         // Note: Change report includes key_1 if count >= 1. 
+         // Our worker helper includes key_1.
+         int key1 = DataGenerator.getKey1Value(clientId);
+         
+         // Custom keys are always included if they fit in count
+         int customCount = group.customKeys.length;
+         // We might need to slice custom keys if totalChangeCount is very small, 
+         // but usually custom keys are prioritized.
+         // For simplicity in optimization, we pass all custom keys. 
+         Map<String, dynamic> customValues = DataGenerator.generateCustomKeys(group.customKeys);
+
+         try {
+           payload = await compute(generatePayloadJson, WorkerInput(
+             count: totalChangeCount, // This controls the total keys generated
+             clientId: clientId,
+             timestamp: payloadTimestamp,
+             key1Value: key1,
+             customKeyValues: customValues,
+           ));
+         } catch (e) {
+            onLog('Isolate Error (Change): $e', 'error', tag: clientId);
+            return;
+         }
+      } else {
+          int customCount = group.customKeys.length;
+          int randomChangeCount = (totalChangeCount - customCount).clamp(0, group.totalKeyCount);
+          data = DataGenerator.generateBatteryStatus(
+            randomChangeCount + customCount,
+            clientId: clientId,
+            customKeys: group.customKeys,
+          );
+          data = DataGenerator.wrapWithTimestamp(data, payloadTimestamp);
+          payload = jsonEncode(data);
+      }
     }
     
-    String payload = jsonEncode(data);
-    // Use info type for change reports to distinguish
-    _publish(client, topic, payload, group.name, 'info', '[$clientId] Change Report #$sendCount (${data.length} keys)');
+    // Check cancellation again
+    if (!_clientTimers.containsKey(clientId)) return;
+    if (_clientVersions[clientId] != version) return;
+    
+    // Use info type for change reports
+    // Calculate length logic: if using isolate, payload is string.
+    // We can't easy get keys count without parsing, so we just say "Change Report"
+    String msg = useIsolate 
+        ? '[$clientId] Change Report #$sendCount (~$totalChangeCount keys)'
+        : '[$clientId] Change Report #$sendCount'; // data is not available in scope if useIsolate=true
+
+    _publish(client, topic, payload, group.name, 'info', msg);
 
     sendCount++;
     _scheduleNext(clientId, intervalMs, sendCount, version, (actualCount) {
@@ -255,15 +336,21 @@ class SchedulerService {
     builder.addString(payload);
     
     try {
-      // OPTIMIZATION: Use QoS 0 (atMostOnce) to prevent "Retry Storms" under high load.
-      // High concurrency delays PUBACKs, causing clients to retry and create duplicates.
-      client.publishMessage(topic, MqttQos.atMostOnce, builder.payload!);
+      // FIX: Use QoS 1 (atLeastOnce) to ensure delivery.
+      // QoS 0 (atMostOnce) causes data loss under high load as packets are dropped.
+      client.publishMessage(topic, MqttQos.atLeastOnce, builder.payload!);
       statisticsCollector.incrementSuccess();
       statisticsCollector.setMessageSize(payload.length);
-      int bytes = utf8.encode(payload).length;
-      onLog('$successMsg ($bytes bytes)', successType, tag: logTagOverride ?? tag);
+      
+      // OPTIMIZATION: Only calculate bytes and log if logging is enabled
+      if (enableLogs) {
+        int bytes = utf8.encode(payload).length;
+        onLog('$successMsg ($bytes bytes)', successType, tag: logTagOverride ?? tag);
+      }
     } catch (e) {
-      onLog('Publish error: $e', 'error', tag: logTagOverride ?? tag);
+      if (enableLogs) {
+        onLog('Publish error: $e', 'error', tag: logTagOverride ?? tag);
+      }
       statisticsCollector.incrementFailure();
     }
   }
@@ -283,32 +370,14 @@ class SchedulerService {
     int now = DateTime.now().millisecondsSinceEpoch;
     int delay = targetWithJitter - now;
 
-    // RELAXED FIX: The previous threshold (-500ms) was too aggressive for 1s intervals with jitter.
-    // If the system lagged by 600ms, it would SKIP the current second, causing a 2s gap.
-    // Now we allow up to 3000ms (3s) of lag before skipping cycles. 
-    // This prioritizes "sending all data" over "skipping to live".
+    // RELAXED FIX: The previous threshold (-500ms) was too aggressive.
+    // However, for "No Data Loss", we must NEVER skip.
+    // We just run as fast as possible (delay=0) until we catch up.
+    /* 
     if (delay < -3000) {
-      // Skip missed cycles
-      int missedCycles = ((now - nextTarget) / intervalMs).ceil();
-      sendCount += missedCycles;
-      
-      // Calculate new target and delay
-      nextTarget = _alignedStartTime + (sendCount * intervalMs);
-      targetWithJitter = nextTarget + jitter;
-      delay = targetWithJitter - now;
-      
-      // Safety: Ensure delay is non-negative and we aren't spiraling
-      if (delay < 0) {
-         delay = 0; 
-         // Force move to next interval if we are somehow still behind
-         if (now > nextTarget) {
-            sendCount++;
-            nextTarget = _alignedStartTime + (sendCount * intervalMs);
-            targetWithJitter = nextTarget + jitter;
-            delay = targetWithJitter - now;
-         }
-      }
+      // ... Skip logic removed to ensure data integrity ...
     }
+    */
 
     if (delay < 0) delay = 0;
     

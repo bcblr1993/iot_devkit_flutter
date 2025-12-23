@@ -472,4 +472,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get confirmStartHint => '点击确认以使用此数据结构开始模拟。';
+
+  @override
+  String get performanceMode => '高性能模式 (关闭日志)';
 }

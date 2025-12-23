@@ -158,5 +158,6 @@
   "selectFile": "选择文件",
   "previewAndStart": "预览并启动",
   "startNow": "开始模拟",
-  "confirmStartHint": "点击确认以使用此数据结构开始模拟。"
+  "confirmStartHint": "点击确认以使用此数据结构开始模拟。",
+  "performanceMode": "高性能模式 (关闭日志)"
 }

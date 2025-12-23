@@ -70,9 +70,10 @@ class ThemeManager extends ChangeNotifier {
       canvasColor: surface, // Fixes DropdownButton background color
       fontFamily: fontFamily,
       extensions: [
-        effect ?? const AppThemeEffect(
+        effect ?? AppThemeEffect(
           animationCurve: Curves.easeInOut, 
           layoutDensity: 1.0, 
+          borderRadius: borderRadius,
           icons: AppIcons.standard,
         ),
       ],
@@ -238,15 +239,15 @@ class ThemeManager extends ChangeNotifier {
   }
 
   static final Map<String, ThemeData> _themes = {
-    // 🟢 森林薄荷 (Forest Mint) - Modern Clean Green
+    // 1. 🌲 Forest Mint (保留)
     'forest-mint': _buildProTheme(
       brightness: Brightness.light,
-      primary: const Color(0xFF047857), // 加深的翡翠绿，对比度更好
+      primary: const Color(0xFF047857),
       secondary: const Color(0xFFD1FAE5),
-      background: const Color(0xFFF8FDF9), // 薄荷白
+      background: const Color(0xFFF8FDF9),
       surface: const Color(0xFFFFFFFF),
       onSurface: const Color(0xFF1F2937),
-      onBackground: const Color(0xFF475569), // 调深，提高可读性
+      onBackground: const Color(0xFF475569),
       error: const Color(0xFFDC2626),
       borderRadius: 20.0,
       borderColor: const Color(0xFFE5E7EB).withOpacity(0.8),
@@ -255,52 +256,142 @@ class ThemeManager extends ChangeNotifier {
       effect: const AppThemeEffect(
         animationCurve: Curves.easeOutCubic,
         layoutDensity: 1.0,
+        borderRadius: 20.0,
         icons: AppIcons.rounded,
         useGlassEffect: true,
       ),
     ),
 
-    // 🔵 极地冰蓝 (Arctic Blue) - Modern Professional Blue  
-    'arctic-blue': _buildProTheme(
+    // 2. 🌌 Midnight Purple (午夜紫罗兰) - 优雅暗色
+    'midnight-purple': _buildProTheme(
+      brightness: Brightness.dark,
+      primary: const Color(0xFF8B5CF6), // Violet
+      secondary: const Color(0xFF4C1D95),
+      background: const Color(0xFF0F0A1E), // Deep Violet Black
+      surface: const Color(0xFF1A1625), // Violet Grey Card
+      onSurface: const Color(0xFFF3E8FF),
+      onBackground: const Color(0xFFE9D5FF),
+      error: const Color(0xFFF87171),
+      borderRadius: 18.0,
+      borderColor: const Color(0xFF4C1D95).withOpacity(0.3),
+      primaryContainer: const Color(0xFF8B5CF6).withOpacity(0.15),
+      onPrimaryContainer: const Color(0xFFDDD6FE),
+      effect: const AppThemeEffect(
+        animationCurve: Curves.easeOutQuint,
+        layoutDensity: 1.0,
+        borderRadius: 18.0,
+        icons: AppIcons.rounded,
+      ),
+    ),
+
+    // 3. 🌅 Sunset Orange (日落橙光) - 温暖活力
+    'sunset-orange': _buildProTheme(
       brightness: Brightness.light,
-      primary: const Color(0xFF0284C7), // 深邃天空蓝
-      secondary: const Color(0xFFF0F9FF), // 更淡的蓝色
-      background: const Color(0xFFF8FAFC), // 冰晶白
+      primary: const Color(0xFFF97316), // Orange
+      secondary: const Color(0xFFFB923C),
+      background: const Color(0xFFFFFBF5), // Warm White
       surface: const Color(0xFFFFFFFF),
-      onSurface: const Color(0xFF1E293B),
-      onBackground: const Color(0xFF475569), // 调深，提高可读性
+      onSurface: const Color(0xFF9A3412),
+      onBackground: const Color(0xFF7C2D12),
+      error: const Color(0xFFDC2626),
+      borderRadius: 14.0,
+      borderColor: const Color(0xFFFED7AA),
+      primaryContainer: const Color(0xFFF97316).withOpacity(0.1),
+      onPrimaryContainer: const Color(0xFFC2410C),
+      effect: const AppThemeEffect(
+        animationCurve: Curves.easeOutBack,
+        layoutDensity: 1.0,
+        borderRadius: 14.0,
+        icons: AppIcons.rounded,
+      ),
+    ),
+
+    // 4. 🌸 Sakura Pink (樱花粉嫩) - 柔和浪漫
+    'sakura-pink': _buildProTheme(
+      brightness: Brightness.light,
+      primary: const Color(0xFFEC4899), // Pink
+      secondary: const Color(0xFFF472B6),
+      background: const Color(0xFFFFF5F7), // Pink White
+      surface: const Color(0xFFFFFFFF),
+      onSurface: const Color(0xFF9F1239),
+      onBackground: const Color(0xFF831843),
       error: const Color(0xFFDC2626),
       borderRadius: 20.0,
-      borderColor: const Color(0xFFE2E8F0).withOpacity(0.9),
-      primaryContainer: const Color(0xFF0284C7).withOpacity(0.08),
-      onPrimaryContainer: const Color(0xFF0369A1),
+      borderColor: const Color(0xFFFBCFE8),
+      primaryContainer: const Color(0xFFEC4899).withOpacity(0.08),
+      onPrimaryContainer: const Color(0xFFBE185D),
       effect: const AppThemeEffect(
-        animationCurve: Curves.easeOutCubic,
+        animationCurve: Curves.easeInOutQuad,
         layoutDensity: 1.0,
+        borderRadius: 20.0,
         icons: AppIcons.rounded,
+      ),
+    ),
+
+    // 5. 🔮 Cyber Teal (赛博青) - 科技未来
+    'cyber-teal': _buildProTheme(
+      brightness: Brightness.dark,
+      primary: const Color(0xFF14B8A6), // Teal
+      secondary: const Color(0xFF0D9488),
+      background: const Color(0xFF0A1A1F), // Deep Teal Black
+      surface: const Color(0xFF132830), // Teal Grey Card
+      onSurface: const Color(0xFF99F6E4),
+      onBackground: const Color(0xFFCCFBF1),
+      error: const Color(0xFFF87171),
+      borderRadius: 10.0, // Harder edges
+      borderColor: const Color(0xFF134E4A),
+      primaryContainer: const Color(0xFF14B8A6).withOpacity(0.15),
+      onPrimaryContainer: const Color(0xFF5EEAD4),
+      effect: const AppThemeEffect(
+        animationCurve: Curves.fastLinearToSlowEaseIn,
+        layoutDensity: 1.0,
+        borderRadius: 10.0,
+        icons: AppIcons.tech, // Tech icons
         useGlassEffect: true,
       ),
     ),
 
-    // 🌙 深夜蓝调 (Midnight Blue) - Professional Dark Theme
-    'midnight-blue': _buildProTheme(
+    // 6. 🏆 Golden Hour (黄金时刻) - 奢华金色
+    'golden-hour': _buildProTheme(
       brightness: Brightness.dark,
-      primary: const Color(0xFF38BDF8), // 明亮天蓝色
-      secondary: const Color(0xFF1E3A8A),
-      background: const Color(0xFF0F172A), // 深蓝背景
-      surface: const Color(0xFF1E293B), // 卡片背景
-      onSurface: const Color(0xFFE2E8F0), // 浅色文字
-      onBackground: const Color(0xFFCBD5E1), // 次要文字
+      primary: const Color(0xFFF59E0B), // Gold
+      secondary: const Color(0xFFD97706),
+      background: const Color(0xFF1C1917), // Dark Brown Black
+      surface: const Color(0xFF292524), // Brown Grey Card
+      onSurface: const Color(0xFFFDE68A),
+      onBackground: const Color(0xFFFEF3C7),
       error: const Color(0xFFEF4444),
-      borderRadius: 20.0,
-      borderColor: const Color(0xFF334155),
-      primaryContainer: const Color(0xFF38BDF8).withOpacity(0.15),
-      onPrimaryContainer: const Color(0xFF7DD3FC),
+      borderRadius: 16.0,
+      borderColor: const Color(0xFF78350F),
+      primaryContainer: const Color(0xFFF59E0B).withOpacity(0.15),
+      onPrimaryContainer: const Color(0xFFFCD34D),
       effect: const AppThemeEffect(
-        animationCurve: Curves.easeOutCubic,
+        animationCurve: Curves.easeInOutCubicEmphasized,
         layoutDensity: 1.0,
+        borderRadius: 16.0,
+        icons: AppIcons.sharp, // Sharp icons
+      ),
+    ),
+
+    // 7. 🌿 Lavender Dream (薰衣草梦境) - 清新淡紫
+    'lavender-dream': _buildProTheme(
+      brightness: Brightness.light,
+      primary: const Color(0xFFA78BFA), // Lavender
+      secondary: const Color(0xFF8B5CF6),
+      background: const Color(0xFFFAFAFF), // Lavender White
+      surface: const Color(0xFFFFFFFF),
+      onSurface: const Color(0xFF6D28D9),
+      onBackground: const Color(0xFF5B21B6),
+      error: const Color(0xFFDC2626),
+      borderRadius: 16.0,
+      borderColor: const Color(0xFFE9D5FF),
+      primaryContainer: const Color(0xFFA78BFA).withOpacity(0.12),
+      onPrimaryContainer: const Color(0xFF7C3AED),
+      effect: const AppThemeEffect(
+        animationCurve: Curves.easeOutCirc,
+        layoutDensity: 1.0,
+        borderRadius: 16.0,
         icons: AppIcons.rounded,
-        useGlassEffect: true,
       ),
     ),
   };

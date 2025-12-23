@@ -475,4 +475,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get confirmStartHint =>
       'Click Confirm to start simulation with this payload structure.';
+
+  @override
+  String get performanceMode => 'Performance Mode (Disable Logs)';
 }
