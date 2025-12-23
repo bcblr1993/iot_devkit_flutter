@@ -184,6 +184,25 @@ class SchedulerService {
     if (!_clientTimers.containsKey(clientId)) return;
 
     int payloadTimestamp = _alignedStartTime + (sendCount * intervalMs);
+    
+    // CRITICAL FIX: Conflict Resolution
+    // If the current time aligns exactly with a Full Report interval, SKIP the Change Report.
+    // Full Reports (Whole Data) include the Changed Data, so sending both is duplicative.
+    int fullIntervalMs = group.fullIntervalSeconds * 1000;
+    int elapsedTime = sendCount * intervalMs;
+    
+    // Check collision (ensure fullInterval is not 0 to avoid division by zero)
+    if (fullIntervalMs > 0 && elapsedTime % fullIntervalMs == 0) {
+      // Just log internally or skip quietly. We still need to schedule the NEXT one.
+      // onLog('[$clientId] Skipped Change Report (Coincides with Full Report)', 'info', tag: group.name);
+      
+      sendCount++;
+      _scheduleNext(clientId, intervalMs, sendCount, (actualCount) {
+        _scheduleChangeReport(client, clientId, topic, group, intervalMs, actualCount);
+      });
+      return; 
+    }
+
     Map<String, dynamic> data;
     int totalChangeCount = (group.totalKeyCount * group.changeRatio).floor();
     
