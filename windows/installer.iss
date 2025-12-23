@@ -2,15 +2,18 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "IoT DevKit"
-#define MyAppVersion "1.0.2"
+#define MyAppVersion "1.0.3"
 #define MyAppPublisher "Chen Xu"
 #define MyAppURL "https://github.com/StartYourTour/iot_devkit"
 #define MyAppExeName "iot_devkit.exe"
+#define MyAppGUID "D86A3D42-1234-4567-89AB-CDEF01234567"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{D86A3D42-1234-4567-89AB-CDEF01234567}
+AppId={{{#MyAppGUID}}}
+ArchitecturesAllowed=x64
+ArchitecturesInstallIn64BitMode=x64
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
@@ -56,7 +59,7 @@ var
   sUnInstPathKey: String;
 begin
   sUnInstPath := '';
-  sUnInstPathKey := 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{#emit SetupSetting("AppId")}_is1';
+  sUnInstPathKey := 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{{#MyAppGUID}}_is1';
   {First check HKLM, then HKCU}
   if RegQueryStringValue(HKLM, sUnInstPathKey, 'UninstallString', sUnInstPath) then
     Result := sUnInstPath
