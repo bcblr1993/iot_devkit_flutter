@@ -278,121 +278,132 @@ class AppDialogHelper {
           maxHeight: MediaQuery.of(context).size.height * 0.5,
           minWidth: 450,
         ),
-        child: Stack(
+        child: Column(
           children: [
-            // 代码内容区域
-            Container(
-              padding: const EdgeInsets.all(20),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 语言标签
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: primaryColor.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+            // 1. Extra Widget (Top)
+            if (extraWidget != null)
+               Container(
+                 decoration: BoxDecoration(
+                   border: Border(bottom: BorderSide(color: primaryColor.withOpacity(0.1))),
+                   color: isDark ? Colors.black12 : Colors.grey.withOpacity(0.02),
+                 ),
+                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                 child: extraWidget,
+               ),
+
+            // 2. Code Area (Expanded)
+            Expanded(
+              child: Stack(
+                children: [
+                  // 代码内容区域
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(
-                            Icons.data_object_rounded,
-                            size: 14,
-                            color: primaryColor,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'JSON',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: primaryColor,
-                              letterSpacing: 0.5,
+                          // 语言标签
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: primaryColor.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.data_object_rounded,
+                                  size: 14,
+                                  color: primaryColor,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'JSON',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: primaryColor,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    
-                    // 代码文本
-                    SelectableText(
-                      code,
-                      style: TextStyle(
-                        fontFamily: 'Courier New',
-                        fontSize: 13,
-                        height: 1.6,
-                        color: isDark 
-                          ? const Color(0xFFE2E8F0) 
-                          : const Color(0xFF1E293B),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    
-                    if (extraWidget != null) ...[
-                      const SizedBox(height: 16),
-                      const Divider(),
-                      const SizedBox(height: 8),
-                      extraWidget,
-                    ],
-                  ],
-                ),
-              ),
-            ),
-            
-            // 复制按钮
-            if (onCopy != null)
-              Positioned(
-                top: 12,
-                right: 12,
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: onCopy,
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: isDark
-                          ? theme.colorScheme.surface.withOpacity(0.95)
-                          : Colors.white.withOpacity(0.95),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: primaryColor.withOpacity(0.3),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.copy_rounded,
-                            size: 16,
-                            color: primaryColor,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            l10n ? '复制' : 'Copy',
+                          const SizedBox(height: 12),
+                          
+                          // 代码文本
+                          SelectableText(
+                            code,
                             style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: primaryColor,
+                              fontFamily: 'Courier New',
+                              fontSize: 13,
+                              height: 1.6,
+                              color: isDark 
+                                ? const Color(0xFFE2E8F0) 
+                                : const Color(0xFF1E293B),
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                ),
+                  
+                  // 复制按钮
+                  if (onCopy != null)
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: onCopy,
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                ? theme.colorScheme.surface.withOpacity(0.95)
+                                : Colors.white.withOpacity(0.95),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: primaryColor.withOpacity(0.3),
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.08),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.copy_rounded,
+                                  size: 16,
+                                  color: primaryColor,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  l10n ? '复制' : 'Copy',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: primaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
+            ),
           ],
         ),
       ),

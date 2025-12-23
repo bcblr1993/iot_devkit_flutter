@@ -10,6 +10,7 @@ import '../models/simulation_context.dart';
 import 'data_generator.dart';
 import 'mqtt/mqtt_client_manager.dart';
 import 'mqtt/scheduler_service.dart';
+import '../utils/isolate_worker.dart';
 
 class MqttController extends ChangeNotifier {
   final _logger = Logger('MqttController');
@@ -48,6 +49,8 @@ class MqttController extends ChangeNotifier {
       statisticsCollector: statisticsCollector,
       onLog: log,
     );
+    // Init Background Worker
+    PersistentIsolateManager.instance.init();
   }
 
   void log(String message, String type, {String? tag}) {

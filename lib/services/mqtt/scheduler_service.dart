@@ -7,7 +7,6 @@ import '../../services/data_generator.dart';
 import '../../utils/statistics_collector.dart';
 import '../../models/group_config.dart';
 import '../../models/custom_key_config.dart';
-import 'package:flutter/foundation.dart'; // For compute
 import '../../utils/isolate_worker.dart';
 import '../../models/simulation_context.dart';
 
@@ -83,7 +82,12 @@ class SchedulerService {
     int initialDelay = (_alignedStartTime - now);
     if (initialDelay < 0) initialDelay = 0;
 
+    // FIX: Calculate sendCount based on elapsed time to support seamless resumption
+    int elapsedMs = now - _alignedStartTime;
     int sendCount = 0;
+    if (elapsedMs > 0) {
+      sendCount = (elapsedMs / intervalMs).ceil();
+    }
     Timer timer = Timer(Duration(milliseconds: initialDelay), () {
       _scheduleNextBasicPublish(client, clientId, context, intervalMs, sendCount, version);
     });
@@ -140,7 +144,12 @@ class SchedulerService {
 
     // 1. Full Report
     int fullIntervalMs = group.fullIntervalSeconds * 1000;
+    // FIX: Calculate sendCount for resumption
+    int elapsedMs = now - _alignedStartTime;
     int fullSendCount = 0;
+    if (elapsedMs > 0) {
+      fullSendCount = (elapsedMs / fullIntervalMs).ceil();
+    }
     Timer fullTimer = Timer(Duration(milliseconds: initialDelay), () {
       _scheduleFullReport(client, clientId, topic, group, fullIntervalMs, fullSendCount, version);
     });
@@ -150,6 +159,9 @@ class SchedulerService {
     if (group.changeRatio > 0 && group.changeIntervalSeconds < group.fullIntervalSeconds) {
       int changeIntervalMs = group.changeIntervalSeconds * 1000;
       int changeSendCount = 0;
+      if (elapsedMs > 0) {
+        changeSendCount = (elapsedMs / changeIntervalMs).ceil();
+      }
       Timer changeTimer = Timer(Duration(milliseconds: initialDelay), () {
         _scheduleChangeReport(client, clientId, topic, group, changeIntervalMs, changeSendCount, version);
       });
@@ -172,46 +184,28 @@ class SchedulerService {
     int payloadTimestamp = _alignedStartTime + (sendCount * intervalMs);
     String payload;
 
-    // OPTIMIZATION: Use Isolate for massive data points (> 1000) or if enabled
-    bool useIsolate = group.totalKeyCount > 1000;
-
-    if (group.format == 'tn') { // TN format not optimized yet (usually small)
-      Map<String, dynamic> data = DataGenerator.generateTnPayload(group.totalKeyCount, timestamp: payloadTimestamp);
-      payload = jsonEncode(data);
-    } else if (group.format == 'tn-empty') {
-      Map<String, dynamic> data = DataGenerator.generateTnEmptyPayload(timestamp: payloadTimestamp);
-      payload = jsonEncode(data);
-    } else {
       // Standard Format
-      if (useIsolate) {
-        // 1. Prepare State (Main Thread)
-        int key1 = DataGenerator.getKey1Value(clientId);
-        Map<String, dynamic> customValues = DataGenerator.generateCustomKeys(group.customKeys);
-        
-        // 2. Offload work to Isolate
-        try {
-          payload = await compute(generatePayloadJson, WorkerInput(
-            count: group.totalKeyCount,
-            clientId: clientId,
-            timestamp: payloadTimestamp,
-            key1Value: key1,
-            customKeyValues: customValues,
-          ));
-        } catch (e) {
-          onLog('Isolate Error: $e', 'error', tag: clientId);
-          return; // Skip on error
-        }
-      } else {
-        // Standard Sync Generation
-        Map<String, dynamic> data = DataGenerator.generateBatteryStatus(
-          group.totalKeyCount,
+      // OPTIMIZATION: Always use Persistent Isolate Worker to offload serialization.
+      // This is crucial for high concurrency (e.g. 200 devices * 100 points) where
+      // the aggregate main-thread cost of 200 JSON encodes causes lag.
+      
+      // 1. Prepare State (Main Thread)
+      int key1 = DataGenerator.getKey1Value(clientId);
+      Map<String, dynamic> customValues = DataGenerator.generateCustomKeys(group.customKeys);
+      
+      // 2. Offload work to Persistent Isolate
+      try {
+        payload = await PersistentIsolateManager.instance.computeTask(WorkerInput(
+          count: group.totalKeyCount,
           clientId: clientId,
-          customKeys: group.customKeys,
-        );
-        data = DataGenerator.wrapWithTimestamp(data, payloadTimestamp);
-        payload = jsonEncode(data);
+          timestamp: payloadTimestamp,
+          key1Value: key1,
+          customKeyValues: customValues,
+        ));
+      } catch (e) {
+        onLog('Isolate Error: $e', 'error', tag: clientId);
+        return; // Skip on error
       }
-    }
     
     // Check cancellation again after await
     if (!_clientTimers.containsKey(clientId)) return;
@@ -257,37 +251,30 @@ class SchedulerService {
       return; 
     }
 
-    // OPTIMIZATION: Use Isolate for massive data points (> 1000)
+    // OPTIMIZATION: Use Persistent Isolate
     int totalChangeCount = (group.totalKeyCount * group.changeRatio).floor();
-    bool useIsolate = totalChangeCount > 1000;
     
-    Map<String, dynamic> data;
     String payload;
 
+    // TN Formats (Usually tiny, keep main thread for now, or TODO migrate)
     if (group.format == 'tn') {
-      data = DataGenerator.generateTnPayload(group.totalKeyCount, timestamp: payloadTimestamp);
+      Map<String, dynamic> data = DataGenerator.generateTnPayload(group.totalKeyCount, timestamp: payloadTimestamp);
       payload = jsonEncode(data);
     } else if (group.format == 'tn-empty') {
-      data = DataGenerator.generateTnEmptyPayload(timestamp: payloadTimestamp);
+      Map<String, dynamic> data = DataGenerator.generateTnEmptyPayload(timestamp: payloadTimestamp);
       payload = jsonEncode(data);
     } else {
       // Standard Format
-      if (useIsolate) {
+    // Standard Format
+    // OPTIMIZATION: Always use Persistent Isolate Worker
+      if (true) {
          // 1. Prepare State (Main Thread)
-         // Note: Change report includes key_1 if count >= 1. 
-         // Our worker helper includes key_1.
          int key1 = DataGenerator.getKey1Value(clientId);
-         
-         // Custom keys are always included if they fit in count
-         int customCount = group.customKeys.length;
-         // We might need to slice custom keys if totalChangeCount is very small, 
-         // but usually custom keys are prioritized.
-         // For simplicity in optimization, we pass all custom keys. 
          Map<String, dynamic> customValues = DataGenerator.generateCustomKeys(group.customKeys);
 
          try {
-           payload = await compute(generatePayloadJson, WorkerInput(
-             count: totalChangeCount, // This controls the total keys generated
+           payload = await PersistentIsolateManager.instance.computeTask(WorkerInput(
+             count: totalChangeCount, 
              clientId: clientId,
              timestamp: payloadTimestamp,
              key1Value: key1,
@@ -297,16 +284,6 @@ class SchedulerService {
             onLog('Isolate Error (Change): $e', 'error', tag: clientId);
             return;
          }
-      } else {
-          int customCount = group.customKeys.length;
-          int randomChangeCount = (totalChangeCount - customCount).clamp(0, group.totalKeyCount);
-          data = DataGenerator.generateBatteryStatus(
-            randomChangeCount + customCount,
-            clientId: clientId,
-            customKeys: group.customKeys,
-          );
-          data = DataGenerator.wrapWithTimestamp(data, payloadTimestamp);
-          payload = jsonEncode(data);
       }
     }
     
@@ -317,9 +294,7 @@ class SchedulerService {
     // Use info type for change reports
     // Calculate length logic: if using isolate, payload is string.
     // We can't easy get keys count without parsing, so we just say "Change Report"
-    String msg = useIsolate 
-        ? '[$clientId] Change Report #$sendCount (~$totalChangeCount keys)'
-        : '[$clientId] Change Report #$sendCount'; // data is not available in scope if useIsolate=true
+    String msg = '[$clientId] Change Report #$sendCount (~$totalChangeCount keys)';
 
     _publish(client, topic, payload, group.name, 'info', msg);
 
