@@ -252,7 +252,9 @@ class SchedulerService {
     builder.addString(payload);
     
     try {
-      client.publishMessage(topic, MqttQos.atLeastOnce, builder.payload!);
+      // OPTIMIZATION: Use QoS 0 (atMostOnce) to prevent "Retry Storms" under high load.
+      // High concurrency delays PUBACKs, causing clients to retry and create duplicates.
+      client.publishMessage(topic, MqttQos.atMostOnce, builder.payload!);
       statisticsCollector.incrementSuccess();
       statisticsCollector.setMessageSize(payload.length);
       int bytes = utf8.encode(payload).length;
@@ -269,8 +271,14 @@ class SchedulerService {
     if (_clientVersions[clientId] != version) return;
 
     int nextTarget = _alignedStartTime + (sendCount * intervalMs);
+    
+    // OPTIMIZATION: Add random Jitter (0-500ms) to the FIRING time (not payload time).
+    // This distributes the CPU/Network spike so 1000 devices don't fire at the exact same millisecond.
+    int jitter = (clientId.hashCode % 500); 
+    int targetWithJitter = nextTarget + jitter;
+
     int now = DateTime.now().millisecondsSinceEpoch;
-    int delay = nextTarget - now;
+    int delay = targetWithJitter - now;
 
     if (delay < -500) {
       // Skip missed cycles
@@ -279,7 +287,8 @@ class SchedulerService {
       
       // Calculate new target and delay
       nextTarget = _alignedStartTime + (sendCount * intervalMs);
-      delay = nextTarget - now;
+      targetWithJitter = nextTarget + jitter;
+      delay = targetWithJitter - now;
       
       // Safety: Ensure delay is non-negative and we aren't spiraling
       if (delay < 0) {
@@ -288,7 +297,8 @@ class SchedulerService {
          if (now > nextTarget) {
             sendCount++;
             nextTarget = _alignedStartTime + (sendCount * intervalMs);
-            delay = nextTarget - now;
+            targetWithJitter = nextTarget + jitter;
+            delay = targetWithJitter - now;
          }
       }
     }
