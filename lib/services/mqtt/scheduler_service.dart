@@ -86,7 +86,7 @@ class SchedulerService {
     int elapsedMs = now - _alignedStartTime;
     int sendCount = 0;
     if (elapsedMs > 0) {
-      sendCount = (elapsedMs / intervalMs).ceil();
+      sendCount = (elapsedMs / intervalMs).floor();
     }
     Timer timer = Timer(Duration(milliseconds: initialDelay), () {
       _scheduleNextBasicPublish(client, clientId, context, intervalMs, sendCount, version);
@@ -148,7 +148,7 @@ class SchedulerService {
     int elapsedMs = now - _alignedStartTime;
     int fullSendCount = 0;
     if (elapsedMs > 0) {
-      fullSendCount = (elapsedMs / fullIntervalMs).ceil();
+      fullSendCount = (elapsedMs / fullIntervalMs).floor();
     }
     Timer fullTimer = Timer(Duration(milliseconds: initialDelay), () {
       _scheduleFullReport(client, clientId, topic, group, fullIntervalMs, fullSendCount, version);
@@ -160,7 +160,7 @@ class SchedulerService {
       int changeIntervalMs = group.changeIntervalSeconds * 1000;
       int changeSendCount = 0;
       if (elapsedMs > 0) {
-        changeSendCount = (elapsedMs / changeIntervalMs).ceil();
+        changeSendCount = (elapsedMs / changeIntervalMs).floor();
       }
       Timer changeTimer = Timer(Duration(milliseconds: initialDelay), () {
         _scheduleChangeReport(client, clientId, topic, group, changeIntervalMs, changeSendCount, version);

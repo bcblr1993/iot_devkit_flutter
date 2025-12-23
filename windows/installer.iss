@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "IoT DevKit"
-#define MyAppVersion "1.0.7"
+#define MyAppVersion "1.0.8"
 #define MyAppPublisher "Chen Xu"
 #define MyAppURL "https://github.com/StartYourTour/iot_devkit"
 #define MyAppExeName "iot_devkit.exe"
