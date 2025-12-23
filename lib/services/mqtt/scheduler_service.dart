@@ -283,7 +283,11 @@ class SchedulerService {
     int now = DateTime.now().millisecondsSinceEpoch;
     int delay = targetWithJitter - now;
 
-    if (delay < -500) {
+    // RELAXED FIX: The previous threshold (-500ms) was too aggressive for 1s intervals with jitter.
+    // If the system lagged by 600ms, it would SKIP the current second, causing a 2s gap.
+    // Now we allow up to 3000ms (3s) of lag before skipping cycles. 
+    // This prioritizes "sending all data" over "skipping to live".
+    if (delay < -3000) {
       // Skip missed cycles
       int missedCycles = ((now - nextTarget) / intervalMs).ceil();
       sendCount += missedCycles;
