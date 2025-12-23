@@ -96,7 +96,7 @@ class _LogConsoleState extends State<LogConsole> {
       children: [
         // Toolbar
         GestureDetector(
-          onTap: widget.onToggle,
+          onTap: widget.isMaximized ? null : widget.onToggle,
           behavior: HitTestBehavior.opaque,
           child: Container(
             height: 40,
@@ -174,18 +174,19 @@ class _LogConsoleState extends State<LogConsole> {
                       ),
                       const SizedBox(width: 4),
                     ],
-                    IconButton(
-                      iconSize: 18,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      icon: AnimatedRotation(
-                        turns: widget.isExpanded ? 0 : -0.25,
-                        duration: const Duration(milliseconds: 200),
-                        child: const Icon(Icons.keyboard_arrow_down),
+                    if (!widget.isMaximized)
+                      IconButton(
+                        iconSize: 18,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        icon: AnimatedRotation(
+                          turns: widget.isExpanded ? 0 : -0.25,
+                          duration: const Duration(milliseconds: 200),
+                          child: const Icon(Icons.keyboard_arrow_down),
+                        ),
+                        onPressed: widget.onToggle,
+                        tooltip: widget.isExpanded ? collapseTooltip : expandTooltip,
                       ),
-                      onPressed: widget.onToggle,
-                      tooltip: widget.isExpanded ? collapseTooltip : expandTooltip,
-                    ),
                   ],
                 ),
               ],

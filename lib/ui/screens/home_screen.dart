@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:provider/provider.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../services/mqtt_controller.dart';
@@ -21,6 +22,10 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   final List<LogEntry> _logs = [];
   bool _isLogExpanded = false;
+  
+  // Performance Optimization: Log Throttling
+  final List<LogEntry> _logBuffer = [];
+  Timer? _logThrottleTimer;
 
   @override
   void initState() {
@@ -36,17 +41,38 @@ class _HomeScreenState extends State<HomeScreen> {
            Provider.of<StatusRegistry>(context, listen: false).setStatus(message, Theme.of(context).colorScheme.error);
         }
         
-        setState(() {
-          final now = DateTime.now();
-          final timestamp = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
-          _logs.add(LogEntry(message, type, timestamp, tag: tag));
-          // Limit logs to prevent memory issues
-          if (_logs.length > 2000) {
-            _logs.removeRange(0, 500);
-          }
-        });
+        final now = DateTime.now();
+        final timestamp = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
+        
+        // Add to buffer (Background operation, no setState)
+        _logBuffer.add(LogEntry(message, type, timestamp, tag: tag));
+
+        // Schedule batch update if not already running
+        if (_logThrottleTimer == null || !_logThrottleTimer!.isActive) {
+          _logThrottleTimer = Timer(const Duration(milliseconds: 300), _flushLogs);
+        }
       };
     });
+  }
+
+  void _flushLogs() {
+    if (!mounted || _logBuffer.isEmpty) return;
+
+    setState(() {
+      _logs.addAll(_logBuffer);
+      _logBuffer.clear();
+      
+      // Limit logs to prevent memory issues
+      if (_logs.length > 2000) {
+        _logs.removeRange(0, _logs.length - 1500); // Keep last 1500
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _logThrottleTimer?.cancel();
+    super.dispose();
   }
 
   @override

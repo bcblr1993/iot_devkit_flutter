@@ -170,30 +170,28 @@ class _GroupsManagerState extends State<GroupsManager> {
         children: [
           Padding(
             padding: const EdgeInsets.all(12.0),
-            child: widget.isLocked 
-                ? Text('${l10n.settingsLocked}.', style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5)))
-                : Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Expanded(child: _buildTextField(l10n.groupName, group.name, (v) => _updateGroup(index, group.copyWith(name: v)))),
+                    Expanded(child: _buildTextField(l10n.groupName, group.name, (v) => _updateGroup(index, group.copyWith(name: v)), enabled: !widget.isLocked)),
                     const SizedBox(width: 8),
-                    Expanded(child: _buildTextField(l10n.startIndex, group.startDeviceNumber.toString(), (v) => _updateGroup(index, group.copyWith(startDeviceNumber: int.tryParse(v) ?? 1)), isNumber: true)),
+                    Expanded(child: _buildTextField(l10n.startIndex, group.startDeviceNumber.toString(), (v) => _updateGroup(index, group.copyWith(startDeviceNumber: int.tryParse(v) ?? 1)), isNumber: true, enabled: !widget.isLocked)),
                     const SizedBox(width: 8),
-                    Expanded(child: _buildTextField(l10n.endIndex, group.endDeviceNumber.toString(), (v) => _updateGroup(index, group.copyWith(endDeviceNumber: int.tryParse(v) ?? 10)), isNumber: true)),
+                    Expanded(child: _buildTextField(l10n.endIndex, group.endDeviceNumber.toString(), (v) => _updateGroup(index, group.copyWith(endDeviceNumber: int.tryParse(v) ?? 10)), isNumber: true, enabled: !widget.isLocked)),
                     const SizedBox(width: 8),
-                    Expanded(child: _buildTextField(l10n.deviceName, group.devicePrefix, (v) => _updateGroup(index, group.copyWith(devicePrefix: v)))),
+                    Expanded(child: _buildTextField(l10n.deviceName, group.devicePrefix, (v) => _updateGroup(index, group.copyWith(devicePrefix: v)), enabled: !widget.isLocked)),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Expanded(child: _buildTextField(l10n.clientId, group.clientIdPrefix, (v) => _updateGroup(index, group.copyWith(clientIdPrefix: v)))),
+                    Expanded(child: _buildTextField(l10n.clientId, group.clientIdPrefix, (v) => _updateGroup(index, group.copyWith(clientIdPrefix: v)), enabled: !widget.isLocked)),
                     const SizedBox(width: 8),
-                    Expanded(child: _buildTextField(l10n.username, group.usernamePrefix, (v) => _updateGroup(index, group.copyWith(usernamePrefix: v)))),
+                    Expanded(child: _buildTextField(l10n.username, group.usernamePrefix, (v) => _updateGroup(index, group.copyWith(usernamePrefix: v)), enabled: !widget.isLocked)),
                     const SizedBox(width: 8),
-                    Expanded(child: _buildTextField(l10n.password, group.passwordPrefix, (v) => _updateGroup(index, group.copyWith(passwordPrefix: v)))),
+                    Expanded(child: _buildTextField(l10n.password, group.passwordPrefix, (v) => _updateGroup(index, group.copyWith(passwordPrefix: v)), enabled: !widget.isLocked)),
                     const SizedBox(width: 8),
                     Expanded(
                       child: DropdownButtonFormField<String>(
@@ -216,13 +214,13 @@ class _GroupsManagerState extends State<GroupsManager> {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Expanded(child: _buildTextField(l10n.totalKeys, group.totalKeyCount.toString(), (v) => _updateGroup(index, group.copyWith(totalKeyCount: int.tryParse(v) ?? 10)), isNumber: true)),
+                    Expanded(child: _buildTextField(l10n.totalKeys, group.totalKeyCount.toString(), (v) => _updateGroup(index, group.copyWith(totalKeyCount: int.tryParse(v) ?? 10)), isNumber: true, enabled: !widget.isLocked)),
                     const SizedBox(width: 8),
-                    Expanded(child: _buildTextField(l10n.changeRatio, group.changeRatio.toString(), (v) => _updateGroup(index, group.copyWith(changeRatio: double.tryParse(v) ?? 0.3)), isNumber: true)),
+                    Expanded(child: _buildTextField(l10n.changeRatio, group.changeRatio.toString(), (v) => _updateGroup(index, group.copyWith(changeRatio: double.tryParse(v) ?? 0.3)), isNumber: true, enabled: !widget.isLocked)),
                     const SizedBox(width: 8),
-                    Expanded(child: _buildTextField(l10n.changeInterval, group.changeIntervalSeconds.toString(), (v) => _updateGroup(index, group.copyWith(changeIntervalSeconds: int.tryParse(v) ?? 1)), isNumber: true)),
+                    Expanded(child: _buildTextField(l10n.changeInterval, group.changeIntervalSeconds.toString(), (v) => _updateGroup(index, group.copyWith(changeIntervalSeconds: int.tryParse(v) ?? 1)), isNumber: true, enabled: !widget.isLocked)),
                     const SizedBox(width: 8),
-                    Expanded(child: _buildTextField(l10n.fullInterval, group.fullIntervalSeconds.toString(), (v) => _updateGroup(index, group.copyWith(fullIntervalSeconds: int.tryParse(v) ?? 300)), isNumber: true)),
+                    Expanded(child: _buildTextField(l10n.fullInterval, group.fullIntervalSeconds.toString(), (v) => _updateGroup(index, group.copyWith(fullIntervalSeconds: int.tryParse(v) ?? 300)), isNumber: true, enabled: !widget.isLocked)),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -265,16 +263,17 @@ class _GroupsManagerState extends State<GroupsManager> {
     );
   }
 
-  Widget _buildTextField(String label, String value, Function(String) onChanged, {bool isNumber = false}) {
+  Widget _buildTextField(String label, String value, Function(String) onChanged, {bool isNumber = false, bool enabled = true}) {
     return TextFormField(
       initialValue: value,
+      enabled: enabled,
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
       decoration: InputDecoration(
         labelText: label,
         isDense: true,
         // Borders are defined in Theme
       ),
-      onChanged: onChanged,
+      onChanged: enabled ? onChanged : null,
     );
   }
 }

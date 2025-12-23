@@ -20,6 +20,7 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
 DisableProgramGroupPage=yes
+DisableDirPage=no
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputDir=..\dist\
@@ -47,3 +48,71 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+
+[Code]
+function GetUninstallString(): String;
+var
+  sUnInstPath: String;
+  sUnInstPathKey: String;
+begin
+  sUnInstPath := '';
+  sUnInstPathKey := 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{#emit SetupSetting("AppId")}_is1';
+  {First check HKLM, then HKCU}
+  if RegQueryStringValue(HKLM, sUnInstPathKey, 'UninstallString', sUnInstPath) then
+    Result := sUnInstPath
+  else begin
+    if RegQueryStringValue(HKCU, sUnInstPathKey, 'UninstallString', sUnInstPath) then
+      Result := sUnInstPath;
+  end;
+end;
+
+/////////////////////////////////////////////////////////////////////
+function IsUpgrade(): Boolean;
+begin
+  Result := (GetUninstallString() <> '');
+end;
+
+/////////////////////////////////////////////////////////////////////
+function UnInstallOldVersion(): Integer;
+var
+  sUnInstallString: String;
+  iResultCode: Integer;
+begin
+{ Return Values: }
+{ 1 - uninstall string is empty }
+{ 2 - error executing the UnInstallString }
+{ 3 - successfully executed the UnInstallString }
+
+  { default return value }
+  Result := 0;
+
+  { get the uninstall string of the old app }
+  sUnInstallString := GetUninstallString();
+  if sUnInstallString <> '' then begin
+    sUnInstallString := RemoveQuotes(sUnInstallString);
+    if Exec(sUnInstallString, '/SILENT /NORESTART /SUPPRESSMSGBOXES','', SW_HIDE, ewWaitUntilTerminated, iResultCode) then
+      Result := 3
+    else
+      Result := 2;
+  end else
+    Result := 1;
+end;
+
+/////////////////////////////////////////////////////////////////////
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if (CurStep=ssInstall) then
+  begin
+    if (IsUpgrade()) then
+    begin
+        if MsgBox(ExpandConstant('{cm:UninstallOldVersion}'), mbConfirmation, MB_YESNO) = IDYES then
+        begin
+            UnInstallOldVersion();
+        end;
+    end;
+  end;
+end;
+
+[CustomMessages]
+english.UninstallOldVersion=An existing version was detected. Do you want to uninstall it completely before installing the new version?
+chinese.UninstallOldVersion=检测到已安装旧版本。您是否希望在安装新版本之前先卸载它？

@@ -105,10 +105,19 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
       }
 
       if (config['mode'] == 'advanced') {
-        _tabController.index = 1;
-      } else {
-        _tabController.index = 0;
-      }
+      // Use animateTo to ensure TabBar and TabBarView are in sync
+      Future.microtask(() {
+        if (mounted && _tabController.index != 1) {
+          _tabController.animateTo(1);
+        }
+      });
+    } else {
+      Future.microtask(() {
+        if (mounted && _tabController.index != 0) {
+          _tabController.animateTo(0);
+        }
+      });
+    }
 
       // Basic Mode mapping
       _startIdxController.text = (config['device_start_number'] ?? 1).toString();
@@ -906,7 +915,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
         isDense: true,
       ),
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-      onChanged: onChanged,
+      onChanged: isLocked ? null : onChanged,
       validator: (value) {
         if (value == null || value.isEmpty) return 'Required';
         if (isNumber && int.tryParse(value) == null) return 'Invalid number';

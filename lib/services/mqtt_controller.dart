@@ -142,37 +142,44 @@ class MqttController extends ChangeNotifier {
        customKeys = List<CustomKeyConfig>.from(config['custom_keys']);
     }
 
-    for (int i = startIdx; i <= endIdx; i++) {
+    // Connect in batches to avoid overwhelming the system while staying fast
+    const int batchSize = 10;
+    for (int i = startIdx; i <= endIdx; i += batchSize) {
       if (!isRunning) break;
-
-      String idxStr = i.toString().padLeft(1, '0');
-      String clientId = '$clientIdPrefix$idxStr';
-      String username = '$userPrefix$idxStr';
-      String password = '$passPrefix$idxStr';
-
-      final context = BasicSimulationContext(
-        topic: topic,
-        intervalSeconds: sendInterval,
-        format: format,
-        dataPointCount: dataPointCount,
-        customKeys: customKeys
-      );
-
-      await _clientManager.createClient(
-        host: host,
-        port: port,
-        clientId: clientId,
-        username: username,
-        password: password,
-        topic: topic,
-        context: context,
-        enableSsl: enableSsl,
-        caPath: caPath,
-        certPath: certPath,
-        keyPath: keyPath,
-      );
       
-      await Future.delayed(const Duration(milliseconds: 10));
+      List<Future<void>> batch = [];
+      for (int j = i; j < i + batchSize && j <= endIdx; j++) {
+        String idxStr = j.toString();
+        String clientId = '$clientIdPrefix$idxStr';
+        String username = '$userPrefix$idxStr';
+        String password = '$passPrefix$idxStr';
+
+        final context = BasicSimulationContext(
+          topic: topic,
+          intervalSeconds: sendInterval,
+          format: format,
+          dataPointCount: dataPointCount,
+          customKeys: customKeys
+        );
+
+        batch.add(_clientManager.createClient(
+          host: host,
+          port: port,
+          clientId: clientId,
+          username: username,
+          password: password,
+          topic: topic,
+          context: context,
+          enableSsl: enableSsl,
+          caPath: caPath,
+          certPath: certPath,
+          keyPath: keyPath,
+        ));
+      }
+      
+      await Future.wait(batch);
+      // Small pause between batches
+      await Future.delayed(const Duration(milliseconds: 100));
     }
   }
 
@@ -206,39 +213,44 @@ class MqttController extends ChangeNotifier {
     String? certPath = config['mqtt']['cert_path'];
     String? keyPath = config['mqtt']['key_path'];
 
+    const int batchSize = 5; // Smaller batch for advanced mode groups
     for (var group in groups) {
       if (!isRunning) break;
       
       log('Starting Group: ${group.name}', 'info');
       
-      for (int i = group.startDeviceNumber; i <= group.endDeviceNumber; i++) {
+      for (int i = group.startDeviceNumber; i <= group.endDeviceNumber; i += batchSize) {
         if (!isRunning) break;
 
-        String idxStr = i.toString(); 
-        String clientId = '${group.clientIdPrefix}$idxStr';
-        String username = '${group.usernamePrefix}$idxStr';
-        String password = '${group.passwordPrefix}$idxStr';
+        List<Future<void>> batch = [];
+        for (int j = i; j < i + batchSize && j <= group.endDeviceNumber; j++) {
+          String idxStr = j.toString(); 
+          String clientId = '${group.clientIdPrefix}$idxStr';
+          String username = '${group.usernamePrefix}$idxStr';
+          String password = '${group.passwordPrefix}$idxStr';
 
-        final context = AdvancedSimulationContext(
-          topic: topic, 
-          group: group
-        );
+          final context = AdvancedSimulationContext(
+            topic: topic, 
+            group: group
+          );
 
-        await _clientManager.createClient(
-          host: host,
-          port: port,
-          clientId: clientId,
-          username: username,
-          password: password,
-          topic: topic,
-          context: context,
-          enableSsl: enableSsl,
-          caPath: caPath,
-          certPath: certPath,
-          keyPath: keyPath,
-        );
-        
-        await Future.delayed(const Duration(milliseconds: 10));
+          batch.add(_clientManager.createClient(
+            host: host,
+            port: port,
+            clientId: clientId,
+            username: username,
+            password: password,
+            topic: topic,
+            context: context,
+            enableSsl: enableSsl,
+            caPath: caPath,
+            certPath: certPath,
+            keyPath: keyPath,
+          ));
+        }
+
+        await Future.wait(batch);
+        await Future.delayed(const Duration(milliseconds: 100));
       }
     }
   }

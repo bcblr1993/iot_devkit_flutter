@@ -45,6 +45,13 @@ class SchedulerService {
   }
 
   void startPublishing(MqttServerClient client, String clientId, SimulationContext context) {
+    // CRITICAL FIX: Ensure any existing scheduling chain for this client is stopped before starting a new one.
+    // This prevents "Double Timers" if onConnected is triggered multiple times or race conditions occur.
+    if (_clientTimers.containsKey(clientId)) {
+      onLog('Restarting scheduler for $clientId (cleaning up cleaning previous timers)', 'warning');
+      stopPublishing(clientId);
+    }
+
     if (context is BasicSimulationContext) {
       _startBasicPublishing(client, clientId, context);
     } else if (context is AdvancedSimulationContext) {
@@ -100,8 +107,8 @@ class SchedulerService {
     
     // 2. Schedule Next
     sendCount++;
-    _scheduleNext(clientId, intervalMs, sendCount, () {
-      _scheduleNextBasicPublish(client, clientId, context, intervalMs, sendCount);
+    _scheduleNext(clientId, intervalMs, sendCount, (actualCount) {
+      _scheduleNextBasicPublish(client, clientId, context, intervalMs, actualCount);
     });
   }
 
@@ -161,8 +168,8 @@ class SchedulerService {
     _publish(client, topic, payload, group.name, 'success', '[$clientId] Full Report #$sendCount');
 
     sendCount++;
-    _scheduleNext(clientId, intervalMs, sendCount, () {
-      _scheduleFullReport(client, clientId, topic, group, intervalMs, sendCount);
+    _scheduleNext(clientId, intervalMs, sendCount, (actualCount) {
+      _scheduleFullReport(client, clientId, topic, group, intervalMs, actualCount);
     });
   }
 
@@ -199,8 +206,8 @@ class SchedulerService {
     _publish(client, topic, payload, group.name, 'info', '[$clientId] Change Report #$sendCount (${data.length} keys)');
 
     sendCount++;
-    _scheduleNext(clientId, intervalMs, sendCount, () {
-      _scheduleChangeReport(client, clientId, topic, group, intervalMs, sendCount);
+    _scheduleNext(clientId, intervalMs, sendCount, (actualCount) {
+      _scheduleChangeReport(client, clientId, topic, group, intervalMs, actualCount);
     });
   }
 
@@ -222,13 +229,36 @@ class SchedulerService {
     }
   }
 
-  void _scheduleNext(String clientId, int intervalMs, int sendCount, VoidCallback callback) {
-     int nextTarget = _alignedStartTime + (sendCount * intervalMs);
-     int delay = nextTarget - DateTime.now().millisecondsSinceEpoch;
-     if (delay < 0) delay = 0;
-     
-     Timer t = Timer(Duration(milliseconds: delay), callback);
-     _addTimer(clientId, t);
+  void _scheduleNext(String clientId, int intervalMs, int sendCount, Function(int) callback) {
+    int nextTarget = _alignedStartTime + (sendCount * intervalMs);
+    int now = DateTime.now().millisecondsSinceEpoch;
+    int delay = nextTarget - now;
+
+    if (delay < -500) {
+      // Skip missed cycles
+      int missedCycles = ((now - nextTarget) / intervalMs).ceil();
+      sendCount += missedCycles;
+      
+      // Calculate new target and delay
+      nextTarget = _alignedStartTime + (sendCount * intervalMs);
+      delay = nextTarget - now;
+      
+      // Safety: Ensure delay is non-negative and we aren't spiraling
+      if (delay < 0) {
+         delay = 0; 
+         // Force move to next interval if we are somehow still behind
+         if (now > nextTarget) {
+            sendCount++;
+            nextTarget = _alignedStartTime + (sendCount * intervalMs);
+            delay = nextTarget - now;
+         }
+      }
+    }
+
+    if (delay < 0) delay = 0;
+    
+    Timer t = Timer(Duration(milliseconds: delay), () => callback(sendCount));
+    _addTimer(clientId, t);
   }
 
   void _addTimer(String clientId, Timer t) {

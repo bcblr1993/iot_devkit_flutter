@@ -65,6 +65,20 @@ class MqttClientManager {
       'keyPath': keyPath,
     };
 
+    // Ensure old client is cleaned up if it exists
+    // Ensure old client is cleaned up if it exists
+    if (_clients.containsKey(clientId)) {
+      _logger.info('[$clientId] Force replacing existing client');
+      try {
+        _clients[clientId]?.disconnect();
+      } catch (_) {}
+      
+      // CRITICAL FIX: Manually trigger cleanup because _handleDisconnect checks for map presence,
+      // which we are about to remove. We must ensure onDisconnected is called to stop Schedulers.
+      onDisconnected(clientId);
+      _clients.remove(clientId);
+    }
+
     final client = MqttServerClient(host, clientId);
     client.port = port;
     client.keepAlivePeriod = 60;
@@ -119,11 +133,11 @@ class MqttClientManager {
     _clients[clientId] = client;
     _reconnectAttempts[clientId] = 0; // Reset retries
     onConnected(clientId, client);
-    onLog('Connected', 'success', tag: _getTag(clientId));
+    onLog('[$clientId] Connected', 'success', tag: _getTag(clientId));
   }
 
   void _handleConnectionFailure(String clientId, dynamic error) {
-    onLog('Connection failed: $error', 'error', tag: _getTag(clientId));
+    onLog('[$clientId] Connection failed: $error', 'error', tag: _getTag(clientId));
     _scheduleReconnect(clientId);
   }
 
@@ -131,7 +145,7 @@ class MqttClientManager {
     if (_clients.containsKey(clientId)) {
       _clients.remove(clientId);
       onDisconnected(clientId);
-      onLog('Disconnected, will retry...', 'warning', tag: _getTag(clientId));
+      onLog('[$clientId] Disconnected, will retry...', 'warning', tag: _getTag(clientId));
       _scheduleReconnect(clientId);
     }
   }

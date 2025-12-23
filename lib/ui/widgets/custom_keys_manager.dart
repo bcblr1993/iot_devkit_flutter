@@ -131,16 +131,16 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
                   ),
               ],
             ),
-            if (!widget.isLocked)
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: Icon(_isSearchVisible ? Icons.search_off : Icons.search, size: 20),
-                    onPressed: _createSearch,
-                    tooltip: l10n.searchLabel,
-                    visualDensity: VisualDensity.compact,
-                  ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(_isSearchVisible ? Icons.search_off : Icons.search, size: 20),
+                  onPressed: _createSearch,
+                  tooltip: l10n.searchLabel,
+                  visualDensity: VisualDensity.compact,
+                ),
+                if (!widget.isLocked) ...[
                   const SizedBox(width: 4),
                   FilledButton.icon(
                     onPressed: _localKeys.length >= widget.maxKeys ? null : _addKey,
@@ -149,7 +149,8 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
                     style: FilledButton.styleFrom(visualDensity: VisualDensity.compact),
                   ),
                 ],
-              ),
+              ],
+            ),
           ],
         ),
         if (_isSearchVisible)

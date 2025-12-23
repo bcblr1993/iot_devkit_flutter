@@ -107,3 +107,11 @@ When asked to implement a feature:
 * ❌ **Don't** lose user input on tab switch. -> **Fix**: Use `AutomaticKeepAliveClientMixin` or `SharedPreferences`.
 * ❌ **Don't** use `setState` in async gaps without checking `mounted`.
 * ❌ **Don't** create new files in the root `lib/` directory. Keep it clean.
+
+---
+
+## 8. Development Environment (Local Only)
+
+* **Proxy**: The local development environment uses a proxy.
+  * **Settings**: `export https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890`
+  * **Rule**: For any network-dependent commands (e.g., `git push`, `flutter pub get`), prefix the command with these proxy variables to ensure connectivity.
