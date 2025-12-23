@@ -111,6 +111,7 @@ class SchedulerService {
       data = DataGenerator.generateTnEmptyPayload(timestamp: payloadTimestamp);
     } else {
       data = DataGenerator.generateBatteryStatus(dataPointCount, clientId: clientId, customKeys: customKeys);
+      data = DataGenerator.wrapWithTimestamp(data, payloadTimestamp);
     }
     
     String payload = jsonEncode(data);
@@ -175,6 +176,7 @@ class SchedulerService {
         clientId: clientId,
         customKeys: group.customKeys,
       );
+      data = DataGenerator.wrapWithTimestamp(data, payloadTimestamp);
     }
     
     String payload = jsonEncode(data);
@@ -233,6 +235,7 @@ class SchedulerService {
         clientId: clientId,
         customKeys: group.customKeys,
       );
+      data = DataGenerator.wrapWithTimestamp(data, payloadTimestamp);
     }
     
     String payload = jsonEncode(data);

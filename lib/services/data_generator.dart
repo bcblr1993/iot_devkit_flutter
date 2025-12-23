@@ -252,4 +252,14 @@ class DataGenerator {
     // Custom keys usually come first or override
     return {...customData, ...generatedData};
   }
+
+  // FORCE TIMESTAMP: Ensures that the payload carries the logical timestamp, 
+  // preventing server-side arrival time artifacts under jitter/load.
+  static Map<String, dynamic> wrapWithTimestamp(Map<String, dynamic> data, int timestamp) {
+    if (data.containsKey('ts')) return data; // Don't overwrite if already exists (e.g. from Tn payload)
+    return {
+      'ts': timestamp,
+      'values': data,
+    };
+  }
 }
