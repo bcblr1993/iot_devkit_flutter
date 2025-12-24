@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../ui/styles/app_theme_effect.dart';
 
 class ThemeManager extends ChangeNotifier {
-  static const String _kInfoTheme = 'app-theme';
+  static const String kThemePreferenceKey = 'app-theme';
   
   late ThemeData _currentTheme;
   String _currentThemeName = 'forest-mint';
@@ -11,9 +11,17 @@ class ThemeManager extends ChangeNotifier {
   ThemeData get currentTheme => _currentTheme;
   String get currentThemeName => _currentThemeName;
 
-  ThemeManager() {
-    _currentTheme = _themes['forest-mint']!;
-    _loadPreference();
+  ThemeManager({String? initialTheme}) {
+    if (initialTheme != null && _themes.containsKey(initialTheme)) {
+      _currentThemeName = initialTheme;
+      _currentTheme = _themes[initialTheme]!;
+    } else {
+      _currentTheme = _themes['forest-mint']!;
+      // Only load preference usage if not provided (though main.dart should ideally always provide it)
+      if (initialTheme == null) {
+        _loadPreference();
+      }
+    }
   }
 
   /// 核心主题构建器，深度定制各个组件
@@ -409,7 +417,7 @@ class ThemeManager extends ChangeNotifier {
 
   Future<void> _loadPreference() async {
     final prefs = await SharedPreferences.getInstance();
-    final savedTheme = prefs.getString(_kInfoTheme);
+    final  savedTheme = prefs.getString(kThemePreferenceKey);
     if (savedTheme != null && _themes.containsKey(savedTheme)) {
       _currentTheme = _themes[savedTheme]!;
       _currentThemeName = savedTheme;
@@ -424,6 +432,6 @@ class ThemeManager extends ChangeNotifier {
 
   Future<void> _savePreference(String themeName) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_kInfoTheme, themeName);
+    await prefs.setString(kThemePreferenceKey, themeName);
   }
 }

@@ -15,19 +15,18 @@ import 'services/log_storage_service.dart';
 
 import 'package:window_manager/window_manager.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize File Logging Service
+  // 1. Initialize File Logging Service
   await LogStorageService.instance.init();
 
-  // Initialize Logging
+  // 2. Initialize Logging
   Logger.root.level = Level.ALL; // Defaults to Level.INFO
   Logger.root.onRecord.listen((record) {
-    // 1. Write to file (Always, or can be throttled)
     LogStorageService.instance.write(record);
-    
-    // 2. Print to console (Debug Only)
     if (kDebugMode) {
       debugPrint('${record.level.name}: ${record.time}: ${record.loggerName}: ${record.message}');
       if (record.error != null) {
@@ -37,6 +36,10 @@ void main() async {
   });
 
   await windowManager.ensureInitialized();
+  
+  // 3. Preload Theme Preference (Sync) to avoid FOUC
+  final prefs = await SharedPreferences.getInstance();
+  final String? savedTheme = prefs.getString(ThemeManager.kThemePreferenceKey);
 
   WindowOptions windowOptions = const WindowOptions(
     size: Size(1100, 750),
@@ -55,17 +58,18 @@ void main() async {
     await windowManager.setMaximizable(true);
   });
 
-  runApp(const IoTDevKitApp());
+  runApp(IoTDevKitApp(initialTheme: savedTheme));
 }
 
 class IoTDevKitApp extends StatelessWidget {
-  const IoTDevKitApp({super.key});
+  final String? initialTheme;
+  const IoTDevKitApp({super.key, this.initialTheme});
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<ThemeManager>(create: (_) => ThemeManager()),
+        ChangeNotifierProvider<ThemeManager>(create: (_) => ThemeManager(initialTheme: initialTheme)),
         ChangeNotifierProvider<LanguageProvider>(create: (_) => LanguageProvider()),
         ChangeNotifierProvider<StatusRegistry>(create: (_) => StatusRegistry()),
         ChangeNotifierProvider<MqttController>(create: (_) => MqttController()),
