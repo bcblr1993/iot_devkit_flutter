@@ -11,7 +11,7 @@
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{{#MyAppGUID}}}
+AppId={{D86A3D42-1234-4567-89AB-CDEF01234567}
 ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
 AppName={#MyAppName}
@@ -23,7 +23,15 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
 DisableProgramGroupPage=yes
+; User requested to Allow choosing directory, so keep no.
 DisableDirPage=no
+; Default to previous path if available
+UsePreviousAppDir=yes
+; Prevent installation if app is running
+AppMutex=IoTDevKit_Instance_Mutex
+; Prevent multiple installers from running
+SetupMutex=IoTDevKit_Setup_Mutex
+
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputDir=..\dist\

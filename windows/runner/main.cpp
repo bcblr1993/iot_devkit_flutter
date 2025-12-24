@@ -13,6 +13,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
     CreateAndAttachConsole();
   }
 
+  // Create a named mutex to detect if the application is already running
+  // This is used by the Inno Setup installer (AppMutex) to block installation/uninstallation
+  // while the app is active.
+  HANDLE hMutex = ::CreateMutex(nullptr, TRUE, L"IoTDevKit_Instance_Mutex");
+  // We don't enforce single instance here (by returning), we just hold the handle.
+  // If you strictly want single instance only, check GetLastError() == ERROR_ALREADY_EXISTS.
+
   // Initialize COM, so that it is available for use in the library and/or
   // plugins.
   ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);

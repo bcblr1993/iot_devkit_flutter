@@ -6,6 +6,7 @@ import '../../models/group_config.dart';
 import '../../models/custom_key_config.dart';
 import 'custom_keys_manager.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../utils/platform_ui_helper.dart';
 
 class GroupsManager extends StatefulWidget {
   final List<GroupConfig> groups;
@@ -243,14 +244,11 @@ class _GroupsManagerState extends State<GroupsManager> {
     if (isGlass) {
       return Card(
         elevation: 0,
-        color: theme.cardColor,
+        color: theme.cardColor.withOpacity(PlatformUIHelper.isHighPerformancePlatform ? 0.3 : 1.0), // More opaque on Windows
         margin: const EdgeInsets.only(bottom: 8),
-        child: ClipRRect(
+        child: PlatformUIHelper.buildGlassEffect(
           borderRadius: BorderRadius.circular(16),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: cardContent,
-          ),
+          child: cardContent,
         ),
       );
     }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../l10n/generated/app_localizations.dart';
+import 'package:iot_devkit/utils/platform_ui_helper.dart';
 import 'version_helper.dart';
 
 /// Utility class for displaying the About dialog across all platforms.
@@ -37,13 +38,13 @@ class AboutDialogHelper {
                       primaryColor.withOpacity(0.03),
                     ],
               ),
-              boxShadow: [
+              boxShadow: PlatformUIHelper.optimizeShadows([
                 BoxShadow(
                   color: primaryColor.withOpacity(0.1),
                   blurRadius: 20,
                   spreadRadius: 2,
                 ),
-              ],
+              ]),
             ),
             child: Padding(
               padding: const EdgeInsets.all(32.0),
@@ -63,13 +64,13 @@ class AboutDialogHelper {
                           primaryColor.withOpacity(0.05),
                         ],
                       ),
-                      boxShadow: [
+                      boxShadow: PlatformUIHelper.optimizeShadows([
                         BoxShadow(
                           color: primaryColor.withOpacity(0.2),
                           blurRadius: 16,
                           spreadRadius: 2,
                         ),
-                      ],
+                      ]),
                     ),
                     child: Image.asset(
                       'assets/icon/original_icon.png',

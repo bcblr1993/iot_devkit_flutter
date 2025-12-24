@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'platform_ui_helper.dart';
 
 /// 统一对话框样式工具类
 /// 采用与关于对话框一致的现代设计风格
@@ -44,13 +45,13 @@ class AppDialogHelper {
                     primaryColor.withOpacity(0.02),
                   ],
             ),
-            boxShadow: [
+            boxShadow: PlatformUIHelper.optimizeShadows([
               BoxShadow(
                 color: primaryColor.withOpacity(0.1),
                 blurRadius: 20,
                 spreadRadius: 2,
               ),
-            ],
+            ]),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -266,13 +267,13 @@ class AppDialogHelper {
             color: primaryColor.withOpacity(0.2),
             width: 1.5,
           ),
-          boxShadow: [
+          boxShadow: PlatformUIHelper.optimizeShadows([
             BoxShadow(
               color: primaryColor.withOpacity(0.08),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
-          ],
+          ]),
         ),
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.5,
