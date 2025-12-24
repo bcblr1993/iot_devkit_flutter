@@ -14,11 +14,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   }
 
   // Create a named mutex to detect if the application is already running
-  // This is used by the Inno Setup installer (AppMutex) to block installation/uninstallation
-  // while the app is active.
+  // This is used by the Inno Setup installer (AppMutex) to block
+  // installation/uninstallation while the app is active.
   HANDLE hMutex = ::CreateMutex(nullptr, TRUE, L"IoTDevKit_Instance_Mutex");
-  // We don't enforce single instance here (by returning), we just hold the handle.
-  // If you strictly want single instance only, check GetLastError() == ERROR_ALREADY_EXISTS.
+  (void)hMutex;
+  // We don't enforce single instance here (by returning), we just hold the
+  // handle. If you strictly want single instance only, check GetLastError() ==
+  // ERROR_ALREADY_EXISTS.
 
   // Initialize COM, so that it is available for use in the library and/or
   // plugins.
@@ -26,8 +28,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
 
   flutter::DartProject project(L"data");
 
-  std::vector<std::string> command_line_arguments =
-      GetCommandLineArguments();
+  std::vector<std::string> command_line_arguments = GetCommandLineArguments();
 
   project.set_dart_entrypoint_arguments(std::move(command_line_arguments));
 
