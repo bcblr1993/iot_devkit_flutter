@@ -11,6 +11,7 @@ import '../widgets/simulator_panel.dart';
 import '../widgets/log_console.dart';
 import '../tools/timestamp_tool.dart';
 import '../tools/json_formatter_tool.dart';
+import '../../services/log_storage_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -115,132 +116,79 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Language Switcher
-                      Consumer<LanguageProvider>(
-                        builder: (context, langProvider, child) {
-                          final currentLang = langProvider.currentLocale.languageCode == 'zh' ? '中' : 'EN';
-                          return Tooltip(
-                            message: l10n.selectLanguage,
-                            child: PopupMenuButton<Locale>(
-                              onSelected: (Locale locale) {
-                                langProvider.setLocale(locale);
-                              },
-                              itemBuilder: (BuildContext context) {
-                                return [
-                                  CheckedPopupMenuItem(
-                                    value: const Locale('en'),
-                                    checked: langProvider.currentLocale.languageCode == 'en',
-                                    child: const Text('English'),
-                                  ),
-                                  CheckedPopupMenuItem(
-                                    value: const Locale('zh'),
-                                    checked: langProvider.currentLocale.languageCode == 'zh',
-                                    child: const Text('简体中文'),
-                                  ),
-                                ];
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.language, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                                    const SizedBox(height: 2),
-                                    Text(currentLang, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant)),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                      // Theme Switcher
-                      Consumer<ThemeManager>(
-                        builder: (context, themeManager, child) {
-                          final isDark = Theme.of(context).brightness == Brightness.dark;
-                          return Tooltip(
-                            message: l10n.selectTheme,
-                            child: PopupMenuButton<String>(
-                              onSelected: (String themeName) {
-                                themeManager.setTheme(themeName);
-                              },
-                              itemBuilder: (BuildContext context) {
-                                return themeManager.availableThemes.map((String theme) {
-                                  String label;
-                                  switch (theme) {
-                                    case 'matrix-emerald': label = l10n.themeMatrixEmerald; break;
-                                    case 'forest-mint': label = l10n.themeForestMint; break;
-                                    case 'arctic-blue': label = l10n.themeArcticBlue; break;
-                                    case 'midnight-blue': label = l10n.themeMidnightBlue; break;
-                                    case 'deep-ocean': label = l10n.themeDeepOcean; break;
-                                    case 'crimson-night': label = l10n.themeCrimsonNight; break;
-                                    case 'ruby-elegance': label = l10n.themeRubyElegance; break;
-                                    case 'void-black': label = l10n.themeVoidBlack; break;
-                                    case 'graphite-pro': label = l10n.themeGraphitePro; break;
-                                    default: label = theme;
-                                  }
-                                  return CheckedPopupMenuItem<String>(
-                                    value: theme,
-                                    checked: theme == themeManager.currentThemeName,
-                                    child: Text(label),
-                                  );
-                                }).toList();
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
-                                      size: 16,
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      isDark ? '暗' : '亮',
-                                      style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                      // About Button (for Windows/Linux - macOS has menu bar)
+                      // Unified Settings Menu
                       Tooltip(
-                        message: l10n.menuAbout,
-                        child: InkWell(
-                          onTap: () {
-                            AboutDialogHelper.showAboutDialog(context);
+                        message: l10n.menuSettings ?? 'Settings',
+                        child: PopupMenuButton<String>(
+                          icon: Icon(Icons.settings, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          tooltip: '', // Disable default tooltip to use custom one
+                          offset: const Offset(50, 0), // Position menu to the right
+                          position: PopupMenuPosition.over,
+                          onSelected: (String action) {
+                            switch (action) {
+                              case 'theme':
+                                _showThemeDialog(context);
+                                break;
+                              case 'language':
+                                _showLanguageDialog(context);
+                                break;
+                              case 'logs':
+                                LogStorageService.instance.openLogFolder();
+                                break;
+                              case 'about':
+                                AboutDialogHelper.showAboutDialog(context);
+                                break;
+                            }
                           },
-                          borderRadius: BorderRadius.circular(8),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.info_outline, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                                const SizedBox(height: 2),
-                                Text('?', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant)),
-                              ],
-                            ),
-                          ),
+                          itemBuilder: (BuildContext context) {
+                            return [
+                              // Theme
+                              PopupMenuItem(
+                                value: 'theme',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.palette_outlined, size: 20, color: Theme.of(context).colorScheme.onSurface),
+                                    const SizedBox(width: 12),
+                                    Text(l10n.selectTheme, style: const TextStyle(fontSize: 14)),
+                                  ],
+                                ),
+                              ),
+                              // Language
+                              PopupMenuItem(
+                                value: 'language',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.language, size: 20, color: Theme.of(context).colorScheme.onSurface),
+                                    const SizedBox(width: 12),
+                                    Text(l10n.selectLanguage, style: const TextStyle(fontSize: 14)),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuDivider(),
+                              // Open Logs
+                              PopupMenuItem(
+                                value: 'logs',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.folder_open, size: 20, color: Theme.of(context).colorScheme.onSurface),
+                                    const SizedBox(width: 12),
+                                    Text(l10n.menuOpenLogs ?? 'Open Logs', style: const TextStyle(fontSize: 14)),
+                                  ],
+                                ),
+                              ),
+                              // About
+                              PopupMenuItem(
+                                value: 'about',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.info_outline, size: 20, color: Theme.of(context).colorScheme.onSurface),
+                                    const SizedBox(width: 12),
+                                    Text(l10n.menuAbout, style: const TextStyle(fontSize: 14)),
+                                  ],
+                                ),
+                              ),
+                            ];
+                          },
                         ),
                       ),
                     ],
@@ -256,6 +204,111 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showThemeDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
+        return Consumer<ThemeManager>(
+          builder: (context, themeManager, child) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            return SimpleDialog(
+              title: Text(l10n.selectTheme),
+              children: themeManager.availableThemes.map((String theme) {
+                String label;
+                switch (theme) {
+                  case 'forest-mint': label = l10n.themeForestMint; break;
+                  case 'midnight-purple': label = l10n.themeMidnightPurple; break;
+                  case 'sunset-orange': label = l10n.themeSunsetOrange; break;
+                  case 'sakura-pink': label = l10n.themeSakuraPink; break;
+                  case 'cyber-teal': label = l10n.themeCyberTeal; break;
+                  case 'golden-hour': label = l10n.themeGoldenHour; break;
+                  case 'lavender-dream': label = l10n.themeLavenderDream; break;
+                  default: label = theme;
+                }
+                return SimpleDialogOption(
+                  onPressed: () {
+                    themeManager.setTheme(theme);
+                    Navigator.pop(context);
+                  },
+                  child: Row(
+                    children: [
+                      Radio<String>(
+                        value: theme, 
+                        groupValue: themeManager.currentThemeName, 
+                        onChanged: (_) {
+                          themeManager.setTheme(theme);
+                          Navigator.pop(context);
+                        },
+                      ),
+                      Text(label, style: const TextStyle(fontSize: 14)),
+                    ],
+                  ),
+                );
+              }).toList(),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showLanguageDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
+        return Consumer<LanguageProvider>(
+          builder: (context, langProvider, child) {
+            return SimpleDialog(
+              title: Text(l10n.selectLanguage),
+              children: [
+                SimpleDialogOption(
+                  onPressed: () {
+                    langProvider.setLocale(const Locale('en'));
+                    Navigator.pop(context);
+                  },
+                  child: Row(
+                    children: [
+                      Radio<String>(
+                        value: 'en',
+                        groupValue: langProvider.currentLocale.languageCode,
+                        onChanged: (_) {
+                          langProvider.setLocale(const Locale('en'));
+                          Navigator.pop(context);
+                        },
+                      ),
+                      const Text('English', style: TextStyle(fontSize: 14)),
+                    ],
+                  ),
+                ),
+                SimpleDialogOption(
+                  onPressed: () {
+                    langProvider.setLocale(const Locale('zh'));
+                    Navigator.pop(context);
+                  },
+                  child: Row(
+                    children: [
+                      Radio<String>(
+                        value: 'zh',
+                        groupValue: langProvider.currentLocale.languageCode,
+                        onChanged: (_) {
+                          langProvider.setLocale(const Locale('zh'));
+                          Navigator.pop(context);
+                        },
+                      ),
+                      const Text('简体中文', style: TextStyle(fontSize: 14)),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 

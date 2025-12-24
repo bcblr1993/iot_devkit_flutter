@@ -159,6 +159,14 @@
   "previewAndStart": "Preview & Start",
   "startNow": "Start Simulation",
   "confirmStartHint": "Click Confirm to start simulation with this payload structure.",
-  "performanceMode": "Performance Mode (Disable Logs)"
+  "performanceMode": "Performance Mode (Disable Logs)",
+  "themeMidnightPurple": "Midnight Purple",
+  "themeSunsetOrange": "Sunset Orange",
+  "themeSakuraPink": "Sakura Pink",
+  "themeCyberTeal": "Cyber Teal",
+  "themeGoldenHour": "Golden Hour",
+  "themeLavenderDream": "Lavender Dream",
+  "menuOpenLogs": "Open Logs Location",
+  "menuSettings": "Settings"
 }
 

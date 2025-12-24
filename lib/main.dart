@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -10,18 +11,28 @@ import 'services/status_registry.dart';
 import 'utils/statistics_collector.dart';
 import 'ui/screens/home_screen.dart';
 import 'utils/about_dialog_helper.dart';
+import 'services/log_storage_service.dart';
 
 import 'package:window_manager/window_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
+  // Initialize File Logging Service
+  await LogStorageService.instance.init();
+
   // Initialize Logging
   Logger.root.level = Level.ALL; // Defaults to Level.INFO
   Logger.root.onRecord.listen((record) {
-    debugPrint('${record.level.name}: ${record.time}: ${record.loggerName}: ${record.message}');
-    if (record.error != null) {
-      debugPrint('Error: ${record.error}');
+    // 1. Write to file (Always, or can be throttled)
+    LogStorageService.instance.write(record);
+    
+    // 2. Print to console (Debug Only)
+    if (kDebugMode) {
+      debugPrint('${record.level.name}: ${record.time}: ${record.loggerName}: ${record.message}');
+      if (record.error != null) {
+        debugPrint('Error: ${record.error}');
+      }
     }
   });
 
@@ -103,6 +114,12 @@ class AppRoot extends StatelessWidget {
               label: l10n.menuAbout,
               onSelected: () {
                 AboutDialogHelper.showAboutDialog(context);
+              },
+            ),
+            PlatformMenuItem(
+              label: l10n.menuOpenLogs ?? 'Open Logs Location',
+              onSelected: () {
+                LogStorageService.instance.openLogFolder();
               },
             ),
             const PlatformMenuItemGroup(

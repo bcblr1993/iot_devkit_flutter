@@ -566,15 +566,18 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
             child: SizedBox(
               key: ValueKey(isRunning),
               width: double.infinity,
-              height: 48,
+              height: 42,
               child: FilledButton.icon(
                 onPressed: () {}, 
-                icon: Icon(isRunning ? effect.icons.stop : effect.icons.play, size: AppIconSize.xl),
+                icon: Icon(isRunning ? effect.icons.stop : effect.icons.play, size: AppIconSize.lg),
                 label: Text(
                   isRunning ? l10n.stopSimulation : l10n.startSimulation,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 0.5),
                 ),
                 style: FilledButton.styleFrom(
+                  elevation: 3,
+                  shadowColor: (isRunning ? errorColor : primaryColor).withOpacity(0.4),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   backgroundColor: isRunning ? errorColor : primaryColor,
                   foregroundColor: isRunning ? theme.colorScheme.onError : theme.colorScheme.onPrimary,
                   disabledBackgroundColor: isRunning ? errorColor : primaryColor,

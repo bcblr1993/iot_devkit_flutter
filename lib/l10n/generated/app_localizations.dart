@@ -1033,6 +1033,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Performance Mode (Disable Logs)'**
   String get performanceMode;
+
+  /// No description provided for @themeMidnightPurple.
+  ///
+  /// In en, this message translates to:
+  /// **'Midnight Purple'**
+  String get themeMidnightPurple;
+
+  /// No description provided for @themeSunsetOrange.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunset Orange'**
+  String get themeSunsetOrange;
+
+  /// No description provided for @themeSakuraPink.
+  ///
+  /// In en, this message translates to:
+  /// **'Sakura Pink'**
+  String get themeSakuraPink;
+
+  /// No description provided for @themeCyberTeal.
+  ///
+  /// In en, this message translates to:
+  /// **'Cyber Teal'**
+  String get themeCyberTeal;
+
+  /// No description provided for @themeGoldenHour.
+  ///
+  /// In en, this message translates to:
+  /// **'Golden Hour'**
+  String get themeGoldenHour;
+
+  /// No description provided for @themeLavenderDream.
+  ///
+  /// In en, this message translates to:
+  /// **'Lavender Dream'**
+  String get themeLavenderDream;
+
+  /// No description provided for @menuOpenLogs.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Logs Location'**
+  String get menuOpenLogs;
+
+  /// No description provided for @menuSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get menuSettings;
 }
 
 class _AppLocalizationsDelegate

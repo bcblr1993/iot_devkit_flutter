@@ -1,5 +1,5 @@
 {
-  "appTitle": "IoT 开发工具箱",
+  "appTitle": "IoT DevKit",
   "navSimulator": "数据模拟",
   "navTimestamp": "时间转换",
   "navJson": "JSON工具",
@@ -159,5 +159,13 @@
   "previewAndStart": "预览并启动",
   "startNow": "开始模拟",
   "confirmStartHint": "点击确认以使用此数据结构开始模拟。",
-  "performanceMode": "高性能模式 (关闭日志)"
+  "performanceMode": "高性能模式 (关闭日志)",
+  "themeMidnightPurple": "午夜紫罗兰 (Midnight)",
+  "themeSunsetOrange": "日落橙光 (Sunset)",
+  "themeSakuraPink": "樱花粉嫩 (Sakura)",
+  "themeCyberTeal": "赛博青 (Cyber)",
+  "themeGoldenHour": "黄金时刻 (Golden)",
+  "themeLavenderDream": "薰衣草梦境 (Lavender)",
+  "menuOpenLogs": "打开日志文件夹",
+  "menuSettings": "设置"
 }

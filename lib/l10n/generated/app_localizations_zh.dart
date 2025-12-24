@@ -9,7 +9,7 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get appTitle => 'IoT 开发工具箱';
+  String get appTitle => 'IoT DevKit';
 
   @override
   String get navSimulator => '数据模拟';
@@ -475,4 +475,28 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get performanceMode => '高性能模式 (关闭日志)';
+
+  @override
+  String get themeMidnightPurple => '午夜紫罗兰 (Midnight)';
+
+  @override
+  String get themeSunsetOrange => '日落橙光 (Sunset)';
+
+  @override
+  String get themeSakuraPink => '樱花粉嫩 (Sakura)';
+
+  @override
+  String get themeCyberTeal => '赛博青 (Cyber)';
+
+  @override
+  String get themeGoldenHour => '黄金时刻 (Golden)';
+
+  @override
+  String get themeLavenderDream => '薰衣草梦境 (Lavender)';
+
+  @override
+  String get menuOpenLogs => '打开日志文件夹';
+
+  @override
+  String get menuSettings => '设置';
 }

@@ -310,8 +310,10 @@ class SchedulerService {
       
       // OPTIMIZATION: Only calculate bytes and log if logging is enabled
       if (enableLogs) {
-        int bytes = utf8.encode(payload).length;
-        onLog('$successMsg ($bytes bytes)', successType, tag: logTagOverride ?? tag);
+        // Use string length as approximation to avoid utf8.encode overhead (which allocates a new list)
+        // For logging purposes, exact byte count isn't critical, but performance is.
+        int charCount = payload.length; 
+        onLog('$successMsg (~$charCount chars)', successType, tag: logTagOverride ?? tag);
       }
     } catch (e) {
       if (enableLogs) {
