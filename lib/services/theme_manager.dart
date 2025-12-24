@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../ui/styles/app_theme_effect.dart';
@@ -44,6 +45,10 @@ class ThemeManager extends ChangeNotifier {
     Color? onPrimaryContainer,
     AppThemeEffect? effect, // Dynamic extension
   }) {
+    // 1. Platform Detection
+    final bool isWindows = Platform.isWindows;
+    
+    // 2. ColorScheme
     final colorScheme = ColorScheme(
       brightness: brightness,
       primary: primary,
@@ -60,14 +65,32 @@ class ThemeManager extends ChangeNotifier {
       onSurface: onSurface,
     );
 
-    final TextTheme textTheme = Typography.material2021(platform: TargetPlatform.macOS)
-        .englishLike
-        .merge(Typography.material2021(platform: TargetPlatform.macOS).black)
-        .apply(
-          bodyColor: onBackground, 
-          displayColor: onBackground,
-          fontFamily: fontFamily, 
-        );
+    // 3. Premium Windows Typography
+    // Windows fonts render thinner than Mac. We bump weights and force YaHei UI.
+    final String effectiveFontFamily = fontFamily ?? (isWindows ? 'Microsoft YaHei UI' : null) ?? 'Roboto';
+    final List<String> fallbackFonts = isWindows ? ['Microsoft YaHei', 'SimHei', 'Segoe UI Emoji'] : [];
+
+    TextTheme baseTextTheme = Typography.material2021(
+      platform: isWindows ? TargetPlatform.windows : TargetPlatform.macOS
+    ).englishLike.merge(
+      Typography.material2021(platform: isWindows ? TargetPlatform.windows : TargetPlatform.macOS).black
+    );
+
+    // Adjust visibility for Windows
+    if (isWindows) {
+       baseTextTheme = baseTextTheme.copyWith(
+         bodyMedium: baseTextTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500), // Fix "thin" look
+         titleMedium: baseTextTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+         labelLarge: baseTextTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+       );
+    }
+
+    final TextTheme textTheme = baseTextTheme.apply(
+      bodyColor: onBackground, 
+      displayColor: onBackground,
+      fontFamily: effectiveFontFamily,
+      fontFamilyFallback: fallbackFonts,
+    );
 
     return ThemeData(
       useMaterial3: true,
