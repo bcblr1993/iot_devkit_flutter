@@ -279,6 +279,8 @@ class AppDialogHelper {
           minWidth: 450,
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min, // Shrink wrap height
+          crossAxisAlignment: CrossAxisAlignment.stretch, // Fix: Fill width
           children: [
             // 1. Extra Widget (Top)
             if (extraWidget != null)
@@ -291,12 +293,14 @@ class AppDialogHelper {
                  child: extraWidget,
                ),
 
-            // 2. Code Area (Expanded)
-            Expanded(
+            // 2. Code Area (Flexible)
+            Flexible(
+              fit: FlexFit.loose,
               child: Stack(
                 children: [
                   // 代码内容区域
                   Container(
+                    width: double.infinity, // Fix: Ensure full width
                     padding: const EdgeInsets.all(20),
                     child: SingleChildScrollView(
                       child: Column(
