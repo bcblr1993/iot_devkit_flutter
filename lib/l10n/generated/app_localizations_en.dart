@@ -502,4 +502,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get menuSettings => 'Settings';
+
+  @override
+  String get qosLabel => 'QoS';
+
+  @override
+  String get qos0 => 'QoS 0 - At most once';
+
+  @override
+  String get qos1 => 'QoS 1 - At least once';
+
+  @override
+  String get qos2 => 'QoS 2 - Exactly once';
+
+  @override
+  String get qosTooltip0 =>
+      'Fire and forget. Fastest, but messages may be lost if network fails.';
+
+  @override
+  String get qosTooltip1 =>
+      'Guaranteed delivery. Ensures message arrives, but may be duplicated.';
+
+  @override
+  String get qosTooltip2 =>
+      'Guaranteed delivery exactly once. Most reliable but slowest.';
 }

@@ -1081,6 +1081,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Settings'**
   String get menuSettings;
+
+  /// No description provided for @qosLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'QoS'**
+  String get qosLabel;
+
+  /// No description provided for @qos0.
+  ///
+  /// In en, this message translates to:
+  /// **'QoS 0 - At most once'**
+  String get qos0;
+
+  /// No description provided for @qos1.
+  ///
+  /// In en, this message translates to:
+  /// **'QoS 1 - At least once'**
+  String get qos1;
+
+  /// No description provided for @qos2.
+  ///
+  /// In en, this message translates to:
+  /// **'QoS 2 - Exactly once'**
+  String get qos2;
+
+  /// No description provided for @qosTooltip0.
+  ///
+  /// In en, this message translates to:
+  /// **'Fire and forget. Fastest, but messages may be lost if network fails.'**
+  String get qosTooltip0;
+
+  /// No description provided for @qosTooltip1.
+  ///
+  /// In en, this message translates to:
+  /// **'Guaranteed delivery. Ensures message arrives, but may be duplicated.'**
+  String get qosTooltip1;
+
+  /// No description provided for @qosTooltip2.
+  ///
+  /// In en, this message translates to:
+  /// **'Guaranteed delivery exactly once. Most reliable but slowest.'**
+  String get qosTooltip2;
 }
 
 class _AppLocalizationsDelegate

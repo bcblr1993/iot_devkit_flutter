@@ -111,3 +111,4 @@ class ConfigService {
     return result;
   }
 }
+// No changes needed to ConfigService - it saves the entire map including nested 'mqtt' config.

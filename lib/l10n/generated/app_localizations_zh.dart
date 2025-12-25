@@ -499,4 +499,25 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get menuSettings => '设置';
+
+  @override
+  String get qosLabel => 'QoS 级别';
+
+  @override
+  String get qos0 => 'QoS 0 - 最多一次';
+
+  @override
+  String get qos1 => 'QoS 1 - 至少一次';
+
+  @override
+  String get qos2 => 'QoS 2 - 只有一次';
+
+  @override
+  String get qosTooltip0 => '发后即忘。速度最快，但网络波动时可能会丢数据。';
+
+  @override
+  String get qosTooltip1 => '确保送达。保证对方收到，但可能会收到重复消息。';
+
+  @override
+  String get qosTooltip2 => '确保送达且不重复。最可靠，但网络开销最大且最慢。';
 }

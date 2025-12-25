@@ -135,6 +135,7 @@ class MqttController extends ChangeNotifier {
     String host = config['mqtt']['host'] ?? 'localhost';
     int port = config['mqtt']['port'] ?? 1883;
     String topic = config['mqtt']['topic'] ?? 'v1/devices/me/telemetry';
+    int qos = config['mqtt']['qos'] ?? 0;
     
     // SSL Config
     bool enableSsl = config['mqtt']['enable_ssl'] ?? false;
@@ -173,6 +174,7 @@ class MqttController extends ChangeNotifier {
 
         final context = BasicSimulationContext(
           topic: topic,
+          qos: qos,
           intervalSeconds: sendInterval,
           format: format,
           dataPointCount: dataPointCount,
@@ -223,6 +225,7 @@ class MqttController extends ChangeNotifier {
     String host = config['mqtt']['host'] ?? 'localhost';
     int port = config['mqtt']['port'] ?? 1883;
     String topic = config['mqtt']['topic'] ?? 'v1/devices/me/telemetry';
+    int qos = config['mqtt']['qos'] ?? 0;
 
     // SSL Config
     bool enableSsl = config['mqtt']['enable_ssl'] ?? false;
@@ -248,6 +251,7 @@ class MqttController extends ChangeNotifier {
 
           final context = AdvancedSimulationContext(
             topic: topic, 
+            qos: qos,
             group: group
           );
 

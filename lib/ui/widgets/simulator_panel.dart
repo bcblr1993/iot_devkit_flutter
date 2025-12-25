@@ -50,8 +50,9 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
   final _portController = TextEditingController(text: '1883');
   final _topicController = TextEditingController(text: 'v1/devices/me/telemetry');
   
-  // SSL Config
+  // SSL & QoS Config
   bool _enableSsl = false;
+  int _qos = 0;
   final _caPathController = TextEditingController();
   final _certPathController = TextEditingController();
   final _keyPathController = TextEditingController();
@@ -102,6 +103,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
         _portController.text = (config['mqtt']['port'] ?? 1883).toString();
         _topicController.text = config['mqtt']['topic'] ?? 'v1/devices/me/telemetry';
         _enableSsl = config['mqtt']['enable_ssl'] ?? false;
+        _qos = config['mqtt']['qos'] ?? 0;
         _caPathController.text = config['mqtt']['ca_path'] ?? '';
         _certPathController.text = config['mqtt']['cert_path'] ?? '';
         _keyPathController.text = config['mqtt']['key_path'] ?? '';
@@ -293,60 +295,143 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
           color: useFeaturedStyle ? colorScheme.onPrimaryContainer : null,
         ),
         Padding(
-          padding: const EdgeInsets.only(top: 5),
+          padding: const EdgeInsets.only(top: 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 第一行: Host/Port/SSL开关
+              // Row 1: Host (Flex 4), Port (Flex 1), QoS (Flex 2)
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    flex: 3,
+                    flex: 4,
                     child: _buildTextField(l10n.host, _hostController, isRunning, customColor: useFeaturedStyle ? colorScheme.onPrimaryContainer : null),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 8),
                   Expanded(
                     flex: 1,
                     child: _buildTextField(l10n.port, _portController, isRunning, isNumber: true, customColor: useFeaturedStyle ? colorScheme.onPrimaryContainer : null),
                   ),
                   const SizedBox(width: 8),
-                  // SSL开关
-                  SizedBox(
+                  Expanded(
+                    flex: 2,
+                    child: DropdownButtonFormField<int>(
+                      decoration: InputDecoration(
+                        labelText: l10n.qosLabel,
+                        labelStyle: TextStyle(
+                          color: useFeaturedStyle 
+                            ? colorScheme.onPrimaryContainer.withOpacity(0.8) 
+                            : theme.colorScheme.onSurfaceVariant,
+                        ),
+                        floatingLabelStyle: TextStyle(
+                          color: useFeaturedStyle 
+                            ? colorScheme.onPrimaryContainer 
+                            : theme.colorScheme.primary,
+                        ),
+                        border: const OutlineInputBorder(),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: useFeaturedStyle 
+                              ? colorScheme.onPrimaryContainer.withOpacity(0.5) 
+                              : theme.colorScheme.outline.withOpacity(0.5),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: useFeaturedStyle 
+                              ? colorScheme.onPrimaryContainer 
+                              : theme.colorScheme.primary, 
+                            width: 2
+                          ),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        isDense: true,
+                      ),
+                      // Use Surface color for popup to ensure standard contrast for text
+                      dropdownColor: theme.colorScheme.surface,
+                      style: TextStyle(
+                        // Selected item text color in the input field
+                        color: useFeaturedStyle ? colorScheme.onPrimaryContainer : theme.colorScheme.onSurface,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      icon: Icon(Icons.arrow_drop_down, 
+                        color: useFeaturedStyle ? colorScheme.onPrimaryContainer : null
+                      ),
+                      value: _qos,
+                      items: [
+                        DropdownMenuItem(
+                          value: 0, 
+                          child: Tooltip(
+                            message: l10n.qosTooltip0 ?? '', 
+                            child: Text(l10n.qos0 ?? 'QoS 0', style: TextStyle(color: theme.colorScheme.onSurface))
+                          )
+                        ),
+                        DropdownMenuItem(
+                          value: 1, 
+                          child: Tooltip(
+                            message: l10n.qosTooltip1 ?? '', 
+                            child: Text(l10n.qos1 ?? 'QoS 1', style: TextStyle(color: theme.colorScheme.onSurface))
+                          )
+                        ),
+                        DropdownMenuItem(
+                          value: 2, 
+                          child: Tooltip(
+                            message: l10n.qosTooltip2 ?? '', 
+                            child: Text(l10n.qos2 ?? 'QoS 2', style: TextStyle(color: theme.colorScheme.onSurface))
+                          )
+                        ),
+                      ],
+                      onChanged: isRunning ? null : (v) => setState(() => _qos = v ?? 0),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              
+              // Row 2: Topic (Full Width)
+              _buildTextField(l10n.topic, _topicController, isRunning, customColor: useFeaturedStyle ? colorScheme.onPrimaryContainer : null),
+              const SizedBox(height: 12),
+              
+              // Row 3: SSL Switch
+              Row(
+                children: [
+                   SizedBox(
                     height: 24,
                     width: 24,
                     child: Checkbox(
                       value: _enableSsl,
-                      side: BorderSide(color: useFeaturedStyle ? colorScheme.onPrimaryContainer.withOpacity(0.7) : colorScheme.onSurfaceVariant),
+                      side: BorderSide(
+                        color: useFeaturedStyle 
+                          ? colorScheme.onPrimaryContainer.withOpacity(0.8) 
+                          : colorScheme.onSurfaceVariant
+                      ),
                       checkColor: useFeaturedStyle ? colorScheme.surface : colorScheme.onPrimary,
                       activeColor: useFeaturedStyle ? colorScheme.onPrimaryContainer : colorScheme.primary,
                       onChanged: isRunning ? null : (v) => setState(() => _enableSsl = v ?? false),
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 8),
                   Text(
                     l10n.enableSsl,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: useFeaturedStyle ? colorScheme.onPrimaryContainer : colorScheme.onSurface,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              
-              // 第二行: Topic
-              _buildTextField(l10n.topic, _topicController, isRunning, customColor: useFeaturedStyle ? colorScheme.onPrimaryContainer : null),
-              
-              // SSL证书字段(仅在启用SSL时显示) - 一行三列
+
+              // Row 4: SSL Files (Conditional)
               if (_enableSsl) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(child: _buildSslField(l10n.caCertificate, _caPathController, isRunning, useFeaturedStyle ? colorScheme.onPrimaryContainer : null, l10n)),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 8),
                     Expanded(child: _buildSslField(l10n.clientCertificate, _certPathController, isRunning, useFeaturedStyle ? colorScheme.onPrimaryContainer : null, l10n)),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 8),
                     Expanded(child: _buildSslField(l10n.privateKey, _keyPathController, isRunning, useFeaturedStyle ? colorScheme.onPrimaryContainer : null, l10n)),
                   ],
                 ),
@@ -903,6 +988,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
         'port': int.tryParse(_portController.text) ?? 1883,
         'topic': _topicController.text,
         'enable_ssl': _enableSsl,
+        'qos': _qos,
         'ca_path': _caPathController.text,
         'cert_path': _certPathController.text,
         'key_path': _keyPathController.text,
@@ -940,6 +1026,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
         enabledBorder: customColor != null ? OutlineInputBorder(borderSide: BorderSide(color: customColor.withOpacity(0.5))) : null,
         focusedBorder: customColor != null ? OutlineInputBorder(borderSide: BorderSide(color: customColor, width: 2)) : null,
         isDense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       ),
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
       onChanged: isLocked ? null : onChanged,

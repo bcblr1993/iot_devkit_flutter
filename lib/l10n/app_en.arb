@@ -167,6 +167,13 @@
   "themeGoldenHour": "Golden Hour",
   "themeLavenderDream": "Lavender Dream",
   "menuOpenLogs": "Open Logs Location",
-  "menuSettings": "Settings"
+  "menuSettings": "Settings",
+  "qosLabel": "QoS",
+  "qos0": "QoS 0 - At most once",
+  "qos1": "QoS 1 - At least once",
+  "qos2": "QoS 2 - Exactly once",
+  "qosTooltip0": "Fire and forget. Fastest, but messages may be lost if network fails.",
+  "qosTooltip1": "Guaranteed delivery. Ensures message arrives, but may be duplicated.",
+  "qosTooltip2": "Guaranteed delivery exactly once. Most reliable but slowest."
 }
 

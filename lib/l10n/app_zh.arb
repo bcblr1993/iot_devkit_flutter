@@ -167,5 +167,12 @@
   "themeGoldenHour": "黄金时刻 (Golden)",
   "themeLavenderDream": "薰衣草梦境 (Lavender)",
   "menuOpenLogs": "打开日志文件夹",
-  "menuSettings": "设置"
+  "menuSettings": "设置",
+  "qosLabel": "QoS 级别",
+  "qos0": "QoS 0 - 最多一次",
+  "qos1": "QoS 1 - 至少一次",
+  "qos2": "QoS 2 - 只有一次",
+  "qosTooltip0": "发后即忘。速度最快，但网络波动时可能会丢数据。",
+  "qosTooltip1": "确保送达。保证对方收到，但可能会收到重复消息。",
+  "qosTooltip2": "确保送达且不重复。最可靠，但网络开销最大且最慢。"
 }

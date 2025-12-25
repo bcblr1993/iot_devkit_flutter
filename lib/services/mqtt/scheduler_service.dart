@@ -121,7 +121,7 @@ class SchedulerService {
     }
     
     String payload = jsonEncode(data);
-    _publish(client, topic, payload, clientId, 'success', 'Sent message #$sendCount', clientId);
+    _publish(client, topic, payload, clientId, 'success', 'Sent message #$sendCount', clientId, _intToQos(context.qos));
     
     // 2. Schedule Next
     sendCount++;
@@ -145,7 +145,7 @@ class SchedulerService {
     // Resumption Disabled: Always start from 0
     int fullSendCount = 0;
     Timer fullTimer = Timer(Duration(milliseconds: initialDelay), () {
-      _scheduleFullReport(client, clientId, topic, group, fullIntervalMs, fullSendCount, version);
+      _scheduleFullReport(client, clientId, topic, group, fullIntervalMs, fullSendCount, version, context.qos);
     });
     _addTimer(clientId, fullTimer);
 
@@ -154,7 +154,7 @@ class SchedulerService {
       int changeIntervalMs = group.changeIntervalSeconds * 1000;
       int changeSendCount = 0;
       Timer changeTimer = Timer(Duration(milliseconds: initialDelay), () {
-        _scheduleChangeReport(client, clientId, topic, group, changeIntervalMs, changeSendCount, version);
+        _scheduleChangeReport(client, clientId, topic, group, changeIntervalMs, changeSendCount, version, context.qos);
       });
       _addTimer(clientId, changeTimer);
     }
@@ -168,6 +168,7 @@ class SchedulerService {
     int intervalMs,
     int sendCount,
     int version,
+    int qos,
   ) async {
     if (!_clientTimers.containsKey(clientId)) return;
     if (_clientVersions[clientId] != version) return; // Wrong Session
@@ -202,11 +203,11 @@ class SchedulerService {
     if (!_clientTimers.containsKey(clientId)) return;
     if (_clientVersions[clientId] != version) return;
 
-    _publish(client, topic, payload, group.name, 'success', '[$clientId] Full Report #$sendCount');
+    _publish(client, topic, payload, group.name, 'success', '[$clientId] Full Report #$sendCount', null, _intToQos(qos));
 
     sendCount++;
     _scheduleNext(clientId, intervalMs, sendCount, version, (actualCount) {
-      _scheduleFullReport(client, clientId, topic, group, intervalMs, actualCount, version);
+      _scheduleFullReport(client, clientId, topic, group, intervalMs, actualCount, version, qos);
     });
   }
 
@@ -218,6 +219,7 @@ class SchedulerService {
     int intervalMs,
     int sendCount,
     int version,
+    int qos,
   ) async {
     if (!_clientTimers.containsKey(clientId)) return;
     if (_clientVersions[clientId] != version) return; // Wrong Session
@@ -237,7 +239,7 @@ class SchedulerService {
       
       sendCount++;
       _scheduleNext(clientId, intervalMs, sendCount, version, (actualCount) {
-        _scheduleChangeReport(client, clientId, topic, group, intervalMs, actualCount, version);
+        _scheduleChangeReport(client, clientId, topic, group, intervalMs, actualCount, version, qos);
       });
       return; 
     }
@@ -287,24 +289,22 @@ class SchedulerService {
     // We can't easy get keys count without parsing, so we just say "Change Report"
     String msg = '[$clientId] Change Report #$sendCount (~$totalChangeCount keys)';
 
-    _publish(client, topic, payload, group.name, 'info', msg);
+    _publish(client, topic, payload, group.name, 'info', msg, null, _intToQos(qos));
 
     sendCount++;
     _scheduleNext(clientId, intervalMs, sendCount, version, (actualCount) {
-      _scheduleChangeReport(client, clientId, topic, group, intervalMs, actualCount, version);
+      _scheduleChangeReport(client, clientId, topic, group, intervalMs, actualCount, version, qos);
     });
   }
 
   // --- Helper Methods ---
 
-  void _publish(MqttServerClient client, String topic, String payload, String tag, String successType, String successMsg, [String? logTagOverride]) {
+  void _publish(MqttServerClient client, String topic, String payload, String tag, String successType, String successMsg, [String? logTagOverride, MqttQos qos = MqttQos.atMostOnce]) {
     final builder = MqttClientPayloadBuilder();
     builder.addString(payload);
     
     try {
-    // FIX: QoS 0 (atMostOnce) for maximum throughput as requested.
-    // User priority: Real-time frequency > Guaranteed delivery.
-    client.publishMessage(topic, MqttQos.atMostOnce, builder.payload!);
+      client.publishMessage(topic, qos, builder.payload!);
       statisticsCollector.incrementSuccess();
       statisticsCollector.setMessageSize(payload.length);
       
@@ -362,5 +362,11 @@ class SchedulerService {
       return;
     }
     _clientTimers[clientId]!.add(t);
+  }
+
+  MqttQos _intToQos(int v) {
+    if (v == 1) return MqttQos.atLeastOnce;
+    if (v == 2) return MqttQos.exactlyOnce;
+    return MqttQos.atMostOnce;
   }
 }
