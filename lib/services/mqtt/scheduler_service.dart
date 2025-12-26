@@ -331,21 +331,29 @@ class SchedulerService {
     int nextTarget = _alignedStartTime + (sendCount * intervalMs);
     
     // OPTIMIZATION: Add random Jitter (0-500ms) to the FIRING time (not payload time).
-    // This distributes the CPU/Network spike so 1000 devices don't fire at the exact same millisecond.
     int jitter = (clientId.hashCode % 500); 
     int targetWithJitter = nextTarget + jitter;
 
     int now = DateTime.now().millisecondsSinceEpoch;
     int delay = targetWithJitter - now;
 
-    // RELAXED FIX: The previous threshold (-500ms) was too aggressive.
-    // However, for "No Data Loss", we must NEVER skip.
-    // We just run as fast as possible (delay=0) until we catch up.
-    /* 
-    if (delay < -3000) {
-      // ... Skip logic removed to ensure data integrity ...
+    // Protection against "Crazy Burst" (Catch-up Loop)
+    // If system lags significantly (e.g. device sleep or heavy load), 
+    // we drop missed messages instead of firing them all at once.
+    if (delay < -5000) { 
+       int missed = (now - targetWithJitter) ~/ intervalMs;
+       if (missed > 0) {
+         sendCount += missed;
+         // Recalculate target for the new head
+         nextTarget = _alignedStartTime + (sendCount * intervalMs);
+         targetWithJitter = nextTarget + jitter;
+         delay = targetWithJitter - now;
+         
+         if (enableLogs) {
+            onLog('[$clientId] System lagged. Skipping $missed messages to catch up.', 'warning');
+         }
+       }
     }
-    */
 
     if (delay < 0) delay = 0;
     
