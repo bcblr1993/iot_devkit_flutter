@@ -60,17 +60,17 @@ class StatisticsCollector extends ChangeNotifier {
     });
     
     // 2. Resource Monitoring (CPU, Memory)
-    // Delayed Start: Wait 1 minute after app startup before first check (Anti-Crash)
-    // Interval: 5 seconds (Reduced load)
-    _resourceStartupDelayTimer = Timer(const Duration(minutes: 1), () {
-        if (_resourceTimer != null && _resourceTimer!.isActive) return;
-        
-        _resourceTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-           if (!_isUpdatingResources) {
-             _updateResources();
-           }
-        });
-    });
+    // CRITICAL: Disabled by default on Windows due to 'wmic' causing crashes/hangs on some systems.
+    // The user reported specific crashes when this timer fires.
+    // _resourceStartupDelayTimer = Timer(const Duration(minutes: 1), () {
+    //     if (_resourceTimer != null && _resourceTimer!.isActive) return;
+    //     
+    //     _resourceTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+    //        if (!_isUpdatingResources) {
+    //          _updateResources();
+    //        }
+    //     });
+    // });
   }
   
   Future<void> _updateResources() async {
