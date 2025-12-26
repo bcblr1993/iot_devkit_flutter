@@ -514,7 +514,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
         border: const OutlineInputBorder(),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       ),
-      validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+      validator: (v) => (v == null || v.isEmpty) ? AppLocalizations.of(context)!.fieldRequired : null,
     );
   }
 

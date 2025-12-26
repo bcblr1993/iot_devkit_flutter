@@ -273,8 +273,8 @@ class MqttConfigSection extends StatelessWidget {
       ),
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
       validator: (value) {
-        if (value == null || value.isEmpty) return 'Required';
-        if (isNumber && int.tryParse(value) == null) return 'Invalid number';
+        if (value == null || value.isEmpty) return AppLocalizations.of(context)!.fieldRequired;
+        if (isNumber && int.tryParse(value) == null) return AppLocalizations.of(context)!.invalidNumber;
         return null;
       },
     );

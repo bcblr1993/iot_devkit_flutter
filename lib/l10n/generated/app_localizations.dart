@@ -1165,6 +1165,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Form validation failed. Please check red fields.'**
   String get formValidationFailed;
+
+  /// No description provided for @fieldRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get fieldRequired;
+
+  /// No description provided for @invalidNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid Number'**
+  String get invalidNumber;
 }
 
 class _AppLocalizationsDelegate

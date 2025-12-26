@@ -545,4 +545,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get formValidationFailed =>
       'Form validation failed. Please check red fields.';
+
+  @override
+  String get fieldRequired => 'Required';
+
+  @override
+  String get invalidNumber => 'Invalid Number';
 }

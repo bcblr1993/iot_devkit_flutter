@@ -541,4 +541,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get formValidationFailed => '表单验证失败，请检查红色字段。';
+
+  @override
+  String get fieldRequired => '此项必填';
+
+  @override
+  String get invalidNumber => '请输入有效的数字';
 }

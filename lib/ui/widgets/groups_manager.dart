@@ -279,8 +279,8 @@ class _GroupsManagerState extends State<GroupsManager> {
       onChanged: enabled ? onChanged : null,
       validator: (value) {
         if (!enabled) return null;
-        if (value == null || value.isEmpty) return 'Required';
-        if (isNumber && num.tryParse(value) == null) return 'Invalid Number';
+        if (value == null || value.isEmpty) return AppLocalizations.of(context)!.fieldRequired;
+        if (isNumber && num.tryParse(value) == null) return AppLocalizations.of(context)!.invalidNumber;
         return null;
       },
     );
