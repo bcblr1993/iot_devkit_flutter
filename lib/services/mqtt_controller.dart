@@ -84,10 +84,13 @@ class MqttController extends ChangeNotifier {
 
   // --- Public API ---
 
+  bool _isStopping = false;
+
   Future<void> stop() async {
     if (!isRunning) return;
     
     _isBusy = true;
+    _isStopping = true; // Signal loops to break
     notifyListeners();
     log('Stopping simulation...', 'info');
 
@@ -101,6 +104,7 @@ class MqttController extends ChangeNotifier {
       // Always ensure state is reset
       _isRunning = false;
       _isBusy = false;
+      _isStopping = false;
       notifyListeners();
     }
   }
@@ -113,6 +117,7 @@ class MqttController extends ChangeNotifier {
 
     _isBusy = true;
     _isRunning = true;
+    _isStopping = false;
     notifyListeners();
     
     _schedulerService.reset();
@@ -183,7 +188,7 @@ class MqttController extends ChangeNotifier {
     // Connect in batches to avoid overwhelming the system while staying fast
     const int batchSize = 10;
     for (int i = startIdx; i <= endIdx; i += batchSize) {
-      if (!isRunning) break;
+      if (!isRunning || _isStopping) break;
       
       List<Future<void>> batch = [];
       for (int j = i; j < i + batchSize && j <= endIdx; j++) {
@@ -259,12 +264,12 @@ class MqttController extends ChangeNotifier {
 
     const int batchSize = 5; // Smaller batch for advanced mode groups
     for (var group in groups) {
-      if (!isRunning) break;
+      if (!isRunning || _isStopping) break;
       
       log('Starting Group: ${group.name}', 'info');
       
       for (int i = group.startDeviceNumber; i <= group.endDeviceNumber; i += batchSize) {
-        if (!isRunning) break;
+        if (!isRunning || _isStopping) break;
 
         List<Future<void>> batch = [];
         for (int j = i; j < i + batchSize && j <= group.endDeviceNumber; j++) {

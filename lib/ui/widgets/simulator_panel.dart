@@ -457,7 +457,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
           width: double.infinity,
           height: 48,
           child: FilledButton.icon(
-            onPressed: isBusy ? null : (isRunning 
+            onPressed: (isBusy && !isRunning) ? null : (isRunning 
               ? () {
                  controller.stop();
                  _showMonitor = false; // Reset on stop 
