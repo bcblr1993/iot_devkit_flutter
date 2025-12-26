@@ -383,14 +383,13 @@ class SchedulerService {
     _addTimer(clientId, t);
   }
 
+  void _addTimer(String clientId, Timer t) {
     // For normal Timer, add to list
-    if (t != null) {
       if (!_clientTimers.containsKey(clientId)) {
         t.cancel();
         return;
       }
       _clientTimers[clientId]!.add(t);
-    }
   }
 
   MqttQos _intToQos(int v) {
