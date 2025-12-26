@@ -286,13 +286,18 @@ class MqttConfigSection extends StatelessWidget {
      final theme = Theme.of(context);
      return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-          color: color ?? theme.colorScheme.primary,
-        ),
+      child: Row(
+        children: [
+          Container(width: 4, height: 16, color: color ?? theme.colorScheme.primary, margin: const EdgeInsets.only(right: 8)),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: color ?? theme.colorScheme.primary,
+            ),
+          ),
+        ],
       ),
     );
   }

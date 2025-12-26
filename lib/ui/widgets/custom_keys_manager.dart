@@ -118,7 +118,12 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l10n.customKeys, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: widget.headerColor ?? theme.colorScheme.primary)),
+                Row(
+                  children: [
+                    Container(width: 4, height: 16, color: widget.headerColor ?? theme.colorScheme.primary, margin: const EdgeInsets.only(right: 8)),
+                    Text(l10n.customKeys, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: widget.headerColor ?? theme.colorScheme.primary)),
+                  ],
+                ),
                 if (_localKeys.length > widget.maxKeys)
                   Text(
                     '${l10n.limitExceeded} (${_localKeys.length}/${widget.maxKeys})',

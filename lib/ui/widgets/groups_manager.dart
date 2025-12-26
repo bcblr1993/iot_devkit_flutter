@@ -109,7 +109,12 @@ class _GroupsManagerState extends State<GroupsManager> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(l10n.groupManagement, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: widget.headerColor ?? Theme.of(context).colorScheme.primary)),
+            Row(
+              children: [
+                Container(width: 4, height: 16, color: widget.headerColor ?? Theme.of(context).colorScheme.primary, margin: const EdgeInsets.only(right: 8)),
+                Text(l10n.groupManagement, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: widget.headerColor ?? Theme.of(context).colorScheme.primary)),
+              ],
+            ),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
