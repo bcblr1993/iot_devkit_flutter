@@ -270,7 +270,7 @@ class ThemeManager extends ChangeNotifier {
   }
 
   static final Map<String, ThemeData> _themes = {
-    // 1. 🌲 Forest Mint (保留 - 用户指定)
+    // 1. 🌲 Forest Mint (保留 - 经典绿)
     'forest-mint': _buildProTheme(
       brightness: Brightness.light,
       primary: const Color(0xFF047857),
@@ -293,115 +293,164 @@ class ThemeManager extends ChangeNotifier {
       ),
     ),
 
-    // 2. 👔 Corporate Slate (商务板岩) - 专业、克制、像 Linear/Vercel 风格
-    'corporate-slate': _buildProTheme(
-      brightness: Brightness.light,
-      primary: const Color(0xFF0F172A), // Slate 900
-      secondary: const Color(0xFF334155), // Slate 700
-      background: const Color(0xFFF8FAFC), // Slate 50
-      surface: const Color(0xFFFFFFFF),
-      onSurface: const Color(0xFF020617), // Slate 950
-      onBackground: const Color(0xFF475569), // Slate 600
-      error: const Color(0xFFBE123C), // Rose 700
-      borderRadius: 6.0, // Sharp, professional corners
-      borderColor: const Color(0xFFE2E8F0), // Slate 200
-      primaryContainer: const Color(0xFFF1F5F9), // Slate 100
-      onPrimaryContainer: const Color(0xFF0F172A),
-      effect: const AppThemeEffect(
-        animationCurve: Curves.easeInOut,
-        layoutDensity: 0.9, // Denser layout for pro tools
-        borderRadius: 6.0,
-        icons: AppIcons.sharp,
-      ),
-    ),
-
-    // 3. 🌌 Cosmic Void (深空虚无) - 极致深黑，点缀紫色星光，适合长时间夜间工作
+    // 2. 🌌 Cosmic Void (保留 - 唯一暗色)
     'cosmic-void': _buildProTheme(
       brightness: Brightness.dark,
-      primary: const Color(0xFF6366F1), // Indigo 500
+      primary: const Color(0xFF818CF8), // Indigo 400
       secondary: const Color(0xFF4F46E5),
-      background: const Color(0xFF000000), // Pure Black (OLED Friendly)
+      background: const Color(0xFF000000), // Pure Black Oled
       surface: const Color(0xFF09090B), // Zinc 950
-      onSurface: const Color(0xFFFAFAFA), // Zinc 50
-      onBackground: const Color(0xFFA1A1AA), // Zinc 400
+      onSurface: const Color(0xFFFAFAFA),
+      onBackground: const Color(0xFFA1A1AA),
       error: const Color(0xFFF87171),
       borderRadius: 12.0,
-      borderColor: const Color(0xFF27272A), // Zinc 800
-      primaryContainer: const Color(0xFF1E1B4B), // Indigo 950
-      onPrimaryContainer: const Color(0xFFC7D2FE), // Indigo 200
+      borderColor: const Color(0xFF27272A),
+      primaryContainer: const Color(0xFF1E1B4B),
+      onPrimaryContainer: const Color(0xFFC7D2FE),
       effect: const AppThemeEffect(
         animationCurve: Curves.easeOutExpo,
         layoutDensity: 1.0,
         borderRadius: 12.0,
         icons: AppIcons.tech,
-        useGlassEffect: false, // Solid performance
+        useGlassEffect: false,
       ),
     ),
 
-    // 4. 🍵 Matcha Mochi (抹茶麻薯) - 治愈系，低饱和度，纸张质感
-    'matcha-mochi': _buildProTheme(
+    // 3. 🧊 Polar Blue (极地冰蓝) - White + Blue
+    'polar-blue': _buildProTheme(
       brightness: Brightness.light,
-      primary: const Color(0xFF5D7052), // Muted Green
-      secondary: const Color(0xFF8B9D83),
-      background: const Color(0xFFF2F0E9), // Warm Beige Paper
-      surface: const Color(0xFFFCFAF7), // Off-white
-      onSurface: const Color(0xFF44403C), // Warm Grey
-      onBackground: const Color(0xFF57534E),
-      error: const Color(0xFFB91C1C),
-      borderRadius: 24.0, // Very round, soft
-      borderColor: const Color(0xFFE7E5E4),
-      primaryContainer: const Color(0xFFE4E9E1),
-      onPrimaryContainer: const Color(0xFF3F4E38),
-      effect: const AppThemeEffect(
-        animationCurve: Curves.easeOutBack, // Bouncy
-        layoutDensity: 1.1, // Relaxed
-        borderRadius: 24.0,
-        icons: AppIcons.rounded,
-      ),
-    ),
-
-    // 5. ⚡ Neon Cyberpunk (霓虹赛博) - 电竞风，高对比度，故障艺术色
-    'neon-cyberpunk': _buildProTheme(
-      brightness: Brightness.dark,
-      primary: const Color(0xFFF000FF), // Magenta
-      secondary: const Color(0xFF00FFFF), // Cyan
-      background: const Color(0xFF050510), // Deep Blue Black
-      surface: const Color(0xFF13132B),
-      onSurface: const Color(0xFFFFFFFF),
-      onBackground: const Color(0xFFB8B8FF),
-      error: const Color(0xFFFF0055),
-      borderRadius: 4.0, // Cyber angular
-      borderColor: const Color(0xFF502090),
-      primaryContainer: const Color(0xFF35003E),
-      onPrimaryContainer: const Color(0xFFFFCCFF),
-      effect: const AppThemeEffect(
-        animationCurve: Curves.elasticOut,
-        layoutDensity: 1.0,
-        borderRadius: 4.0,
-        icons: AppIcons.tech,
-      ),
-    ),
-
-    // 6. 🌊 Nordic Frost (北欧霜雪) - 极简主义，冰蓝冷调
-    'nordic-frost': _buildProTheme(
-      brightness: Brightness.light,
-      primary: const Color(0xFF0EA5E9), // Sky 500
-      secondary: const Color(0xFF7DD3FC),
-      background: const Color(0xFFF0F9FF), // Sky 50
+      primary: const Color(0xFF0066CC), // Swiss Blue
+      secondary: const Color(0xFFE6F2FF),
+      background: const Color(0xFFF8FAFC), // Cool White
       surface: const Color(0xFFFFFFFF),
-      onSurface: const Color(0xFF0C4A6E), // Sky 900
-      onBackground: const Color(0xFF334155),
+      onSurface: const Color(0xFF333333), // Dark Grey Text
+      onBackground: const Color(0xFF64748B),
+      error: const Color(0xFFEF4444),
+      borderRadius: 8.0,
+      borderColor: const Color(0xFFE2E8F0),
+      primaryContainer: const Color(0xFFF1F5F9), // Slate 100
+      onPrimaryContainer: const Color(0xFF0F172A),
+      effect: const AppThemeEffect(
+        animationCurve: Curves.easeInOut,
+        layoutDensity: 0.95,
+        borderRadius: 8.0,
+        icons: AppIcons.sharp,
+        useGlassEffect: false,
+      ),
+    ),
+
+    // 4. 🌹 Porcelain Red (绯红白瓷) - White + Red
+    'porcelain-red': _buildProTheme(
+      brightness: Brightness.light,
+      primary: const Color(0xFFD32F2F), // Carmine
+      secondary: const Color(0xFFFFEBEE),
+      background: const Color(0xFFFFFAFA), // Snow
+      surface: const Color(0xFFFFFFFF),
+      onSurface: const Color(0xFF333333),
+      onBackground: const Color(0xFF757575),
+      error: const Color(0xFFB71C1C),
+      borderRadius: 12.0,
+      borderColor: const Color(0xFFF5F5F5),
+      primaryContainer: const Color(0xFFFFEBEE),
+      onPrimaryContainer: const Color(0xFFB71C1C),
+      effect: const AppThemeEffect(
+        animationCurve: Curves.easeOutQuart,
+        layoutDensity: 1.0,
+        borderRadius: 12.0,
+        icons: AppIcons.standard,
+        useGlassEffect: true,
+      ),
+    ),
+
+    // 5. 🔮 Wisteria White (紫藤云烟) - White + Purple
+    'wisteria-white': _buildProTheme(
+      brightness: Brightness.light,
+      primary: const Color(0xFF8B5CF6), // Violet 500
+      secondary: const Color(0xFFF3E8FF),
+      background: const Color(0xFFFAF5FF), // Purple 50
+      surface: const Color(0xFFFFFFFF),
+      onSurface: const Color(0xFF333333),
+      onBackground: const Color(0xFF6B7280),
       error: const Color(0xFFEF4444),
       borderRadius: 16.0,
-      borderColor: const Color(0xFFBAE6FD), // Sky 200
-      primaryContainer: const Color(0xFFE0F2FE),
-      onPrimaryContainer: const Color(0xFF0369A1),
+      borderColor: const Color(0xFFF3E8FF),
+      primaryContainer: const Color(0xFFF3E8FF),
+      onPrimaryContainer: const Color(0xFF5B21B6),
       effect: const AppThemeEffect(
-        animationCurve: Curves.easeOutSine,
+        animationCurve: Curves.easeInOutCubic,
         layoutDensity: 1.0,
         borderRadius: 16.0,
+        icons: AppIcons.rounded,
+        useGlassEffect: true,
+      ),
+    ),
+
+    // 6. 🍊 Amber Glow (晨曦琥珀) - White + Orange
+    'amber-glow': _buildProTheme(
+      brightness: Brightness.light,
+      primary: const Color(0xFFF97316), // Orange 500
+      secondary: const Color(0xFFFFEDD5),
+      background: const Color(0xFFFFF7ED), // Orange 50
+      surface: const Color(0xFFFFFFFF),
+      onSurface: const Color(0xFF333333),
+      onBackground: const Color(0xFF78716C),
+      error: const Color(0xFFEF4444),
+      borderRadius: 10.0,
+      borderColor: const Color(0xFFFED7AA),
+      primaryContainer: const Color(0xFFFFEDD5),
+      onPrimaryContainer: const Color(0xFF9A3412),
+      effect: const AppThemeEffect(
+        animationCurve: Curves.easeOutBack,
+        layoutDensity: 1.0,
+        borderRadius: 10.0,
         icons: AppIcons.standard,
-        useGlassEffect: true, // Icy glass
+        useGlassEffect: false,
+      ),
+    ),
+
+    // 7. 🦢 Graphite Mono (极简石墨) - White + Gray
+    'graphite-mono': _buildProTheme(
+      brightness: Brightness.light,
+      primary: const Color(0xFF374151), // Gray 700
+      secondary: const Color(0xFFF3F4F6),
+      background: const Color(0xFFFFFFFF), // Pure White
+      surface: const Color(0xFFFFFFFF),
+      onSurface: const Color(0xFF111827), // Gray 900
+      onBackground: const Color(0xFF4B5563),
+      error: const Color(0xFFEF4444), // Only color allowed is error
+      borderRadius: 0.0, // Bauhaus sharp
+      borderColor: const Color(0xFFE5E7EB),
+      primaryContainer: const Color(0xFFF3F4F6),
+      onPrimaryContainer: const Color(0xFF1F2937),
+      effect: const AppThemeEffect(
+        animationCurve: Curves.linear,
+        layoutDensity: 0.85, // Compact
+        borderRadius: 0.0,
+        icons: AppIcons.sharp,
+        useGlassEffect: false,
+      ),
+    ),
+
+    // 8. 🏖️ Azure Coast (蔚蓝海岸) - White + Cyan
+    'azure-coast': _buildProTheme(
+      brightness: Brightness.light,
+      primary: const Color(0xFF06B6D4), // Cyan 500
+      secondary: const Color(0xFFCFFAFE),
+      background: const Color(0xFFECFEFF), // Cyan 50
+      surface: const Color(0xFFFFFFFF),
+      onSurface: const Color(0xFF333333),
+      onBackground: const Color(0xFF64748B),
+      error: const Color(0xFFEF4444),
+      borderRadius: 14.0,
+      borderColor: const Color(0xFFCFFAFE),
+      primaryContainer: const Color(0xFFE0F2FE), // Light Blue 100 mixed
+      onPrimaryContainer: const Color(0xFF0E7490),
+      effect: const AppThemeEffect(
+        animationCurve: Curves.easeInOutSine,
+        layoutDensity: 1.0,
+        borderRadius: 14.0,
+        icons: AppIcons.rounded,
+        useGlassEffect: true,
       ),
     ),
   };

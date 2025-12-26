@@ -219,13 +219,15 @@ class _HomeScreenState extends State<HomeScreen> {
               title: Text(l10n.selectTheme),
               children: themeManager.availableThemes.map((String theme) {
                 String label;
-                switch (theme) {
+                  switch (theme) {
                   case 'forest-mint': label = l10n.themeForestMint; break;
-                  case 'corporate-slate': label = l10n.themeCorporateSlate; break;
                   case 'cosmic-void': label = l10n.themeCosmicVoid; break;
-                  case 'matcha-mochi': label = l10n.themeMatchaMochi; break;
-                  case 'neon-cyberpunk': label = l10n.themeNeonCyberpunk; break;
-                  case 'nordic-frost': label = l10n.themeNordicFrost; break;
+                  case 'polar-blue': label = l10n.themePolarBlue; break;
+                  case 'porcelain-red': label = l10n.themePorcelainRed; break;
+                  case 'wisteria-white': label = l10n.themeWisteriaWhite; break;
+                  case 'amber-glow': label = l10n.themeAmberGlow; break;
+                  case 'graphite-mono': label = l10n.themeGraphiteMono; break;
+                  case 'azure-coast': label = l10n.themeAzureCoast; break;
                   default: label = theme;
                 }
                 return SimpleDialogOption(
