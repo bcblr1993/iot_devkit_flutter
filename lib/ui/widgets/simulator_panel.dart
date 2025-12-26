@@ -508,14 +508,52 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
   }
 
   Widget _buildLogToolbarStats(BuildContext context, AppLocalizations l10n) {
-     // Simplifying log header for brevity
-     return Row(
-       children: [
-         Icon(Icons.terminal, size: 16, color: Theme.of(context).colorScheme.primary),
-         const SizedBox(width: 8),
-         Text(l10n.logs, style: const TextStyle(fontWeight: FontWeight.bold)),
-       ],
-     );
+    final mqttController = Provider.of<MqttController>(context, listen: false);
+    final theme = Theme.of(context);
+    final isSmallScreen = MediaQuery.of(context).size.width < 600;
+
+    return ListenableBuilder(
+      listenable: mqttController.statisticsCollector,
+      builder: (context, _) {
+        final stats = mqttController.statisticsCollector;
+        return Row(
+          children: [
+            Icon(Icons.terminal, size: 16, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            Text(l10n.logs, style: const TextStyle(fontWeight: FontWeight.bold)),
+            if (!isSmallScreen) ...[
+              const SizedBox(width: 16),
+              Container(width: 1, height: 16, color: theme.dividerColor),
+              const SizedBox(width: 16),
+              _buildStatItem(context, l10n.totalDevices, stats.totalDevices.toString(), Colors.blue),
+              const SizedBox(width: 12),
+              _buildStatItem(context, l10n.online, stats.onlineDevices.toString(), Colors.green),
+              const SizedBox(width: 12),
+              _buildStatItem(context, l10n.statSent, stats.totalMessages.toString(), theme.colorScheme.onSurface),
+              const SizedBox(width: 12),
+              _buildStatItem(context, l10n.statSuccess, stats.successCount.toString(), Colors.green),
+              const SizedBox(width: 12),
+              _buildStatItem(context, l10n.statFailed, stats.failureCount.toString(), theme.colorScheme.error),
+            ] else 
+              Expanded(child: Text(
+                '  D:${stats.onlineDevices}/${stats.totalDevices} S:${stats.successCount} F:${stats.failureCount}',
+                style: const TextStyle(fontSize: 11),
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.right,
+              )),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildStatItem(BuildContext context, String label, String value, Color color) {
+    return Row(
+      children: [
+        Text('$label: ', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+        Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
+      ],
+    );
   }
 }
 

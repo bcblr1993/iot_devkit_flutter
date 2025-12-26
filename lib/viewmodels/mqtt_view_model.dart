@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:iot_devkit/models/group_config.dart';
 import 'package:iot_devkit/models/custom_key_config.dart';
 import 'package:iot_devkit/services/config_service.dart';
-import 'package:iot_devkit/services/mqtt_controller.dart';
 import 'package:iot_devkit/services/data_generator.dart';
 
 class MqttViewModel extends ChangeNotifier {
