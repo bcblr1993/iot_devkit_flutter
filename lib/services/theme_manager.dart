@@ -270,7 +270,7 @@ class ThemeManager extends ChangeNotifier {
   }
 
   static final Map<String, ThemeData> _themes = {
-    // 1. 🌲 Forest Mint (保留)
+    // 1. 🌲 Forest Mint (保留 - 用户指定)
     'forest-mint': _buildProTheme(
       brightness: Brightness.light,
       primary: const Color(0xFF047857),
@@ -293,136 +293,115 @@ class ThemeManager extends ChangeNotifier {
       ),
     ),
 
-    // 2. 🌌 Midnight Purple (午夜紫罗兰) - 优雅暗色
-    'midnight-purple': _buildProTheme(
-      brightness: Brightness.dark,
-      primary: const Color(0xFF8B5CF6), // Violet
-      secondary: const Color(0xFF4C1D95),
-      background: const Color(0xFF0F0A1E), // Deep Violet Black
-      surface: const Color(0xFF1A1625), // Violet Grey Card
-      onSurface: const Color(0xFFF3E8FF),
-      onBackground: const Color(0xFFE9D5FF),
-      error: const Color(0xFFF87171),
-      borderRadius: 18.0,
-      borderColor: const Color(0xFF4C1D95).withOpacity(0.3),
-      primaryContainer: const Color(0xFF8B5CF6).withOpacity(0.15),
-      onPrimaryContainer: const Color(0xFFDDD6FE),
-      effect: const AppThemeEffect(
-        animationCurve: Curves.easeOutQuint,
-        layoutDensity: 1.0,
-        borderRadius: 18.0,
-        icons: AppIcons.rounded,
-      ),
-    ),
-
-    // 3. 🌅 Sunset Orange (日落橙光) - 温暖活力
-    'sunset-orange': _buildProTheme(
+    // 2. 👔 Corporate Slate (商务板岩) - 专业、克制、像 Linear/Vercel 风格
+    'corporate-slate': _buildProTheme(
       brightness: Brightness.light,
-      primary: const Color(0xFFF97316), // Orange
-      secondary: const Color(0xFFFB923C),
-      background: const Color(0xFFFFFBF5), // Warm White
+      primary: const Color(0xFF0F172A), // Slate 900
+      secondary: const Color(0xFF334155), // Slate 700
+      background: const Color(0xFFF8FAFC), // Slate 50
       surface: const Color(0xFFFFFFFF),
-      onSurface: const Color(0xFF9A3412),
-      onBackground: const Color(0xFF7C2D12),
-      error: const Color(0xFFDC2626),
-      borderRadius: 14.0,
-      borderColor: const Color(0xFFFED7AA),
-      primaryContainer: const Color(0xFFF97316).withOpacity(0.1),
-      onPrimaryContainer: const Color(0xFFC2410C),
+      onSurface: const Color(0xFF020617), // Slate 950
+      onBackground: const Color(0xFF475569), // Slate 600
+      error: const Color(0xFFBE123C), // Rose 700
+      borderRadius: 6.0, // Sharp, professional corners
+      borderColor: const Color(0xFFE2E8F0), // Slate 200
+      primaryContainer: const Color(0xFFF1F5F9), // Slate 100
+      onPrimaryContainer: const Color(0xFF0F172A),
       effect: const AppThemeEffect(
-        animationCurve: Curves.easeOutBack,
-        layoutDensity: 1.0,
-        borderRadius: 14.0,
-        icons: AppIcons.rounded,
+        animationCurve: Curves.easeInOut,
+        layoutDensity: 0.9, // Denser layout for pro tools
+        borderRadius: 6.0,
+        icons: AppIcons.sharp,
       ),
     ),
 
-    // 4. 🌸 Sakura Pink (樱花粉嫩) - 柔和浪漫
-    'sakura-pink': _buildProTheme(
-      brightness: Brightness.light,
-      primary: const Color(0xFFEC4899), // Pink
-      secondary: const Color(0xFFF472B6),
-      background: const Color(0xFFFFF5F7), // Pink White
-      surface: const Color(0xFFFFFFFF),
-      onSurface: const Color(0xFF9F1239),
-      onBackground: const Color(0xFF831843),
-      error: const Color(0xFFDC2626),
-      borderRadius: 20.0,
-      borderColor: const Color(0xFFFBCFE8),
-      primaryContainer: const Color(0xFFEC4899).withOpacity(0.08),
-      onPrimaryContainer: const Color(0xFFBE185D),
-      effect: const AppThemeEffect(
-        animationCurve: Curves.easeInOutQuad,
-        layoutDensity: 1.0,
-        borderRadius: 20.0,
-        icons: AppIcons.rounded,
-      ),
-    ),
-
-    // 5. 🔮 Cyber Teal (赛博青) - 科技未来
-    'cyber-teal': _buildProTheme(
+    // 3. 🌌 Cosmic Void (深空虚无) - 极致深黑，点缀紫色星光，适合长时间夜间工作
+    'cosmic-void': _buildProTheme(
       brightness: Brightness.dark,
-      primary: const Color(0xFF14B8A6), // Teal
-      secondary: const Color(0xFF0D9488),
-      background: const Color(0xFF0A1A1F), // Deep Teal Black
-      surface: const Color(0xFF132830), // Teal Grey Card
-      onSurface: const Color(0xFF99F6E4),
-      onBackground: const Color(0xFFCCFBF1),
+      primary: const Color(0xFF6366F1), // Indigo 500
+      secondary: const Color(0xFF4F46E5),
+      background: const Color(0xFF000000), // Pure Black (OLED Friendly)
+      surface: const Color(0xFF09090B), // Zinc 950
+      onSurface: const Color(0xFFFAFAFA), // Zinc 50
+      onBackground: const Color(0xFFA1A1AA), // Zinc 400
       error: const Color(0xFFF87171),
-      borderRadius: 10.0, // Harder edges
-      borderColor: const Color(0xFF134E4A),
-      primaryContainer: const Color(0xFF14B8A6).withOpacity(0.15),
-      onPrimaryContainer: const Color(0xFF5EEAD4),
+      borderRadius: 12.0,
+      borderColor: const Color(0xFF27272A), // Zinc 800
+      primaryContainer: const Color(0xFF1E1B4B), // Indigo 950
+      onPrimaryContainer: const Color(0xFFC7D2FE), // Indigo 200
       effect: const AppThemeEffect(
-        animationCurve: Curves.fastLinearToSlowEaseIn,
+        animationCurve: Curves.easeOutExpo,
         layoutDensity: 1.0,
-        borderRadius: 10.0,
-        icons: AppIcons.tech, // Tech icons
-        useGlassEffect: true,
+        borderRadius: 12.0,
+        icons: AppIcons.tech,
+        useGlassEffect: false, // Solid performance
       ),
     ),
 
-    // 6. 🏆 Golden Hour (黄金时刻) - 奢华金色
-    'golden-hour': _buildProTheme(
+    // 4. 🍵 Matcha Mochi (抹茶麻薯) - 治愈系，低饱和度，纸张质感
+    'matcha-mochi': _buildProTheme(
+      brightness: Brightness.light,
+      primary: const Color(0xFF5D7052), // Muted Green
+      secondary: const Color(0xFF8B9D83),
+      background: const Color(0xFFF2F0E9), // Warm Beige Paper
+      surface: const Color(0xFFFCFAF7), // Off-white
+      onSurface: const Color(0xFF44403C), // Warm Grey
+      onBackground: const Color(0xFF57534E),
+      error: const Color(0xFFB91C1C),
+      borderRadius: 24.0, // Very round, soft
+      borderColor: const Color(0xFFE7E5E4),
+      primaryContainer: const Color(0xFFE4E9E1),
+      onPrimaryContainer: const Color(0xFF3F4E38),
+      effect: const AppThemeEffect(
+        animationCurve: Curves.easeOutBack, // Bouncy
+        layoutDensity: 1.1, // Relaxed
+        borderRadius: 24.0,
+        icons: AppIcons.rounded,
+      ),
+    ),
+
+    // 5. ⚡ Neon Cyberpunk (霓虹赛博) - 电竞风，高对比度，故障艺术色
+    'neon-cyberpunk': _buildProTheme(
       brightness: Brightness.dark,
-      primary: const Color(0xFFF59E0B), // Gold
-      secondary: const Color(0xFFD97706),
-      background: const Color(0xFF1C1917), // Dark Brown Black
-      surface: const Color(0xFF292524), // Brown Grey Card
-      onSurface: const Color(0xFFFDE68A),
-      onBackground: const Color(0xFFFEF3C7),
+      primary: const Color(0xFFF000FF), // Magenta
+      secondary: const Color(0xFF00FFFF), // Cyan
+      background: const Color(0xFF050510), // Deep Blue Black
+      surface: const Color(0xFF13132B),
+      onSurface: const Color(0xFFFFFFFF),
+      onBackground: const Color(0xFFB8B8FF),
+      error: const Color(0xFFFF0055),
+      borderRadius: 4.0, // Cyber angular
+      borderColor: const Color(0xFF502090),
+      primaryContainer: const Color(0xFF35003E),
+      onPrimaryContainer: const Color(0xFFFFCCFF),
+      effect: const AppThemeEffect(
+        animationCurve: Curves.elasticOut,
+        layoutDensity: 1.0,
+        borderRadius: 4.0,
+        icons: AppIcons.tech,
+      ),
+    ),
+
+    // 6. 🌊 Nordic Frost (北欧霜雪) - 极简主义，冰蓝冷调
+    'nordic-frost': _buildProTheme(
+      brightness: Brightness.light,
+      primary: const Color(0xFF0EA5E9), // Sky 500
+      secondary: const Color(0xFF7DD3FC),
+      background: const Color(0xFFF0F9FF), // Sky 50
+      surface: const Color(0xFFFFFFFF),
+      onSurface: const Color(0xFF0C4A6E), // Sky 900
+      onBackground: const Color(0xFF334155),
       error: const Color(0xFFEF4444),
       borderRadius: 16.0,
-      borderColor: const Color(0xFF78350F),
-      primaryContainer: const Color(0xFFF59E0B).withOpacity(0.15),
-      onPrimaryContainer: const Color(0xFFFCD34D),
+      borderColor: const Color(0xFFBAE6FD), // Sky 200
+      primaryContainer: const Color(0xFFE0F2FE),
+      onPrimaryContainer: const Color(0xFF0369A1),
       effect: const AppThemeEffect(
-        animationCurve: Curves.easeInOutCubicEmphasized,
+        animationCurve: Curves.easeOutSine,
         layoutDensity: 1.0,
         borderRadius: 16.0,
-        icons: AppIcons.sharp, // Sharp icons
-      ),
-    ),
-
-    // 7. 🌿 Lavender Dream (薰衣草梦境) - 清新淡紫
-    'lavender-dream': _buildProTheme(
-      brightness: Brightness.light,
-      primary: const Color(0xFFA78BFA), // Lavender
-      secondary: const Color(0xFF8B5CF6),
-      background: const Color(0xFFFAFAFF), // Lavender White
-      surface: const Color(0xFFFFFFFF),
-      onSurface: const Color(0xFF6D28D9),
-      onBackground: const Color(0xFF5B21B6),
-      error: const Color(0xFFDC2626),
-      borderRadius: 16.0,
-      borderColor: const Color(0xFFE9D5FF),
-      primaryContainer: const Color(0xFFA78BFA).withOpacity(0.12),
-      onPrimaryContainer: const Color(0xFF7C3AED),
-      effect: const AppThemeEffect(
-        animationCurve: Curves.easeOutCirc,
-        layoutDensity: 1.0,
-        borderRadius: 16.0,
-        icons: AppIcons.rounded,
+        icons: AppIcons.standard,
+        useGlassEffect: true, // Icy glass
       ),
     ),
   };

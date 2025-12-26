@@ -483,22 +483,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get performanceMode => '高性能模式 (关闭日志)';
 
   @override
-  String get themeMidnightPurple => '午夜紫罗兰 (Midnight)';
+  String get themeCorporateSlate => '商务板岩 (Corporate)';
 
   @override
-  String get themeSunsetOrange => '日落橙光 (Sunset)';
+  String get themeCosmicVoid => '深空虚无 (Cosmic)';
 
   @override
-  String get themeSakuraPink => '樱花粉嫩 (Sakura)';
+  String get themeMatchaMochi => '抹茶麻薯 (Matcha)';
 
   @override
-  String get themeCyberTeal => '赛博青 (Cyber)';
+  String get themeNeonCyberpunk => '霓虹赛博 (Neon)';
 
   @override
-  String get themeGoldenHour => '黄金时刻 (Golden)';
-
-  @override
-  String get themeLavenderDream => '薰衣草梦境 (Lavender)';
+  String get themeNordicFrost => '北欧霜雪 (Nordic)';
 
   @override
   String get menuOpenLogs => '打开日志文件夹';

@@ -486,22 +486,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get performanceMode => 'Performance Mode (Disable Logs)';
 
   @override
-  String get themeMidnightPurple => 'Midnight Purple';
+  String get themeCorporateSlate => 'Corporate Slate';
 
   @override
-  String get themeSunsetOrange => 'Sunset Orange';
+  String get themeCosmicVoid => 'Cosmic Void';
 
   @override
-  String get themeSakuraPink => 'Sakura Pink';
+  String get themeMatchaMochi => 'Matcha Mochi';
 
   @override
-  String get themeCyberTeal => 'Cyber Teal';
+  String get themeNeonCyberpunk => 'Neon Cyberpunk';
 
   @override
-  String get themeGoldenHour => 'Golden Hour';
-
-  @override
-  String get themeLavenderDream => 'Lavender Dream';
+  String get themeNordicFrost => 'Nordic Frost';
 
   @override
   String get menuOpenLogs => 'Open Logs Location';

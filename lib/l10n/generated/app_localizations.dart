@@ -1046,41 +1046,35 @@ abstract class AppLocalizations {
   /// **'Performance Mode (Disable Logs)'**
   String get performanceMode;
 
-  /// No description provided for @themeMidnightPurple.
+  /// No description provided for @themeCorporateSlate.
   ///
   /// In en, this message translates to:
-  /// **'Midnight Purple'**
-  String get themeMidnightPurple;
+  /// **'Corporate Slate'**
+  String get themeCorporateSlate;
 
-  /// No description provided for @themeSunsetOrange.
+  /// No description provided for @themeCosmicVoid.
   ///
   /// In en, this message translates to:
-  /// **'Sunset Orange'**
-  String get themeSunsetOrange;
+  /// **'Cosmic Void'**
+  String get themeCosmicVoid;
 
-  /// No description provided for @themeSakuraPink.
+  /// No description provided for @themeMatchaMochi.
   ///
   /// In en, this message translates to:
-  /// **'Sakura Pink'**
-  String get themeSakuraPink;
+  /// **'Matcha Mochi'**
+  String get themeMatchaMochi;
 
-  /// No description provided for @themeCyberTeal.
+  /// No description provided for @themeNeonCyberpunk.
   ///
   /// In en, this message translates to:
-  /// **'Cyber Teal'**
-  String get themeCyberTeal;
+  /// **'Neon Cyberpunk'**
+  String get themeNeonCyberpunk;
 
-  /// No description provided for @themeGoldenHour.
+  /// No description provided for @themeNordicFrost.
   ///
   /// In en, this message translates to:
-  /// **'Golden Hour'**
-  String get themeGoldenHour;
-
-  /// No description provided for @themeLavenderDream.
-  ///
-  /// In en, this message translates to:
-  /// **'Lavender Dream'**
-  String get themeLavenderDream;
+  /// **'Nordic Frost'**
+  String get themeNordicFrost;
 
   /// No description provided for @menuOpenLogs.
   ///
