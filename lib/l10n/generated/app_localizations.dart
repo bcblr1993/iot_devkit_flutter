@@ -1177,6 +1177,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Invalid Number'**
   String get invalidNumber;
+
+  /// No description provided for @dashboardTPS.
+  ///
+  /// In en, this message translates to:
+  /// **'Throughput'**
+  String get dashboardTPS;
+
+  /// No description provided for @dashboardBandwidth.
+  ///
+  /// In en, this message translates to:
+  /// **'Bandwidth'**
+  String get dashboardBandwidth;
+
+  /// No description provided for @dashboardLatency.
+  ///
+  /// In en, this message translates to:
+  /// **'Latency'**
+  String get dashboardLatency;
+
+  /// No description provided for @chartTitleThroughput.
+  ///
+  /// In en, this message translates to:
+  /// **'Throughput Trend'**
+  String get chartTitleThroughput;
+
+  /// No description provided for @chartTitleLatency.
+  ///
+  /// In en, this message translates to:
+  /// **'Latency Trend'**
+  String get chartTitleLatency;
+
+  /// No description provided for @cpuUsage.
+  ///
+  /// In en, this message translates to:
+  /// **'CPU'**
+  String get cpuUsage;
+
+  /// No description provided for @memoryUsage.
+  ///
+  /// In en, this message translates to:
+  /// **'Mem'**
+  String get memoryUsage;
 }
 
 class _AppLocalizationsDelegate

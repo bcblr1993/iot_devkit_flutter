@@ -551,4 +551,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get invalidNumber => 'Invalid Number';
+
+  @override
+  String get dashboardTPS => 'Throughput';
+
+  @override
+  String get dashboardBandwidth => 'Bandwidth';
+
+  @override
+  String get dashboardLatency => 'Latency';
+
+  @override
+  String get chartTitleThroughput => 'Throughput Trend';
+
+  @override
+  String get chartTitleLatency => 'Latency Trend';
+
+  @override
+  String get cpuUsage => 'CPU';
+
+  @override
+  String get memoryUsage => 'Mem';
 }

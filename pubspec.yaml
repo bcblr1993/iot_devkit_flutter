@@ -1,7 +1,7 @@
 name: iot_devkit
 description: A new Flutter project for IoT MQTT Device Simulation.
 publish_to: 'none'
-version: 1.2.11+1
+version: 1.2.12
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -26,6 +26,7 @@ dependencies:
   # UI (Optional, but useful for icons if not using material default)
   cupertino_icons: ^1.0.8
   package_info_plus: ^8.1.0
+  fl_chart: ^1.1.1
 
 dev_dependencies:
   flutter_test:

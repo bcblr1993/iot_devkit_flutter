@@ -547,4 +547,25 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get invalidNumber => '请输入有效的数字';
+
+  @override
+  String get dashboardTPS => '吞吐量 (TPS)';
+
+  @override
+  String get dashboardBandwidth => '带宽';
+
+  @override
+  String get dashboardLatency => '平局延迟';
+
+  @override
+  String get chartTitleThroughput => '吞吐量趋势';
+
+  @override
+  String get chartTitleLatency => '延迟趋势';
+
+  @override
+  String get cpuUsage => 'CPU';
+
+  @override
+  String get memoryUsage => '内存';
 }

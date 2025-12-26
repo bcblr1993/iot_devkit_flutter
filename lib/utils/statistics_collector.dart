@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 class StatisticsCollector extends ChangeNotifier {
@@ -11,13 +12,112 @@ class StatisticsCollector extends ChangeNotifier {
   int totalMessages = 0;
   int successCount = 0;
   int failureCount = 0;
+  // Performance Metrics
+  double currentTps = 0.0;
+  double currentBandwidth = 0.0; // KB/s
+  double currentLatency = 0.0;
+  
+  // History Buffers (Last 60s)
+  final List<Map<String, double>> tpsHistory = [];
+  final List<Map<String, double>> latencyHistory = [];
+  
+  // Resources
+  double cpuUsage = 0.0; // %
+  int memoryUsage = 0; // Bytes
+
+  // Internal tracking
+  int _lastTotalMessages = 0;
+  int _lastTotalBytes = 0;
+  int totalBytes = 0;
+  
+  // Restored missing fields
   int totalLatency = 0;
   int latencySamples = 0;
   int messageSize = 0; // Bytes
+  
+  // Maps 
   final Map<String, int> groupMessageSizes = {};
 
   Timer? _updateTimer;
+  Timer? _rateTimer;
   bool _needsUpdate = false;
+
+  StatisticsCollector() {
+    _startRateTimer();
+  }
+  
+  void _startRateTimer() {
+    _rateTimer?.cancel();
+    _rateTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+       _calculateRates();
+       _updateResources();
+    });
+  }
+  
+  Future<void> _updateResources() async {
+    try {
+      // Process Memory (RSS)
+      memoryUsage = ProcessInfo.currentRss;
+      
+      // CPU Usage (Platform Specific)
+      if (Platform.isMacOS || Platform.isLinux) {
+        // macOS/Linux: ps -A -o %cpu
+        // Pipe to awk to sum it up
+        final result = await Process.run('sh', ['-c', "ps -A -o %cpu | awk '{s+=\$1} END {print s}'"]);
+        if (result.exitCode == 0) {
+          cpuUsage = double.tryParse(result.stdout.toString().trim()) ?? 0.0;
+        }
+      } else if (Platform.isWindows) {
+        // Windows: wmic cpu get loadpercentage
+        final result = await Process.run('wmic', ['cpu', 'get', 'loadpercentage']);
+        if (result.exitCode == 0) {
+          // Output is distinct lines, e.g. "LoadPercentage \n 12 \n"
+          final lines = result.stdout.toString().split('\n');
+          for (var line in lines) {
+             final val = double.tryParse(line.trim());
+             if (val != null) {
+               cpuUsage = val;
+               break;
+             }
+          }
+        }
+      }
+      
+      // Force update to refresh stats
+      _needsUpdate = true; 
+      _flushToUI();
+      
+    } catch (e) {
+      // ignore silently to avoid log spam
+    }
+  }
+
+  void _calculateRates() {
+     int deltaMessages = totalMessages - _lastTotalMessages;
+     int deltaBytes = totalBytes - _lastTotalBytes;
+     
+     _lastTotalMessages = totalMessages;
+     _lastTotalBytes = totalBytes;
+     
+     currentTps = deltaMessages.toDouble();
+     currentBandwidth = deltaBytes / 1024.0;
+     currentLatency = latencySamples > 0 ? (totalLatency / latencySamples) : 0.0;
+     
+     // Update History
+     double now = DateTime.now().millisecondsSinceEpoch.toDouble();
+     
+     tpsHistory.add({'time': now, 'value': currentTps});
+     if (tpsHistory.length > 60) tpsHistory.removeAt(0);
+     
+     latencyHistory.add({'time': now, 'value': currentLatency});
+     if (latencyHistory.length > 60) latencyHistory.removeAt(0);
+     
+     // Force update every second if there is activity or history
+     if (currentTps > 0 || tpsHistory.isNotEmpty) {
+       _needsUpdate = true;
+       _flushToUI();
+     }
+  }
 
   void reset() {
     totalDevices = 0;
@@ -28,10 +128,23 @@ class StatisticsCollector extends ChangeNotifier {
     totalLatency = 0;
     latencySamples = 0;
     messageSize = 0;
+    totalBytes = 0;
     groupMessageSizes.clear();
     
+    // Reset performance metrics
+    currentTps = 0.0;
+    currentBandwidth = 0.0;
+    currentLatency = 0.0;
+    tpsHistory.clear();
+    latencyHistory.clear();
+    _lastTotalMessages = 0;
+    _lastTotalBytes = 0;
+
     _needsUpdate = false;
     _updateTimer?.cancel();
+    // Restart rate timer 
+    _startRateTimer(); 
+    
     notifyListeners();
   }
 
@@ -45,8 +158,10 @@ class StatisticsCollector extends ChangeNotifier {
     _scheduleUpdate();
   }
 
+  @override
   void setMessageSize(int size) {
     messageSize = size;
+    totalBytes += size; 
     _scheduleUpdate();
   }
 

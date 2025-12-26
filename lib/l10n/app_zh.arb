@@ -183,5 +183,12 @@
   "qos2": "QoS 2",
   "formValidationFailed": "表单验证失败，请检查红色字段。",
   "fieldRequired": "此项必填",
-  "invalidNumber": "请输入有效的数字"
+  "invalidNumber": "请输入有效的数字",
+  "dashboardTPS": "吞吐量 (TPS)",
+  "dashboardBandwidth": "带宽",
+  "dashboardLatency": "平局延迟",
+  "chartTitleThroughput": "吞吐量趋势",
+  "chartTitleLatency": "延迟趋势",
+  "cpuUsage": "CPU",
+  "memoryUsage": "内存"
 }

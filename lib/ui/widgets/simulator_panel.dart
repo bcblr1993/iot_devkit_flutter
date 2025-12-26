@@ -13,6 +13,7 @@ import 'custom_keys_manager.dart';
 import 'mqtt_config_section.dart';
 import '../../services/config_service.dart';
 import 'log_console.dart';
+import 'performance_monitor.dart';
 import '../styles/app_theme_effect.dart';
 import '../styles/app_constants.dart';
 import '../../services/theme_manager.dart';
@@ -197,12 +198,27 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
                 ),
               ),
 
-              // Tabs
+              // Config Tabs or Performance Monitor (Collapsible)
               Expanded(
-                child: IgnorePointer(
-                  ignoring: isRunning,
+                child: (isRunning && _showMonitor)
+                  ? Stack(
+                      children: [
+                        const PerformanceMonitor(),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: IconButton.filledTonal(
+                            icon: const Icon(Icons.close, size: 18),
+                            onPressed: () => setState(() => _showMonitor = false),
+                            tooltip: l10n.close ?? 'Close',
+                          ),
+                        ),
+                      ],
+                    )
+                  : IgnorePointer(
+                  ignoring: mqttController.isBusy, // Only ignore when starting/stopping, not just running
                   child: Opacity(
-                    opacity: isRunning ? 0.7 : 1.0,
+                    opacity: mqttController.isBusy ? 0.7 : 1.0,
                     child: Column(
                       children: [
                         Padding(
@@ -374,6 +390,17 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
     );
   }
 
+  bool _showMonitor = false;
+
+  @override
+  void didUpdateWidget(SimulatorPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Auto-show monitor disabled by user request. Default false.
+    // User can toggle via Dashboard button.
+  }
+
+  // ... (existing helper methods)
+
   Widget _buildActionButtons(BuildContext context, MqttViewModel vm, MqttController controller, AppLocalizations l10n, AppThemeEffect effect) {
     final theme = Theme.of(context);
     final errorColor = theme.colorScheme.error;
@@ -389,12 +416,16 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
           height: 48,
           child: FilledButton.icon(
             onPressed: isBusy ? null : (isRunning 
-              ? () => controller.stop() 
+              ? () {
+                 controller.stop();
+                 _showMonitor = false; // Reset on stop 
+              }
               : () {
                 if (isBasic) {
                   bool valid = vm.startBasicSimulation(context, (config, basic) {
                      _showUnifiedPreviewDialog(context, vm.generatePreviewData(isBasic: true)!, () {
                        controller.start(config);
+                       // Auto-show disabled
                        widget.onSimulationStarted?.call();
                      });
                   });
@@ -408,6 +439,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
                      }
                      _showUnifiedPreviewDialog(context, data, () {
                         controller.start(config);
+                        // Auto-show disabled
                         widget.onSimulationStarted?.call();
                      });
                   });
@@ -432,28 +464,23 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
         Row(
           children: [
             Expanded(child: OutlinedButton.icon(
-              onPressed: isRunning ? null : () {
+              onPressed: isRunning 
+                ? () => setState(() => _showMonitor = !_showMonitor) // Toggle Dashboard
+                : () {
                 final data = vm.generatePreviewData(isBasic: isBasic);
                 if (data != null) _showUnifiedPreviewDialog(context, data, null);
                 else _setStatus('Cannot generate preview', Colors.orange);
               },
-              icon: const Icon(Icons.remove_red_eye_outlined),
-              label: Text(l10n.previewPayload),
+              icon: Icon(isRunning ? (_showMonitor ? Icons.visibility_off : Icons.dashboard) : Icons.remove_red_eye_outlined),
+              label: Text(isRunning 
+                 ? (_showMonitor ? (l10n.close ?? 'Close Monitor') : (l10n.statistics ?? 'Dashboard')) 
+                 : l10n.previewPayload),
             )),
             const SizedBox(width: 8),
-            // Import/Export logic needs moving to VM or keeping here calling ConfigService directly is fine for UI actions
             Expanded(child: OutlinedButton.icon(
               onPressed: isRunning ? null : () async {
                 final res = await ConfigService.importFromFile();
                 if (res.config != null) {
-                   // Updating VM state requires VM to have loadConfig(map) method or rely on reload
-                   // VM has _applyConfig private. Need to expose plain apply method or save to local storage and reload.
-                   // ConfigService saved it? No check importFromFile implementation... it returns Map.
-                   // So we need to tell VM to apply this map.
-                   // Since _applyConfig is private, I'll update it to be public or add applyConfig method in next step if it fails.
-                   // For now assuming ConfigService saves it? No.
-                   // I'll make VM.loadConfig() public (it is).
-                   // I'll save imported config to LocalStorage then loadConfig().
                    await ConfigService.saveToLocalStorage(res.config!);
                    await vm.loadConfig();
                    _setStatus(l10n.configImported ?? 'Imported', Colors.green);
@@ -539,6 +566,11 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
               _buildStatItem(context, l10n.statSuccess, stats.successCount.toString(), Colors.green),
               const SizedBox(width: 12),
               _buildStatItem(context, l10n.statFailed, stats.failureCount.toString(), theme.colorScheme.error),
+              const SizedBox(width: 12),
+              // Resources
+              _buildStatItem(context, l10n.cpuUsage ?? 'CPU', '${stats.cpuUsage.toStringAsFixed(1)}%', Colors.purple),
+              const SizedBox(width: 12),
+              _buildStatItem(context, l10n.memoryUsage ?? 'Mem', '${(stats.memoryUsage / 1024 / 1024).toStringAsFixed(0)} MB', Colors.indigo),
             ] else 
               Expanded(child: Text(
                 'D:${stats.onlineDevices}/${stats.totalDevices} S:${stats.successCount} F:${stats.failureCount}',
