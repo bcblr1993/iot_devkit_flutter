@@ -47,10 +47,19 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(_handleTabSelection);
+  }
+
+  void _handleTabSelection() {
+    if (_tabController.indexIsChanging) {
+      // Rebuild to update button logic (isBasic check)
+      setState(() {});
+    }
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_handleTabSelection);
     _tabController.dispose();
     super.dispose();
   }
@@ -383,14 +392,15 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
               ? () => controller.stop() 
               : () {
                 if (isBasic) {
-                  vm.startBasicSimulation(context, (config, basic) {
+                  bool valid = vm.startBasicSimulation(context, (config, basic) {
                      _showUnifiedPreviewDialog(context, vm.generatePreviewData(isBasic: true)!, () {
                        controller.start(config);
                        widget.onSimulationStarted?.call();
                      });
                   });
+                  if (!valid) _setStatus(l10n.formValidationFailed ?? 'Please check invalid fields', theme.colorScheme.error);
                 } else {
-                  vm.startAdvancedSimulation(context, (config, basic) {
+                  bool valid = vm.startAdvancedSimulation(context, (config, basic) {
                      final data = vm.generatePreviewData(isBasic: false);
                      if (data == null) {
                        _setStatus('No groups configured', Colors.orange);
@@ -401,6 +411,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
                         widget.onSimulationStarted?.call();
                      });
                   });
+                  if (!valid) _setStatus(l10n.formValidationFailed ?? 'Please check invalid fields', theme.colorScheme.error);
                 }
               }),
             icon: isBusy 

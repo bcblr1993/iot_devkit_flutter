@@ -7,6 +7,7 @@ import '../../services/language_provider.dart';
 import '../../services/status_registry.dart';
 import '../../services/theme_manager.dart';
 import '../../utils/about_dialog_helper.dart';
+import '../../utils/app_dialog_helper.dart';
 import '../widgets/simulator_panel.dart';
 import '../widgets/log_console.dart';
 import '../tools/timestamp_tool.dart';
@@ -208,108 +209,182 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showThemeDialog(BuildContext context) {
-    showDialog(
+    final l10n = AppLocalizations.of(context)!;
+    AppDialogHelper.show(
       context: context,
-      builder: (context) {
-        final l10n = AppLocalizations.of(context)!;
-        return Consumer<ThemeManager>(
-          builder: (context, themeManager, child) {
-            final isDark = Theme.of(context).brightness == Brightness.dark;
-            return SimpleDialog(
-              title: Text(l10n.selectTheme),
-              children: themeManager.availableThemes.map((String theme) {
-                String label;
-                  switch (theme) {
-                  case 'forest-mint': label = l10n.themeForestMint; break;
-                  case 'cosmic-void': label = l10n.themeCosmicVoid; break;
-                  case 'polar-blue': label = l10n.themePolarBlue; break;
-                  case 'porcelain-red': label = l10n.themePorcelainRed; break;
-                  case 'wisteria-white': label = l10n.themeWisteriaWhite; break;
-                  case 'amber-glow': label = l10n.themeAmberGlow; break;
-                  case 'graphite-mono': label = l10n.themeGraphiteMono; break;
-                  case 'azure-coast': label = l10n.themeAzureCoast; break;
-                  default: label = theme;
-                }
-                return SimpleDialogOption(
-                  onPressed: () {
-                    themeManager.setTheme(theme);
-                    Navigator.pop(context);
-                  },
-                  child: Row(
-                    children: [
-                      Radio<String>(
-                        value: theme, 
-                        groupValue: themeManager.currentThemeName, 
-                        onChanged: (_) {
-                          themeManager.setTheme(theme);
-                          Navigator.pop(context);
-                        },
+      title: l10n.selectTheme,
+      icon: Icons.palette_outlined,
+      content: Consumer<ThemeManager>(
+        builder: (context, themeManager, child) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: themeManager.availableThemes.map((String theme) {
+              String label;
+                switch (theme) {
+                case 'forest-mint': label = l10n.themeForestMint; break;
+                case 'cosmic-void': label = l10n.themeCosmicVoid; break;
+                case 'polar-blue': label = l10n.themePolarBlue; break;
+                case 'porcelain-red': label = l10n.themePorcelainRed; break;
+                case 'wisteria-white': label = l10n.themeWisteriaWhite; break;
+                case 'amber-glow': label = l10n.themeAmberGlow; break;
+                case 'graphite-mono': label = l10n.themeGraphiteMono; break;
+                case 'azure-coast': label = l10n.themeAzureCoast; break;
+                default: label = theme;
+              }
+              
+              final isSelected = themeManager.currentThemeName == theme;
+              final primaryColor = Theme.of(context).colorScheme.primary;
+              
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      themeManager.setTheme(theme);
+                      Navigator.pop(context);
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isSelected ? primaryColor.withOpacity(0.08) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected ? primaryColor.withOpacity(0.3) : Colors.transparent,
+                        ),
                       ),
-                      Text(label, style: const TextStyle(fontSize: 14)),
-                    ],
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 20,
+                            height: 20,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isSelected ? primaryColor : Colors.transparent,
+                              border: Border.all(
+                                color: isSelected ? primaryColor : Theme.of(context).disabledColor,
+                                width: 2,
+                              ),
+                            ),
+                            child: isSelected 
+                              ? const Center(child: Icon(Icons.check, size: 12, color: Colors.white))
+                              : null,
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Text(
+                              label,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                );
-              }).toList(),
-            );
-          },
-        );
-      },
+                ),
+              );
+            }).toList(),
+          );
+        },
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(MaterialLocalizations.of(context).closeButtonLabel),
+        ),
+      ],
     );
   }
 
   void _showLanguageDialog(BuildContext context) {
-    showDialog(
+    final l10n = AppLocalizations.of(context)!;
+    AppDialogHelper.show(
       context: context,
-      builder: (context) {
-        final l10n = AppLocalizations.of(context)!;
-        return Consumer<LanguageProvider>(
-          builder: (context, langProvider, child) {
-            return SimpleDialog(
-              title: Text(l10n.selectLanguage),
-              children: [
-                SimpleDialogOption(
-                  onPressed: () {
-                    langProvider.setLocale(const Locale('en'));
-                    Navigator.pop(context);
-                  },
-                  child: Row(
-                    children: [
-                      Radio<String>(
-                        value: 'en',
-                        groupValue: langProvider.currentLocale.languageCode,
-                        onChanged: (_) {
-                          langProvider.setLocale(const Locale('en'));
-                          Navigator.pop(context);
-                        },
+      title: l10n.selectLanguage,
+      icon: Icons.language_outlined,
+      content: Consumer<LanguageProvider>(
+        builder: (context, langProvider, child) {
+          final options = [
+            {'code': 'en', 'label': 'English'},
+            {'code': 'zh', 'label': '简体中文'},
+          ];
+          
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: options.map((opt) {
+              final code = opt['code']!;
+              final label = opt['label']!;
+              final isSelected = langProvider.currentLocale.languageCode == code;
+              final primaryColor = Theme.of(context).colorScheme.primary;
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      langProvider.setLocale(Locale(code));
+                      Navigator.pop(context);
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isSelected ? primaryColor.withOpacity(0.08) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected ? primaryColor.withOpacity(0.3) : Colors.transparent,
+                        ),
                       ),
-                      const Text('English', style: TextStyle(fontSize: 14)),
-                    ],
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 20,
+                            height: 20,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isSelected ? primaryColor : Colors.transparent,
+                              border: Border.all(
+                                color: isSelected ? primaryColor : Theme.of(context).disabledColor,
+                                width: 2,
+                              ),
+                            ),
+                            child: isSelected 
+                              ? const Center(child: Icon(Icons.check, size: 12, color: Colors.white))
+                              : null,
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Text(
+                              label,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-                SimpleDialogOption(
-                  onPressed: () {
-                    langProvider.setLocale(const Locale('zh'));
-                    Navigator.pop(context);
-                  },
-                  child: Row(
-                    children: [
-                      Radio<String>(
-                        value: 'zh',
-                        groupValue: langProvider.currentLocale.languageCode,
-                        onChanged: (_) {
-                          langProvider.setLocale(const Locale('zh'));
-                          Navigator.pop(context);
-                        },
-                      ),
-                      const Text('简体中文', style: TextStyle(fontSize: 14)),
-                    ],
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      },
+              );
+            }).toList(),
+          );
+        },
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(MaterialLocalizations.of(context).closeButtonLabel),
+        ),
+      ],
     );
   }
 

@@ -190,7 +190,9 @@ class MqttClientManager {
   }
 
   Future<void> stopAll() async {
-    // Cancel reconnect timers
+    _logger.info('Stopping all clients...');
+    
+    // 1. Clear configs to prevent reconnects
     for (var timer in _reconnectTimers.values) {
       timer?.cancel();
     }
@@ -198,15 +200,22 @@ class MqttClientManager {
     _reconnectAttempts.clear();
     _clientConfigs.clear();
 
-    // Disconnect clients
-    for (var client in _clients.values) {
+    // 2. Disconnect clients safely
+    // Create a copy of values to avoid concurrent modification issues during iteration
+    final clientsToDisconnect = List<MqttServerClient>.from(_clients.values);
+    
+    // Clear the map immediately so callbacks know we are shutting down
+    _clients.clear();
+
+    for (final client in clientsToDisconnect) {
       try {
+        // Prevent callback from triggering logic if possible, or let it trigger but find nothing in _clients
+        // We already cleared _clients, so _handleDisconnect will see map mismatch and do nothing.
         client.disconnect();
       } catch (e) {
         _logger.warning('Error disconnecting client', e);
       }
     }
-    _clients.clear();
   }
 
   void _cleanupClient(String clientId) {

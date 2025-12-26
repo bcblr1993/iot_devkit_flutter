@@ -247,21 +247,25 @@ class MqttViewModel extends ChangeNotifier {
     }
   }
   
-  void startBasicSimulation(BuildContext context, Function(Map<String, dynamic>, bool) showPreviewCallback) {
+  bool startBasicSimulation(BuildContext context, Function(Map<String, dynamic>, bool) showPreviewCallback) {
     if (formKeyBasic.currentState!.validate() && formKeyMqtt.currentState!.validate()) {
        final config = getCompleteConfig();
        config['mode'] = 'basic';
        ConfigService.saveToLocalStorage(config);
        showPreviewCallback(config, true);
+       return true;
     }
+    return false;
   }
 
-  void startAdvancedSimulation(BuildContext context, Function(Map<String, dynamic>, bool) showPreviewCallback) {
+  bool startAdvancedSimulation(BuildContext context, Function(Map<String, dynamic>, bool) showPreviewCallback) {
     if (formKeyAdvanced.currentState!.validate() && formKeyMqtt.currentState!.validate()) {
        final config = getCompleteConfig();
        config['mode'] = 'advanced';
        ConfigService.saveToLocalStorage(config);
        showPreviewCallback(config, false);
+       return true;
     }
+    return false;
   }
 }

@@ -462,10 +462,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get privateKey => '私钥';
 
   @override
-  String get previewPayload => '预览数据';
+  String get previewPayload => '数据预览';
 
   @override
-  String get payloadPreview => '数据预览';
+  String get payloadPreview => 'Payload Preview';
 
   @override
   String get selectFile => '选择文件';
@@ -483,10 +483,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get performanceMode => '高性能模式 (关闭日志)';
 
   @override
-  String get themeCorporateSlate => '商务板岩 (Corporate)';
+  String get themePolarBlue => '极地冰蓝 (Ice Blue)';
 
   @override
-  String get themeCosmicVoid => '深空虚无 (Cosmic)';
+  String get themePorcelainRed => '绯红白瓷 (Porcelain)';
+
+  @override
+  String get themeWisteriaWhite => '紫藤云烟 (Wisteria)';
+
+  @override
+  String get themeAmberGlow => '晨曦琥珀 (Amber)';
+
+  @override
+  String get themeGraphiteMono => '极简石墨 (Graphite)';
+
+  @override
+  String get themeAzureCoast => '蔚蓝海岸 (Azure)';
+
+  @override
+  String get themeCosmicVoid => '深空虚无 (Void)';
 
   @override
   String get themeMatchaMochi => '抹茶麻薯 (Matcha)';
@@ -507,20 +522,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get qosLabel => 'QoS 级别';
 
   @override
-  String get qos0 => 'QoS 0 - 最多一次';
+  String get qosTooltip0 => '至多一次 (0)';
 
   @override
-  String get qos1 => 'QoS 1 - 至少一次';
+  String get qosTooltip1 => '至少一次 (1)';
 
   @override
-  String get qos2 => 'QoS 2 - 只有一次';
+  String get qosTooltip2 => '仅一次 (2)';
 
   @override
-  String get qosTooltip0 => '发后即忘。速度最快，但网络波动时可能会丢数据。';
+  String get qos0 => 'QoS 0';
 
   @override
-  String get qosTooltip1 => '确保送达。保证对方收到，但可能会收到重复消息。';
+  String get qos1 => 'QoS 1';
 
   @override
-  String get qosTooltip2 => '确保送达且不重复。最可靠，但网络开销最大且最慢。';
+  String get qos2 => 'QoS 2';
+
+  @override
+  String get formValidationFailed => '表单验证失败，请检查红色字段。';
 }

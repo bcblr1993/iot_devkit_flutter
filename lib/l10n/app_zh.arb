@@ -180,5 +180,6 @@
   "qosTooltip2": "仅一次 (2)",
   "qos0": "QoS 0",
   "qos1": "QoS 1",
-  "qos2": "QoS 2"
+  "qos2": "QoS 2",
+  "formValidationFailed": "表单验证失败，请检查红色字段。"
 }

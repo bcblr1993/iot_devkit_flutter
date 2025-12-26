@@ -180,5 +180,6 @@
   "qosTooltip2": "Exactly once (2)",
   "qos0": "QoS 0",
   "qos1": "QoS 1",
-  "qos2": "QoS 2"
+  "qos2": "QoS 2",
+  "formValidationFailed": "Form validation failed. Please check red fields."
 }

@@ -94,9 +94,12 @@ class MqttController extends ChangeNotifier {
     try {
       _schedulerService.stopAll();
       await _clientManager.stopAll();
-      _isRunning = false;
       log('Simulation stopped.', 'info');
+    } catch (e) {
+      log('Error during stop: $e', 'error');
     } finally {
+      // Always ensure state is reset
+      _isRunning = false;
       _isBusy = false;
       notifyListeners();
     }
@@ -223,7 +226,11 @@ class MqttController extends ChangeNotifier {
     List<dynamic> groupsRaw = config['groups'] ?? [];
     List<GroupConfig> groups = [];
     for (var g in groupsRaw) {
-      if (g is GroupConfig) groups.add(g);
+      if (g is GroupConfig) {
+        groups.add(g);
+      } else if (g is Map<String, dynamic>) {
+        groups.add(GroupConfig.fromJson(g));
+      }
     }
     
     if (groups.isEmpty) {

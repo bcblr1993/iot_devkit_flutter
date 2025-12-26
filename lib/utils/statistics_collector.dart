@@ -66,9 +66,9 @@ class StatisticsCollector extends ChangeNotifier {
     _scheduleUpdate();
   }
 
-  void incrementFailure() {
-    totalMessages++;
-    failureCount++;
+  void incrementFailure({int count = 1}) {
+    totalMessages += count;
+    failureCount += count;
     _scheduleUpdate();
   }
 
@@ -76,7 +76,7 @@ class StatisticsCollector extends ChangeNotifier {
     if (!_needsUpdate) {
       _needsUpdate = true;
       if (_updateTimer == null || !_updateTimer!.isActive) {
-        _updateTimer = Timer(const Duration(milliseconds: 1000), _flushToUI);
+        _updateTimer = Timer(const Duration(milliseconds: 200), _flushToUI);
       }
     }
   }

@@ -1046,11 +1046,41 @@ abstract class AppLocalizations {
   /// **'Performance Mode (Disable Logs)'**
   String get performanceMode;
 
-  /// No description provided for @themeCorporateSlate.
+  /// No description provided for @themePolarBlue.
   ///
   /// In en, this message translates to:
-  /// **'Corporate Slate'**
-  String get themeCorporateSlate;
+  /// **'Polar Blue'**
+  String get themePolarBlue;
+
+  /// No description provided for @themePorcelainRed.
+  ///
+  /// In en, this message translates to:
+  /// **'Porcelain Red'**
+  String get themePorcelainRed;
+
+  /// No description provided for @themeWisteriaWhite.
+  ///
+  /// In en, this message translates to:
+  /// **'Wisteria White'**
+  String get themeWisteriaWhite;
+
+  /// No description provided for @themeAmberGlow.
+  ///
+  /// In en, this message translates to:
+  /// **'Amber Glow'**
+  String get themeAmberGlow;
+
+  /// No description provided for @themeGraphiteMono.
+  ///
+  /// In en, this message translates to:
+  /// **'Graphite Mono'**
+  String get themeGraphiteMono;
+
+  /// No description provided for @themeAzureCoast.
+  ///
+  /// In en, this message translates to:
+  /// **'Azure Coast'**
+  String get themeAzureCoast;
 
   /// No description provided for @themeCosmicVoid.
   ///
@@ -1091,44 +1121,50 @@ abstract class AppLocalizations {
   /// No description provided for @qosLabel.
   ///
   /// In en, this message translates to:
-  /// **'QoS'**
+  /// **'QoS Level'**
   String get qosLabel;
-
-  /// No description provided for @qos0.
-  ///
-  /// In en, this message translates to:
-  /// **'QoS 0 - At most once'**
-  String get qos0;
-
-  /// No description provided for @qos1.
-  ///
-  /// In en, this message translates to:
-  /// **'QoS 1 - At least once'**
-  String get qos1;
-
-  /// No description provided for @qos2.
-  ///
-  /// In en, this message translates to:
-  /// **'QoS 2 - Exactly once'**
-  String get qos2;
 
   /// No description provided for @qosTooltip0.
   ///
   /// In en, this message translates to:
-  /// **'Fire and forget. Fastest, but messages may be lost if network fails.'**
+  /// **'At most once (0)'**
   String get qosTooltip0;
 
   /// No description provided for @qosTooltip1.
   ///
   /// In en, this message translates to:
-  /// **'Guaranteed delivery. Ensures message arrives, but may be duplicated.'**
+  /// **'At least once (1)'**
   String get qosTooltip1;
 
   /// No description provided for @qosTooltip2.
   ///
   /// In en, this message translates to:
-  /// **'Guaranteed delivery exactly once. Most reliable but slowest.'**
+  /// **'Exactly once (2)'**
   String get qosTooltip2;
+
+  /// No description provided for @qos0.
+  ///
+  /// In en, this message translates to:
+  /// **'QoS 0'**
+  String get qos0;
+
+  /// No description provided for @qos1.
+  ///
+  /// In en, this message translates to:
+  /// **'QoS 1'**
+  String get qos1;
+
+  /// No description provided for @qos2.
+  ///
+  /// In en, this message translates to:
+  /// **'QoS 2'**
+  String get qos2;
+
+  /// No description provided for @formValidationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Form validation failed. Please check red fields.'**
+  String get formValidationFailed;
 }
 
 class _AppLocalizationsDelegate

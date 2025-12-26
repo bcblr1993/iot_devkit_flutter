@@ -486,7 +486,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get performanceMode => 'Performance Mode (Disable Logs)';
 
   @override
-  String get themeCorporateSlate => 'Corporate Slate';
+  String get themePolarBlue => 'Polar Blue';
+
+  @override
+  String get themePorcelainRed => 'Porcelain Red';
+
+  @override
+  String get themeWisteriaWhite => 'Wisteria White';
+
+  @override
+  String get themeAmberGlow => 'Amber Glow';
+
+  @override
+  String get themeGraphiteMono => 'Graphite Mono';
+
+  @override
+  String get themeAzureCoast => 'Azure Coast';
 
   @override
   String get themeCosmicVoid => 'Cosmic Void';
@@ -507,26 +522,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuSettings => 'Settings';
 
   @override
-  String get qosLabel => 'QoS';
+  String get qosLabel => 'QoS Level';
 
   @override
-  String get qos0 => 'QoS 0 - At most once';
+  String get qosTooltip0 => 'At most once (0)';
 
   @override
-  String get qos1 => 'QoS 1 - At least once';
+  String get qosTooltip1 => 'At least once (1)';
 
   @override
-  String get qos2 => 'QoS 2 - Exactly once';
+  String get qosTooltip2 => 'Exactly once (2)';
 
   @override
-  String get qosTooltip0 =>
-      'Fire and forget. Fastest, but messages may be lost if network fails.';
+  String get qos0 => 'QoS 0';
 
   @override
-  String get qosTooltip1 =>
-      'Guaranteed delivery. Ensures message arrives, but may be duplicated.';
+  String get qos1 => 'QoS 1';
 
   @override
-  String get qosTooltip2 =>
-      'Guaranteed delivery exactly once. Most reliable but slowest.';
+  String get qos2 => 'QoS 2';
+
+  @override
+  String get formValidationFailed =>
+      'Form validation failed. Please check red fields.';
 }

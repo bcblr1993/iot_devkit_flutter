@@ -27,7 +27,7 @@ class SchedulerService {
   });
 
   void reset() {
-    _alignedStartTime = DateTime.now().millisecondsSinceEpoch + 2000;
+    _alignedStartTime = DateTime.now().millisecondsSinceEpoch + 200;
   }
 
   void stopAll() {
@@ -349,8 +349,9 @@ class SchedulerService {
          targetWithJitter = nextTarget + jitter;
          delay = targetWithJitter - now;
          
+         statisticsCollector.incrementFailure(count: missed);
          if (enableLogs) {
-            onLog('[$clientId] System lagged. Skipping $missed messages to catch up.', 'warning');
+            onLog('[$clientId] System lagged. Skipped (Failed) $missed messages to catch up.', 'error');
          }
        }
     }
