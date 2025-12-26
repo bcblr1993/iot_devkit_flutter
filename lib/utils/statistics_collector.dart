@@ -40,6 +40,7 @@ class StatisticsCollector extends ChangeNotifier {
 
   Timer? _updateTimer;
   Timer? _rateTimer;
+  Timer? _resourceStartupDelayTimer;
   Timer? _resourceTimer;
   bool _needsUpdate = false;
   bool _isUpdatingResources = false;
@@ -47,21 +48,28 @@ class StatisticsCollector extends ChangeNotifier {
   StatisticsCollector() {
     _startTimers();
   }
-  
+
   void _startTimers() {
     _rateTimer?.cancel();
     _resourceTimer?.cancel();
+    _resourceStartupDelayTimer?.cancel();
     
     // 1. Rate Calculation (TPS, Bandwidth) - Fast (1s)
     _rateTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
        _calculateRates();
     });
     
-    // 2. Resource Monitoring (CPU, Memory) - Slow (3s) & Guarded
-    _resourceTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
-       if (!_isUpdatingResources) {
-         _updateResources();
-       }
+    // 2. Resource Monitoring (CPU, Memory)
+    // Delayed Start: Wait 1 minute after app startup before first check (Anti-Crash)
+    // Interval: 5 seconds (Reduced load)
+    _resourceStartupDelayTimer = Timer(const Duration(minutes: 1), () {
+        if (_resourceTimer != null && _resourceTimer!.isActive) return;
+        
+        _resourceTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+           if (!_isUpdatingResources) {
+             _updateResources();
+           }
+        });
     });
   }
   
