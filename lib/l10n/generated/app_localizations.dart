@@ -134,6 +134,18 @@ abstract class AppLocalizations {
   /// **'STOP SIMULATION'**
   String get stopSimulation;
 
+  /// No description provided for @starting.
+  ///
+  /// In en, this message translates to:
+  /// **'STARTING...'**
+  String get starting;
+
+  /// No description provided for @stopping.
+  ///
+  /// In en, this message translates to:
+  /// **'STOPPING...'**
+  String get stopping;
+
   /// No description provided for @mqttBroker.
   ///
   /// In en, this message translates to:

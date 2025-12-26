@@ -27,6 +27,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get stopSimulation => '停止模拟';
 
   @override
+  String get starting => '启动中...';
+
+  @override
+  String get stopping => '停止中...';
+
+  @override
   String get mqttBroker => 'MQTT 代理配置';
 
   @override

@@ -5,6 +5,8 @@
   "navJson": "JSON",
   "startSimulation": "START SIMULATION",
   "stopSimulation": "STOP SIMULATION",
+  "starting": "STARTING...",
+  "stopping": "STOPPING...",
   "mqttBroker": "MQTT Broker",
   "dataStatistics": "Data Statistics",
   "unitMessages": "msgs",

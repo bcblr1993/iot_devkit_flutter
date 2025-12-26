@@ -5,6 +5,8 @@
   "navJson": "JSON工具",
   "startSimulation": "开始模拟",
   "stopSimulation": "停止模拟",
+  "starting": "启动中...",
+  "stopping": "停止中...",
   "mqttBroker": "MQTT 代理配置",
   "dataStatistics": "数据统计",
   "unitMessages": "条",

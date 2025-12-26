@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
@@ -13,6 +14,7 @@ import '../../models/group_config.dart';
 import '../../models/custom_key_config.dart';
 import 'groups_manager.dart';
 import 'custom_keys_manager.dart';
+import 'mqtt_config_section.dart';
 import '../../services/config_service.dart';
 import '../../services/status_registry.dart';
 import 'log_console.dart';
@@ -44,6 +46,8 @@ class SimulatorPanel extends StatefulWidget {
 class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _formKeyBasic = GlobalKey<FormState>();
+  final _formKeyAdvanced = GlobalKey<FormState>();
+  final _formKeyMqtt = GlobalKey<FormState>();
   
   // Basic Mode Controllers
   final _hostController = TextEditingController(text: 'localhost');
@@ -76,6 +80,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
   // Advanced Mode State
   List<GroupConfig> _groups = [];
   bool _isLogMaximized = false;
+  Timer? _autoSaveTimer;
 
   @override
   void initState() {
@@ -86,7 +91,31 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
         setState(() {}); // Update action buttons when tab changes
       }
     });
+    
+    // Auto-Save Listeners
+    final controllers = [
+      _hostController, _portController, _topicController,
+      _caPathController, _certPathController, _keyPathController,
+      _startIdxController, _endIdxController, _intervalController, 
+      _dataPointController, _devicePrefixController, _clientIdPrefixController,
+      _usernamePrefixController, _passwordPrefixController
+    ];
+    
+    for (var c in controllers) {
+      c.addListener(_scheduleAutoSave);
+    }
+    
     _loadConfig();
+  }
+
+  void _scheduleAutoSave() {
+    _autoSaveTimer?.cancel();
+    _autoSaveTimer = Timer(const Duration(seconds: 1), () {
+      if (!mounted) return;
+      final config = _getCompleteConfig();
+      ConfigService.saveToLocalStorage(config);
+      debugPrint('[AutoSave] Configuration saved to local storage.');
+    });
   }
 
   Future<void> _loadConfig() async {
@@ -155,6 +184,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
 
   @override
   void dispose() {
+    _autoSaveTimer?.cancel();
     _tabController.dispose();
     super.dispose();
   }
@@ -280,217 +310,29 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
   }
 
   Widget _buildMqttSection(bool isRunning, AppLocalizations l10n, AppThemeEffect effect) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    
-    // Check if we should use the "Featured Highlight" style
-    final bool useFeaturedStyle = colorScheme.primaryContainer != colorScheme.surface && 
-                                 colorScheme.primaryContainer != colorScheme.background;
-
-    Widget content = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader(
-          l10n.mqttBroker, 
-          color: useFeaturedStyle ? colorScheme.onPrimaryContainer : null,
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Row 1: Host (Flex 4), Port (Flex 1), QoS (Flex 2)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: 4,
-                    child: _buildTextField(l10n.host, _hostController, isRunning, customColor: useFeaturedStyle ? colorScheme.onPrimaryContainer : null),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    flex: 1,
-                    child: _buildTextField(l10n.port, _portController, isRunning, isNumber: true, customColor: useFeaturedStyle ? colorScheme.onPrimaryContainer : null),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    flex: 2,
-                    child: DropdownButtonFormField<int>(
-                      decoration: InputDecoration(
-                        labelText: l10n.qosLabel,
-                        labelStyle: TextStyle(
-                          color: useFeaturedStyle 
-                            ? colorScheme.onPrimaryContainer.withOpacity(0.8) 
-                            : theme.colorScheme.onSurfaceVariant,
-                        ),
-                        floatingLabelStyle: TextStyle(
-                          color: useFeaturedStyle 
-                            ? colorScheme.onPrimaryContainer 
-                            : theme.colorScheme.primary,
-                        ),
-                        border: const OutlineInputBorder(),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: useFeaturedStyle 
-                              ? colorScheme.onPrimaryContainer.withOpacity(0.5) 
-                              : theme.colorScheme.outline.withOpacity(0.5),
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: useFeaturedStyle 
-                              ? colorScheme.onPrimaryContainer 
-                              : theme.colorScheme.primary, 
-                            width: 2
-                          ),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                        isDense: true,
-                      ),
-                      // Use Surface color for popup to ensure standard contrast for text
-                      dropdownColor: theme.colorScheme.surface,
-                      style: TextStyle(
-                        // Selected item text color in the input field
-                        color: useFeaturedStyle ? colorScheme.onPrimaryContainer : theme.colorScheme.onSurface,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      icon: Icon(Icons.arrow_drop_down, 
-                        color: useFeaturedStyle ? colorScheme.onPrimaryContainer : null
-                      ),
-                      value: _qos,
-                      items: [
-                        DropdownMenuItem(
-                          value: 0, 
-                          child: Tooltip(
-                            message: l10n.qosTooltip0 ?? '', 
-                            child: Text(l10n.qos0 ?? 'QoS 0', style: TextStyle(color: theme.colorScheme.onSurface))
-                          )
-                        ),
-                        DropdownMenuItem(
-                          value: 1, 
-                          child: Tooltip(
-                            message: l10n.qosTooltip1 ?? '', 
-                            child: Text(l10n.qos1 ?? 'QoS 1', style: TextStyle(color: theme.colorScheme.onSurface))
-                          )
-                        ),
-                        DropdownMenuItem(
-                          value: 2, 
-                          child: Tooltip(
-                            message: l10n.qosTooltip2 ?? '', 
-                            child: Text(l10n.qos2 ?? 'QoS 2', style: TextStyle(color: theme.colorScheme.onSurface))
-                          )
-                        ),
-                      ],
-                      onChanged: isRunning ? null : (v) => setState(() => _qos = v ?? 0),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              
-              // Row 2: Topic (Full Width)
-              _buildTextField(l10n.topic, _topicController, isRunning, customColor: useFeaturedStyle ? colorScheme.onPrimaryContainer : null),
-              const SizedBox(height: 12),
-              
-              // Row 3: SSL Switch
-              Row(
-                children: [
-                   SizedBox(
-                    height: 24,
-                    width: 24,
-                    child: Checkbox(
-                      value: _enableSsl,
-                      side: BorderSide(
-                        color: useFeaturedStyle 
-                          ? colorScheme.onPrimaryContainer.withOpacity(0.8) 
-                          : colorScheme.onSurfaceVariant
-                      ),
-                      checkColor: useFeaturedStyle ? colorScheme.surface : colorScheme.onPrimary,
-                      activeColor: useFeaturedStyle ? colorScheme.onPrimaryContainer : colorScheme.primary,
-                      onChanged: isRunning ? null : (v) => setState(() => _enableSsl = v ?? false),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    l10n.enableSsl,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: useFeaturedStyle ? colorScheme.onPrimaryContainer : colorScheme.onSurface,
-                    ),
-                  ),
-                ],
-              ),
-
-              // Row 4: SSL Files (Conditional)
-              if (_enableSsl) ...[
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(child: _buildSslField(l10n.caCertificate, _caPathController, isRunning, useFeaturedStyle ? colorScheme.onPrimaryContainer : null, l10n)),
-                    const SizedBox(width: 8),
-                    Expanded(child: _buildSslField(l10n.clientCertificate, _certPathController, isRunning, useFeaturedStyle ? colorScheme.onPrimaryContainer : null, l10n)),
-                    const SizedBox(width: 8),
-                    Expanded(child: _buildSslField(l10n.privateKey, _keyPathController, isRunning, useFeaturedStyle ? colorScheme.onPrimaryContainer : null, l10n)),
-                  ],
-                ),
-              ],
-            ],
-          ),
-        ),
-      ],
+    return Form(
+      key: _formKeyMqtt,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      child: MqttConfigSection(
+        isRunning: isRunning,
+        hostController: _hostController,
+        portController: _portController,
+        topicController: _topicController,
+        caPathController: _caPathController,
+        certPathController: _certPathController,
+        keyPathController: _keyPathController,
+        enableSsl: _enableSsl,
+        onSslChanged: (val) {
+          setState(() => _enableSsl = val);
+          _scheduleAutoSave();
+        },
+        qos: _qos,
+        onQosChanged: (val) {
+          setState(() => _qos = val);
+          _scheduleAutoSave();
+        },
+      ),
     );
-
-    if (useFeaturedStyle) {
-      return Container(
-        padding: EdgeInsets.fromLTRB(
-          14 * effect.layoutDensity, 
-          18 * effect.layoutDensity, 
-          14 * effect.layoutDensity, 
-          14 * effect.layoutDensity
-        ),
-        decoration: BoxDecoration(
-          color: colorScheme.primaryContainer,
-          borderRadius: BorderRadius.circular(theme.cardTheme.shape is RoundedRectangleBorder 
-            ? (theme.cardTheme.shape as RoundedRectangleBorder).borderRadius.resolve(Directionality.of(context)).topLeft.x
-            : 16),
-        ),
-        child: content,
-      );
-    }
-
-    return content;
-  }
-
-  Widget _buildSslField(String label, TextEditingController controller, bool isLocked, Color? customColor, AppLocalizations l10n) {
-    return Row(
-      children: [
-        Expanded(
-          child: SizedBox(
-            height: 40, // More compact height
-            child: _buildTextField(label, controller, isLocked, customColor: customColor),
-          ),
-        ),
-        const SizedBox(width: 8),
-        IconButton(
-          onPressed: isLocked ? null : () => _pickFile(controller),
-          icon: Icon(Icons.folder_open, size: AppIconSize.md, color: customColor ?? Theme.of(context).colorScheme.primary),
-          tooltip: l10n.selectFile,
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _pickFile(TextEditingController controller) async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles();
-    if (result != null) {
-      setState(() {
-        controller.text = result.files.single.path!;
-      });
-    }
   }
 
   Widget _buildBasicTab(MqttController controller, bool isRunning, AppLocalizations l10n) {
@@ -505,6 +347,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
       padding: const EdgeInsets.all(12.0),
       child: Form(
         key: _formKeyBasic,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -599,7 +442,10 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
               isLocked: isRunning,
               maxKeys: int.tryParse(_dataPointController.text) ?? 10,
               enableExpandedLayout: false,
-              onKeysChanged: (newKeys) => setState(() => _basicCustomKeys = newKeys),
+              onKeysChanged: (newKeys) {
+                setState(() => _basicCustomKeys = newKeys);
+                _scheduleAutoSave();
+              },
             ),
           ],
         ),
@@ -617,12 +463,17 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
       isLocked: isRunning,
       onGroupsChanged: (newGroups) {
         _groups = newGroups;
+        _scheduleAutoSave();
       },
     );
 
     return SingleChildScrollView(
       padding: EdgeInsets.all(12.0 * effect.layoutDensity),
-      child: content,
+      child: Form(
+        key: _formKeyAdvanced,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        child: content,
+      ),
     );
   }
 
@@ -630,6 +481,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
     final theme = Theme.of(context);
     final errorColor = theme.colorScheme.error;
     final primaryColor = theme.colorScheme.primary;
+    final isBusy = controller.isBusy;
 
     return Column(
       children: [
@@ -637,9 +489,11 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
 
         // 主操作按钮 - 开始/停止
         _AnimatedTactileButton(
-          onPressed: isRunning 
-            ? () => controller.stop()
-            : () => isBasic ? _handleStartBasic(controller) : _handleStartAdvanced(controller),
+          onPressed: isBusy 
+            ? null 
+            : (isRunning 
+                ? () => controller.stop()
+                : () => isBasic ? _handleStartBasic(controller) : _handleStartAdvanced(controller)),
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             transitionBuilder: (child, animation) {
@@ -649,15 +503,30 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
               );
             },
             child: SizedBox(
-              key: ValueKey(isRunning),
+              key: ValueKey('${isRunning}_$isBusy'),
               width: double.infinity,
-              height: 42,
+              height: 48, // Slightly taller for better touch target
               child: FilledButton.icon(
-                onPressed: () {}, 
-                icon: Icon(isRunning ? effect.icons.stop : effect.icons.play, size: AppIconSize.lg),
+                onPressed: isBusy 
+                  ? null 
+                  : (isRunning 
+                      ? () => controller.stop()
+                      : () => isBasic ? _handleStartBasic(controller) : _handleStartAdvanced(controller)),
+                icon: isBusy 
+                  ? SizedBox(
+                      width: 20, 
+                      height: 20, 
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5, 
+                        color: theme.colorScheme.onPrimary,
+                      )
+                    )
+                  : Icon(isRunning ? effect.icons.stop : effect.icons.play, size: AppIconSize.lg),
                 label: Text(
-                  isRunning ? l10n.stopSimulation : l10n.startSimulation,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                  isBusy 
+                    ? (isRunning ? l10n.stopping : l10n.starting) // We might need to add these keys or just use "Processing..."
+                    : (isRunning ? l10n.stopSimulation : l10n.startSimulation),
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: 0.5),
                 ),
                 style: FilledButton.styleFrom(
                   elevation: 3,
@@ -665,8 +534,8 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   backgroundColor: isRunning ? errorColor : primaryColor,
                   foregroundColor: isRunning ? theme.colorScheme.onError : theme.colorScheme.onPrimary,
-                  disabledBackgroundColor: isRunning ? errorColor : primaryColor,
-                  disabledForegroundColor: isRunning ? theme.colorScheme.onError : theme.colorScheme.onPrimary,
+                  disabledBackgroundColor: (isRunning ? errorColor : primaryColor).withOpacity(0.7),
+                  disabledForegroundColor: theme.colorScheme.onPrimary.withOpacity(0.8),
                 ),
               ),
             ),
@@ -860,7 +729,10 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
 
   // Handlers
   void _handleStartBasic(MqttController controller) {
-    if (_formKeyBasic.currentState!.validate()) {
+    final basicValid = _formKeyBasic.currentState!.validate();
+    final mqttValid = _formKeyMqtt.currentState!.validate();
+
+    if (basicValid && mqttValid) {
        // Validate Config First
        final config = _getCompleteConfig();
        ConfigService.saveToLocalStorage(config);
@@ -871,6 +743,11 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
   }
 
   void _handleStartAdvanced(MqttController controller) {
+     final advancedValid = _formKeyAdvanced.currentState!.validate();
+     final mqttValid = _formKeyMqtt.currentState!.validate();
+     
+     if (!advancedValid || !mqttValid) return;
+
      final config = _getCompleteConfig();
      
      // Validate groups
@@ -925,7 +802,9 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
     if (result.success) {
       _setStatus(l10n.configExported, Colors.green);
     } else {
-      _setStatus('${l10n.configExportFailed}: ${result.error}', Theme.of(context).colorScheme.error);
+      if (mounted) {
+        _setStatus('${l10n.configExportFailed}: ${result.error}', Theme.of(context).colorScheme.error);
+      }
     }
   }
 
@@ -955,6 +834,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
     }
     
     // Step 3: Validation passed - show confirmation dialog - 使用统一对话框样式
+    if (!mounted) return;
     final confirmed = await AppDialogHelper.showConfirm(
       context: context,
       title: l10n.confirmImport,

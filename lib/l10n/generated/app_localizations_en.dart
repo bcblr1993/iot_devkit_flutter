@@ -27,6 +27,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get stopSimulation => 'STOP SIMULATION';
 
   @override
+  String get starting => 'STARTING...';
+
+  @override
+  String get stopping => 'STOPPING...';
+
+  @override
   String get mqttBroker => 'MQTT Broker';
 
   @override

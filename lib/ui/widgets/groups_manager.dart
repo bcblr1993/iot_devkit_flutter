@@ -272,6 +272,12 @@ class _GroupsManagerState extends State<GroupsManager> {
         // Borders are defined in Theme
       ),
       onChanged: enabled ? onChanged : null,
+      validator: (value) {
+        if (!enabled) return null;
+        if (value == null || value.isEmpty) return 'Required';
+        if (isNumber && num.tryParse(value) == null) return 'Invalid Number';
+        return null;
+      },
     );
   }
 }

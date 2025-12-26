@@ -26,6 +26,9 @@ class MqttController extends ChangeNotifier {
   Function(String message, String type, {String? tag})? onLog;
   
   // Performance: Global Log Switch
+  bool _isBusy = false;
+  bool get isBusy => _isBusy;
+
   bool _enableDetailedLogs = true;
   bool get enableDetailedLogs => _enableDetailedLogs;
 
@@ -84,14 +87,19 @@ class MqttController extends ChangeNotifier {
   Future<void> stop() async {
     if (!isRunning) return;
     
-    _isRunning = false;
+    _isBusy = true;
     notifyListeners();
     log('Stopping simulation...', 'info');
 
-    _schedulerService.stopAll();
-    await _clientManager.stopAll();
-
-    log('Simulation stopped.', 'info');
+    try {
+      _schedulerService.stopAll();
+      await _clientManager.stopAll();
+      _isRunning = false;
+      log('Simulation stopped.', 'info');
+    } finally {
+      _isBusy = false;
+      notifyListeners();
+    }
   }
 
   Future<void> start(Map<String, dynamic> config) async {
@@ -100,22 +108,31 @@ class MqttController extends ChangeNotifier {
       return;
     }
 
+    _isBusy = true;
     _isRunning = true;
     notifyListeners();
     
     _schedulerService.reset();
     statisticsCollector.reset();
     
-    // Determine Mode
-    String mode = config['mode'] ?? 'basic';
-    
-    if (mode == 'basic') {
-      await _startBasicMode(config);
-    } else if (mode == 'advanced') {
-      await _startAdvancedMode(config);
-    } else {
-      log('Unknown mode: $mode', 'error');
-      stop();
+    try {
+      // Determine Mode
+      String mode = config['mode'] ?? 'basic';
+      
+      if (mode == 'basic') {
+        await _startBasicMode(config);
+      } else if (mode == 'advanced') {
+        await _startAdvancedMode(config);
+      } else {
+        log('Unknown mode: $mode', 'error');
+        await stop();
+      }
+    } catch (e) {
+      log('Error starting simulation: $e', 'error');
+      _isRunning = false;
+    } finally {
+      _isBusy = false;
+      notifyListeners();
     }
   }
 
