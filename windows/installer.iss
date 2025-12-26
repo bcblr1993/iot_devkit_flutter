@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "IoT DevKit"
-#define MyAppVersion "1.2.15"
+#define MyAppVersion "1.2.16"
 #define MyAppPublisher "Chen Xu"
 #define MyAppURL "https://github.com/StartYourTour/iot_devkit"
 #define MyAppExeName "iot_devkit.exe"
@@ -10,30 +10,23 @@
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
-; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{D86A3D42-1234-4567-89AB-CDEF01234567}
+AppId={#MyAppGUID}
 ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
-;AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
 DisableProgramGroupPage=yes
-; User requested to Allow choosing directory, so keep no.
 DisableDirPage=no
-; Default to previous path if available
 UsePreviousAppDir=yes
-; Prevent installation if app is running
 AppMutex=IoTDevKit_Instance_Mutex
-; Prevent multiple installers from running
 SetupMutex=IoTDevKit_Setup_Mutex
-
-; Uncomment the following line to run in non administrative install mode (install for current user only.)
-;PrivilegesRequired=lowest
+; Request administrative privileges for installation
+PrivilegesRequired=admin
 OutputDir=..\dist\
 OutputBaseFilename=iot_devkit-{#MyAppVersion}-windows
 Compression=lzma
@@ -67,7 +60,7 @@ var
   sUnInstPathKey: String;
 begin
   sUnInstPath := '';
-  sUnInstPathKey := 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{{#MyAppGUID}}_is1';
+  sUnInstPathKey := 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{#MyAppGUID}_is1';
   {First check HKLM, then HKCU}
   if RegQueryStringValue(HKLM, sUnInstPathKey, 'UninstallString', sUnInstPath) then
     Result := sUnInstPath
@@ -107,6 +100,24 @@ begin
       Result := 2;
   end else
     Result := 1;
+end;
+
+// Check for Visual C++ 2015-2022 Redistributable (x64)
+function VCVersionInstalled(): Boolean;
+begin
+  Result := RegKeyExists(HKLM, 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64');
+end;
+
+function InitializeSetup(): Boolean;
+begin
+  Result := True;
+  if not VCVersionInstalled() then
+  begin
+    if MsgBox('The Visual C++ 2015-2022 Redistributable (x64) is required for this application. Please download and install it from Microsoft website. Continue installation anyway?', mbConfirmation, MB_YESNO) = IDNO then
+    begin
+      Result := False;
+    end;
+  end;
 end;
 
 /////////////////////////////////////////////////////////////////////
