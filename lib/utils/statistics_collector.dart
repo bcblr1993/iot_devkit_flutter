@@ -40,24 +40,37 @@ class StatisticsCollector extends ChangeNotifier {
 
   Timer? _updateTimer;
   Timer? _rateTimer;
+  Timer? _resourceTimer;
   bool _needsUpdate = false;
+  bool _isUpdatingResources = false;
 
   StatisticsCollector() {
-    _startRateTimer();
+    _startTimers();
   }
   
-  void _startRateTimer() {
+  void _startTimers() {
     _rateTimer?.cancel();
+    _resourceTimer?.cancel();
+    
+    // 1. Rate Calculation (TPS, Bandwidth) - Fast (1s)
     _rateTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
        _calculateRates();
-       _updateResources();
+    });
+    
+    // 2. Resource Monitoring (CPU, Memory) - Slow (3s) & Guarded
+    _resourceTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+       if (!_isUpdatingResources) {
+         _updateResources();
+       }
     });
   }
   
   Future<void> _updateResources() async {
+    _isUpdatingResources = true;
     try {
-      // Process Memory (RSS)
+      // Process Memory (RSS) - Fast (dart:io)
       memoryUsage = ProcessInfo.currentRss;
+
       
       // CPU Usage (Platform Specific)
       if (Platform.isMacOS || Platform.isLinux) {
@@ -89,6 +102,8 @@ class StatisticsCollector extends ChangeNotifier {
       
     } catch (e) {
       // ignore silently to avoid log spam
+    } finally {
+      _isUpdatingResources = false;
     }
   }
 
@@ -142,8 +157,8 @@ class StatisticsCollector extends ChangeNotifier {
 
     _needsUpdate = false;
     _updateTimer?.cancel();
-    // Restart rate timer 
-    _startRateTimer(); 
+    // Restart timers 
+    _startTimers(); 
     
     notifyListeners();
   }

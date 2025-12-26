@@ -568,4 +568,28 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get memoryUsage => '内存';
+
+  @override
+  String get profiles => '配置列表';
+
+  @override
+  String get newProfile => '新建配置';
+
+  @override
+  String get profileName => '配置名称';
+
+  @override
+  String get renameProfile => '重命名配置';
+
+  @override
+  String get deleteProfile => '删除配置';
+
+  @override
+  String get deleteConfirm => '确定要删除该配置吗？';
+
+  @override
+  String get rename => '重命名';
+
+  @override
+  String get noProfiles => '暂无配置';
 }

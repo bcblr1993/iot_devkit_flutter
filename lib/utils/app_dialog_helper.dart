@@ -434,4 +434,55 @@ class AppDialogHelper {
       ],
     );
   }
+
+
+  /// 显示带文本输入框的对话框
+  static Future<void> showTextFieldDialog({
+    required BuildContext context,
+    required String title,
+    String? hintText,
+    String? initialValue,
+    required String confirmText,
+    required String cancelText,
+    required Function(String) onConfirm,
+  }) {
+    final controller = TextEditingController(text: initialValue);
+    final theme = Theme.of(context);
+    final l10n = Localizations.localeOf(context).languageCode == 'zh';
+
+    return show(
+      context: context,
+      title: title,
+      icon: Icons.edit_rounded,
+      content: TextField(
+        controller: controller,
+        autofocus: true,
+        decoration: InputDecoration(
+          hintText: hintText,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          filled: true,
+          fillColor: theme.colorScheme.surface,
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(cancelText),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+            onConfirm(controller.text);
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: theme.colorScheme.primary,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+          child: Text(confirmText),
+        ),
+      ],
+    );
+  }
 }

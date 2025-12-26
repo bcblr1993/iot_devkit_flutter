@@ -4,6 +4,8 @@ import 'package:iot_devkit/models/group_config.dart';
 import 'package:iot_devkit/models/custom_key_config.dart';
 import 'package:iot_devkit/services/config_service.dart';
 import 'package:iot_devkit/services/data_generator.dart';
+import 'package:iot_devkit/services/profile_service.dart';
+import 'package:iot_devkit/models/profile_metadata.dart';
 
 class MqttViewModel extends ChangeNotifier {
   
@@ -56,8 +58,29 @@ class MqttViewModel extends ChangeNotifier {
   // Auto-Save
   Timer? _autoSaveTimer;
 
+  // Profile Management
+  String? _currentProfileId;
+  String? get currentProfileId => _currentProfileId;
+  final ProfileService _profileService = ProfileService();
+
   MqttViewModel() {
     _initListeners();
+    _initProfile();
+  }
+  
+  Future<void> _initProfile() async {
+    // 1. Try to get last active profile
+    final lastId = await _profileService.getLastActiveProfileId();
+    if (lastId != null) {
+      final config = await _profileService.loadProfileConfig(lastId);
+      if (config != null) {
+        _currentProfileId = lastId;
+        _applyConfig(config);
+        notifyListeners();
+        return; 
+      }
+    }
+    // 2. Fallback to auto-save (default)
     loadConfig();
   }
 
@@ -128,10 +151,16 @@ class MqttViewModel extends ChangeNotifier {
 
   void scheduleAutoSave() {
     _autoSaveTimer?.cancel();
-    _autoSaveTimer = Timer(const Duration(seconds: 1), () {
+    _autoSaveTimer = Timer(const Duration(seconds: 1), () async {
       final config = getCompleteConfig();
+      // Always save to local buffer (current session)
       ConfigService.saveToLocalStorage(config);
-      debugPrint('[MqttViewModel] Config auto-saved.');
+      
+      // If a profile is active, update it too
+      if (_currentProfileId != null) {
+        await updateCurrentProfile();
+      }
+      debugPrint('[MqttViewModel] Config & Profile auto-saved.');
     });
   }
 
@@ -245,7 +274,68 @@ class MqttViewModel extends ChangeNotifier {
       debugPrint('Error generating preview: $e');
       return null;
     }
+  } // End generatePreviewData
+
+    // --- Profile Actions ---
+  
+  Future<void> loadProfile(String id) async {
+    final config = await _profileService.loadProfileConfig(id);
+    if (config != null) {
+      _currentProfileId = id;
+      _applyConfig(config);
+      await _profileService.setActiveProfileId(id);
+      
+      // Also update auto-save immediate
+      ConfigService.saveToLocalStorage(config);
+      notifyListeners();
+    }
   }
+  
+  Future<void> saveCurrentAsProfile(String name) async {
+    final config = getCompleteConfig();
+    final meta = await _profileService.saveProfile(name, config, id: _currentProfileId); // Update existing if ID set?
+    // Actually, usually "Save As" creates new, "Save" updates existing.
+    // Let's split logic:
+    // If _currentProfileId is null, create new.
+    // If _currentProfileId is set, update it?
+    // But user might want to Save As New...
+    // For now simple approach: User provides Name. If ID exists and Name matches, update. 
+    // Wait, the UI will likely have "Save" (update current) and "Save As New".
+    
+    // Let's make this method just "Save/Update current active profile or create new if none"
+    // BUT we need a way to Create New from UI explicitly.
+    
+    // Changing signature: saveProfile(name, {bool isNew = false})
+    // But for now let's just stick to "Save" updates current, "Save As" creates new.
+  }
+
+  Future<void> createNewProfile(String name) async {
+    final config = getCompleteConfig();
+    final meta = await _profileService.saveProfile(name, config); // id null = new
+    _currentProfileId = meta.id;
+    await _profileService.setActiveProfileId(meta.id);
+    notifyListeners();
+  }
+  
+  Future<void> updateCurrentProfile() async {
+    if (_currentProfileId == null) return;
+    // We need the name... ProfileService stores name in metadata list.
+    // Let's find current name
+    final profiles = await _profileService.loadProfiles();
+    final current = profiles.cast<ProfileMetadata?>().firstWhere((p) => p?.id == _currentProfileId, orElse: () => null);
+    
+    if (current != null) {
+      final config = getCompleteConfig();
+      await _profileService.saveProfile(current.name, config, id: _currentProfileId);
+    }
+  }
+
+  void clearCurrentProfile() {
+    _currentProfileId = null;
+    _profileService.setActiveProfileId(null);
+    notifyListeners();
+  }
+
   
   bool startBasicSimulation(BuildContext context, Function(Map<String, dynamic>, bool) showPreviewCallback) {
     if (formKeyBasic.currentState!.validate() && formKeyMqtt.currentState!.validate()) {

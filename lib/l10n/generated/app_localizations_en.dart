@@ -572,4 +572,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get memoryUsage => 'Mem';
+
+  @override
+  String get profiles => 'Profiles';
+
+  @override
+  String get newProfile => 'New Profile';
+
+  @override
+  String get profileName => 'Profile Name';
+
+  @override
+  String get renameProfile => 'Rename Profile';
+
+  @override
+  String get deleteProfile => 'Delete Profile';
+
+  @override
+  String get deleteConfirm => 'Are you sure you want to delete this profile?';
+
+  @override
+  String get rename => 'Rename';
+
+  @override
+  String get noProfiles => 'No Profiles';
 }

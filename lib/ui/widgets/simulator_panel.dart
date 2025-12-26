@@ -14,6 +14,8 @@ import 'mqtt_config_section.dart';
 import '../../services/config_service.dart';
 import 'log_console.dart';
 import 'performance_monitor.dart';
+import 'profile_sidebar.dart';
+import '../../services/profile_service.dart';
 import '../styles/app_theme_effect.dart';
 import '../styles/app_constants.dart';
 import '../../services/theme_manager.dart';
@@ -142,22 +144,32 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
     }
   }
 
+  bool _showProfileSidebar = false; // Default hidden
+
   @override
   Widget build(BuildContext context) {
     // Inject MqttViewModel here.
-    // Note: In a larger app, Provider might be higher up. 
-    // Here we create it locally for the panel lifecycle if it doesn't exist, 
-    // or rely on a parent provider. 
-    // Given the architecture, HomeScreen uses SimulatorPanel directly.
-    // We should allow SimulatorPanel to CREATE the VM.
-    
     final mqttController = Provider.of<MqttController>(context);
     
     return ChangeNotifierProvider(
       create: (_) => MqttViewModel(),
       child: Consumer<MqttViewModel>(
         builder: (context, vm, _) {
-          return _buildContent(context, vm, mqttController);
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Sidebar
+              ProfileSidebar(
+                isVisible: _showProfileSidebar,
+                onClose: () => setState(() => _showProfileSidebar = false),
+              ),
+              
+              // Main Content
+              Expanded(
+                child: _buildContent(context, vm, mqttController),
+              ),
+            ],
+          );
         }
       ),
     );
@@ -176,9 +188,39 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
           bottom: 40,
           child: Column(
             children: [
+              // Top Bar with Toggle
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 12.0 * effect.layoutDensity, 
+                  vertical: 8.0 * effect.layoutDensity
+                ),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(_showProfileSidebar ? Icons.menu_open : Icons.menu),
+                      tooltip: l10n.profiles ?? 'Profiles',
+                      onPressed: () => setState(() => _showProfileSidebar = !_showProfileSidebar),
+                    ),
+                    const SizedBox(width: 8),
+                    if (vm.currentProfileId != null)
+                       Chip(
+                         label: FutureBuilder<String?>(
+                           future: vm.currentProfileId == null ? null : ProfileService().loadProfiles().then((list) => list.firstWhere((p) => p.id == vm.currentProfileId).name),
+                           builder: (context, snapshot) {
+                             return Text(snapshot.data ?? l10n.profileName ?? 'Profile');
+                           },
+                         ),
+                         onDeleted: () => vm.clearCurrentProfile(),
+                         deleteIcon: const Icon(Icons.close, size: 16),
+                         visualDensity: VisualDensity.compact,
+                       ),
+                  ],
+                ),
+              ),
+
               // MQTT Section
               Padding(
-                padding: EdgeInsets.all(12.0 * effect.layoutDensity),
+                padding: EdgeInsets.symmetric(horizontal: 12.0 * effect.layoutDensity),
                 child: Form(
                   key: vm.formKeyMqtt,
                   autovalidateMode: AutovalidateMode.onUserInteraction,

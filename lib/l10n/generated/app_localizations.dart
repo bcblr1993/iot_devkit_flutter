@@ -1219,6 +1219,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Mem'**
   String get memoryUsage;
+
+  /// No description provided for @profiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Profiles'**
+  String get profiles;
+
+  /// No description provided for @newProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'New Profile'**
+  String get newProfile;
+
+  /// No description provided for @profileName.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile Name'**
+  String get profileName;
+
+  /// No description provided for @renameProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename Profile'**
+  String get renameProfile;
+
+  /// No description provided for @deleteProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Profile'**
+  String get deleteProfile;
+
+  /// No description provided for @deleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this profile?'**
+  String get deleteConfirm;
+
+  /// No description provided for @rename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get rename;
+
+  /// No description provided for @noProfiles.
+  ///
+  /// In en, this message translates to:
+  /// **'No Profiles'**
+  String get noProfiles;
 }
 
 class _AppLocalizationsDelegate

@@ -80,11 +80,19 @@ class SchedulerService {
     // Initial Delay
     int now = DateTime.now().millisecondsSinceEpoch;
     int initialDelay = (_alignedStartTime - now);
-    if (initialDelay < 0) initialDelay = 0;
-
-    // FIX: Calculate sendCount based on elapsed time to support seamless resumption
-    // Resumption Disabled: Always start from 0
+    
+    // STRICT FIX: Calculate correct sendCount to resume IMMEDIATELY with latest time.
     int sendCount = 0;
+    if (initialDelay < 0) {
+      // We are past start time (Resume or Late Start).
+      // Jump to the current interval bucket.
+      sendCount = (now - _alignedStartTime) ~/ intervalMs;
+      initialDelay = 0; 
+      
+      // Note: By setting delay 0, we fire tick #sendCount immediately.
+      // This satisfies "Recover -> Upload Latest Immediately".
+    }
+
     Timer timer = Timer(Duration(milliseconds: initialDelay), () {
       _scheduleNextBasicPublish(client, clientId, context, intervalMs, sendCount, version);
     });
@@ -141,10 +149,16 @@ class SchedulerService {
 
     // 1. Full Report
     int fullIntervalMs = group.fullIntervalSeconds * 1000;
-    // FIX: Calculate sendCount for resumption
-    // Resumption Disabled: Always start from 0
     int fullSendCount = 0;
-    Timer fullTimer = Timer(Duration(milliseconds: initialDelay), () {
+    int fullDelay = initialDelay;
+    
+    // STRICT RESUME
+    if (fullDelay < 0) {
+       fullSendCount = (now - _alignedStartTime) ~/ fullIntervalMs;
+       fullDelay = 0;
+    }
+
+    Timer fullTimer = Timer(Duration(milliseconds: fullDelay), () {
       _scheduleFullReport(client, clientId, topic, group, fullIntervalMs, fullSendCount, version, context.qos);
     });
     _addTimer(clientId, fullTimer);
@@ -153,7 +167,14 @@ class SchedulerService {
     if (group.changeRatio > 0 && group.changeIntervalSeconds < group.fullIntervalSeconds) {
       int changeIntervalMs = group.changeIntervalSeconds * 1000;
       int changeSendCount = 0;
-      Timer changeTimer = Timer(Duration(milliseconds: initialDelay), () {
+      int changeDelay = initialDelay;
+      
+      if (changeDelay < 0) {
+         changeSendCount = (now - _alignedStartTime) ~/ changeIntervalMs;
+         changeDelay = 0;
+      }
+
+      Timer changeTimer = Timer(Duration(milliseconds: changeDelay), () {
         _scheduleChangeReport(client, clientId, topic, group, changeIntervalMs, changeSendCount, version, context.qos);
       });
       _addTimer(clientId, changeTimer);
@@ -328,49 +349,48 @@ class SchedulerService {
     if (!_clientTimers.containsKey(clientId)) return;
     if (_clientVersions[clientId] != version) return;
 
-    int nextTarget = _alignedStartTime + (sendCount * intervalMs);
-    
-    // OPTIMIZATION: Add random Jitter (0-500ms) to the FIRING time (not payload time).
-    int jitter = (clientId.hashCode % 500); 
-    int targetWithJitter = nextTarget + jitter;
-
     int now = DateTime.now().millisecondsSinceEpoch;
-    int delay = targetWithJitter - now;
-
-    // Protection against "Crazy Burst" (Catch-up Loop)
-    // If system lags significantly (e.g. device sleep or heavy load), 
-    // we drop missed messages instead of firing them all at once.
-    if (delay < -5000) { 
-       int missed = (now - targetWithJitter) ~/ intervalMs;
-       if (missed > 0) {
-         sendCount += missed;
-         // Recalculate target for the new head
-         nextTarget = _alignedStartTime + (sendCount * intervalMs);
-         targetWithJitter = nextTarget + jitter;
-         delay = targetWithJitter - now;
+    int nextTarget = _alignedStartTime + (sendCount * intervalMs);
+    int delay = nextTarget - now;
+    
+    // STRICT MODE: Drop missed packets.
+    // If we are late (delay < 0), we don't catch up. We just aim for the NEXT future slot.
+    // Allow a tiny tolerance (e.g. -20ms) to run immediately, but if it's substantial, we skip.
+    if (delay < -20) { // 20ms tolerance
+       // Calculate how many we missed
+       int correctCount = ((now - _alignedStartTime) ~/ intervalMs) + 1;
+       
+       if (correctCount > sendCount) {
+         int skipped = correctCount - sendCount;
          
-         statisticsCollector.incrementFailure(count: missed);
-         if (enableLogs) {
-            onLog('[$clientId] System lagged. Skipped (Failed) $missed messages to catch up.', 'error');
+         // Log drop
+         if (enableLogs && skipped > 1) {
+             onLog('[$clientId] STRICT MODE: Late by ${-delay}ms. Dropping $skipped ticks.', 'warning');
          }
+         
+         statisticsCollector.incrementFailure(count: skipped);
+         
+         // Fast Forward
+         sendCount = correctCount;
+         nextTarget = _alignedStartTime + (sendCount * intervalMs);
+         delay = nextTarget - now;
        }
     }
-
-    if (delay < 0) delay = 0;
     
+    if (delay < 0) delay = 0;
+
     Timer t = Timer(Duration(milliseconds: delay), () => callback(sendCount));
     _addTimer(clientId, t);
   }
 
-  void _addTimer(String clientId, Timer t) {
-    // STRICT FIX: If the client is not in the map, it means we stopped publishing.
-    // Do NOT re-create the list. Instead, cancel the zombie timer immediately.
-    if (!_clientTimers.containsKey(clientId)) {
-      t.cancel();
-      // onLog('[$clientId] Zombie timer killed', 'warning');
-      return;
+    // For normal Timer, add to list
+    if (t != null) {
+      if (!_clientTimers.containsKey(clientId)) {
+        t.cancel();
+        return;
+      }
+      _clientTimers[clientId]!.add(t);
     }
-    _clientTimers[clientId]!.add(t);
   }
 
   MqttQos _intToQos(int v) {

@@ -190,5 +190,13 @@
   "chartTitleThroughput": "Throughput Trend",
   "chartTitleLatency": "Latency Trend",
   "cpuUsage": "CPU",
-  "memoryUsage": "Mem"
+  "memoryUsage": "Mem",
+  "profiles": "Profiles",
+  "newProfile": "New Profile",
+  "profileName": "Profile Name", 
+  "renameProfile": "Rename Profile",
+  "deleteProfile": "Delete Profile",
+  "deleteConfirm": "Are you sure you want to delete this profile?",
+  "rename": "Rename",
+  "noProfiles": "No Profiles"
 }
