@@ -108,6 +108,8 @@ class _LogConsoleState extends State<LogConsole> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    Icon(Icons.terminal, size: 16, color: Theme.of(context).colorScheme.primary),
+                    const SizedBox(width: 8),
                     Text(logTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
                     if (widget.headerContent != null) ...[
                       const SizedBox(width: 12),
