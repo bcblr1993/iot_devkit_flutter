@@ -3,7 +3,7 @@ name: Build and Release Professional Artifacts
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
 
 jobs:
@@ -14,8 +14,8 @@ jobs:
       contents: write
     strategy:
       matrix:
-        os: [windows-latest, macos-latest]
-    
+        os: [windows-latest, macos-latest, ubuntu-latest]
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -23,7 +23,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: "stable"
 
       - name: Install dependencies
         run: flutter pub get
@@ -38,13 +38,13 @@ jobs:
           CURRENT_VERSION=$(grep 'version: ' pubspec.yaml | sed 's/version: //')
           # Extract base version (remove everything after +)
           BASE_VERSION=$(echo $CURRENT_VERSION | cut -d+ -f1)
-          
+
           # Construct new version: 1.0.0-20251222
           NEW_VERSION="${BASE_VERSION}-${BUILD_DATE}"
-          
+
           echo "Updating version from $CURRENT_VERSION to $NEW_VERSION"
           sed -i.bak "s/version: $CURRENT_VERSION/version: $NEW_VERSION/" pubspec.yaml
-          
+
           # Also update version in installer.iss for Windows
           if [ -f "windows/installer.iss" ]; then
             sed -i.bak "s/#define MyAppVersion .*/#define MyAppVersion \"$NEW_VERSION\"/" windows/installer.iss
@@ -54,11 +54,30 @@ jobs:
       - name: Setup flutter_distributor
         run: dart pub global activate flutter_distributor
 
+      # --- Linux Setup ---
+      - name: Install Linux Dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev
+
       - name: Install Inno Setup
         if: matrix.os == 'windows-latest'
         run: |
           choco install innosetup
         shell: pwsh
+
+      # --- Linux Build ---
+      - name: Build Linux
+        if: matrix.os == 'ubuntu-latest'
+        run: flutter build linux --release
+
+      - name: Package Linux (Tarball)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          mkdir -p dist
+          cd build/linux/x64/release/bundle
+          tar -czf ../../../../../dist/iot_devkit_linux.tar.gz *
 
       - name: Build Windows
         if: matrix.os == 'windows-latest'
@@ -86,6 +105,7 @@ jobs:
           files: |
             dist/**/*.exe
             dist/**/*.dmg
+            dist/**/*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
