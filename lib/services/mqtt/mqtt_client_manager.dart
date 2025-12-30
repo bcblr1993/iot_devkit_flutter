@@ -37,6 +37,10 @@ class MqttClientManager {
     return _clientConfigs[clientId]?['context'] as SimulationContext?;
   }
 
+  void forEachClient(void Function(String clientId, MqttServerClient client) action) {
+    _clients.forEach(action);
+  }
+
   Future<void> createClient({
     required String host,
     required int port,

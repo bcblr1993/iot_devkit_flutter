@@ -109,6 +109,9 @@ class MqttController extends ChangeNotifier {
     }
   }
 
+  // State for delayed start
+  bool _isInitializing = false;
+
   Future<void> start(Map<String, dynamic> config) async {
     if (isRunning) {
       log('Simulation already running.', 'error');
@@ -118,15 +121,16 @@ class MqttController extends ChangeNotifier {
     _isBusy = true;
     _isRunning = true;
     _isStopping = false;
+    _isInitializing = true; // Block auto-start in onConnected
     notifyListeners();
     
-    _schedulerService.reset();
     statisticsCollector.reset();
     
     try {
       // Determine Mode
       String mode = config['mode'] ?? 'basic';
       
+      // Phase 1: Connect All Devices
       if (mode == 'basic') {
         await _startBasicMode(config);
       } else if (mode == 'advanced') {
@@ -134,12 +138,35 @@ class MqttController extends ChangeNotifier {
       } else {
         log('Unknown mode: $mode', 'error');
         await stop();
+        return;
       }
+
+      // Phase 2: Stabilization Delay
+      if (isRunning && !_isStopping) {
+        log('All devices connected. Waiting 3s for stabilization...', 'info');
+        await Future.delayed(const Duration(seconds: 3));
+        
+        // Phase 3: Start Data Upload
+        log('Stabilization complete. Starting data upload...', 'info');
+        _isInitializing = false;
+        
+        // Reset scheduler time to now (so data starts from t=0)
+        _schedulerService.reset();
+        
+        _clientManager.forEachClient((clientId, client) {
+           final ctx = _clientManager.getClientContext(clientId);
+           if (ctx != null) {
+             _schedulerService.startPublishing(client, clientId, ctx);
+           }
+        });
+      }
+
     } catch (e) {
       log('Error starting simulation: $e', 'error');
       _isRunning = false;
     } finally {
       _isBusy = false;
+      _isInitializing = false; // Ensure reset
       notifyListeners();
     }
   }
@@ -314,6 +341,9 @@ class MqttController extends ChangeNotifier {
     statisticsCollector.setOnlineDevices(_clientManager.activeClientCount);
     
     // Start Scheduler
+    // If initializing (Phase 1), do NOT start scheduler yet.
+    if (_isInitializing) return;
+
     final config = _clientManager.getClientContext(clientId);
     if (config != null) {
       _schedulerService.startPublishing(client, clientId, config);
