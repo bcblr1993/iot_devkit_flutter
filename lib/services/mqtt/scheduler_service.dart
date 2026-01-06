@@ -290,18 +290,28 @@ class SchedulerService {
     // If the current time aligns exactly with a Full Report interval, SKIP the Change Report.
     // Full Reports (Whole Data) include the Changed Data, so sending both is duplicative.
     int fullIntervalMs = group.fullIntervalSeconds * 1000;
-    int elapsedTime = sendCount * intervalMs;
-    
-    // Check collision (ensure fullInterval is not 0 to avoid division by zero)
-    if (fullIntervalMs > 0 && elapsedTime % fullIntervalMs == 0) {
-      // Just log internally or skip quietly. We still need to schedule the NEXT one.
-      // onLog('[$clientId] Skipped Change Report (Coincides with Full Report)', 'info', tag: group.name);
+    if (fullIntervalMs > 0) {
+      // 1. Re-calculate the Full Report Phase Offset (same hashCode logic)
+      int fullPhaseOffset = clientId.hashCode % fullIntervalMs;
       
-      sendCount++;
-      _scheduleNext(clientId, intervalMs, sendCount, version, phaseOffset, (actualCount) {
-        _scheduleChangeReport(client, clientId, topic, group, intervalMs, actualCount, version, qos, phaseOffset);
-      });
-      return; 
+      // 2. Check if the current timestamp falls exactly on a Full Report target
+      // Target_Full = Start + FullOffset + (N * FullInterval)
+      // Check: (Current - Start - FullOffset) % FullInterval == 0
+      int relativeToFullGrid = payloadTimestamp - _alignedStartTime - fullPhaseOffset;
+      
+      if (relativeToFullGrid % fullIntervalMs == 0) {
+        // Collision! This timeslot is already covered by _scheduleFullReport.
+        // Skip sending data, but CONTINUE scheduling the next change report.
+        if (enableLogs) {
+             // onLog('[$clientId] Skipped Change Report (Coincides with Full Report)', 'info', tag: group.name);
+        }
+        
+        sendCount++;
+        _scheduleNext(clientId, intervalMs, sendCount, version, phaseOffset, (actualCount) {
+          _scheduleChangeReport(client, clientId, topic, group, intervalMs, actualCount, version, qos, phaseOffset);
+        });
+        return; 
+      }
     }
 
     // OPTIMIZATION: Use Persistent Isolate
