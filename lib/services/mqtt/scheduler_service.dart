@@ -367,6 +367,95 @@ class SchedulerService {
     });
   }
 
+  // --- UNIFIED REPORTING (v1.2.25) ---
+  // Runs at Change Speed. Decides on every tick whether to send FULL or CHANGE.
+  Future<void> _scheduleUnifiedReport(
+    MqttServerClient client,
+    String clientId,
+    String topic,
+    GroupConfig group,
+    int intervalMs,     // This is the Change Interval (Fast)
+    int fullIntervalMs, // This is the Full Interval (Slow)
+    int sendCount,
+    int version,
+    int qos,
+    int phaseOffset,
+  ) async {
+    if (!_clientTimers.containsKey(clientId)) return;
+    if (_clientVersions[clientId] != version) return;
+
+    int payloadTimestamp = _alignedStartTime + phaseOffset + (sendCount * intervalMs);
+    
+    // Decision Logic:
+    // We are on tick #sendCount of the Fast Interval.
+    // Elapsed Time = sendCount * FastInterval
+    // Is this a multiple of SlowInterval?
+    // Note: We need to check relative to proper alignment.
+    // Since we aligned 'phaseOffset' based on FastInterval, and SlowInterval % FastInterval == 0,
+    // The timestamp strictly aligns.
+    // Collision Check:
+    int elapsedTime = sendCount * intervalMs;
+    bool isFullReportTime = (elapsedTime % fullIntervalMs == 0);
+    
+    // NOTE: 'sendCount' counts 0, 1, 2...
+    // At count 0 (t=0), elapsed=0 => isFullReportTime = true. Correct.
+    
+    String payload;
+    String typeTag = isFullReportTime ? 'success' : 'info';
+    String logMsg;
+
+    if (isFullReportTime) {
+       // --- GENERATE FULL REPORT ---
+       int key1 = DataGenerator.getKey1Value(clientId);
+       Map<String, dynamic> customValues = DataGenerator.generateCustomKeys(group.customKeys);
+       
+       try {
+        payload = await PersistentIsolateManager.instance.computeTask(WorkerInput(
+          count: group.totalKeyCount,
+          clientId: clientId,
+          timestamp: payloadTimestamp,
+          key1Value: key1,
+          customKeyValues: customValues,
+        ));
+       } catch (e) {
+        onLog('Isolate Error (Unified Full): $e', 'error', tag: clientId);
+        return;
+       }
+       logMsg = '[$clientId] Full Report #$sendCount';
+    } else {
+       // --- GENERATE CHANGE REPORT ---
+       int totalChangeCount = (group.totalKeyCount * group.changeRatio).floor();
+       
+       // Use Isolate
+       int key1 = DataGenerator.getKey1Value(clientId);
+       Map<String, dynamic> customValues = DataGenerator.generateCustomKeys(group.customKeys);
+
+       try {
+         payload = await PersistentIsolateManager.instance.computeTask(WorkerInput(
+             count: totalChangeCount, 
+             clientId: clientId,
+             timestamp: payloadTimestamp,
+             key1Value: key1,
+             customKeyValues: customValues,
+         ));
+       } catch (e) {
+          onLog('Isolate Error (Unified Change): $e', 'error', tag: clientId);
+          return;
+       }
+       logMsg = '[$clientId] Change Report #$sendCount (~$totalChangeCount keys)';
+    }
+
+    if (!_clientTimers.containsKey(clientId)) return;
+    if (_clientVersions[clientId] != version) return;
+
+    _publish(client, topic, payload, group.name, typeTag, logMsg, null, _intToQos(qos));
+
+    sendCount++;
+    _scheduleNext(clientId, intervalMs, sendCount, version, phaseOffset, (actualCount) {
+      _scheduleUnifiedReport(client, clientId, topic, group, intervalMs, fullIntervalMs, actualCount, version, qos, phaseOffset);
+    });
+  }
+
   // --- Helper Methods ---
 
   void _publish(MqttServerClient client, String topic, String payload, String tag, String successType, String successMsg, [String? logTagOverride, MqttQos qos = MqttQos.atMostOnce]) {
