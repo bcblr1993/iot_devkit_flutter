@@ -77,24 +77,37 @@ class SchedulerService {
     int intervalSeconds = context.intervalSeconds;
     int intervalMs = intervalSeconds * 1000;
     
+    // STAGGER LOGIC:
+    // Distribute load across the interval to prevent "Thundering Herd" (CPU spikes).
+    // Use hashCode for deterministic distribution.
+    int phaseOffset = 0;
+    if (intervalMs > 0) {
+      phaseOffset = clientId.hashCode % intervalMs;
+    }
+    
     // Initial Delay
     int now = DateTime.now().millisecondsSinceEpoch;
-    int initialDelay = (_alignedStartTime - now);
     
-    // STRICT FIX: Calculate correct sendCount to resume IMMEDIATELY with latest time.
+    // Target = GridStart + Stagger + (Count * Interval)
+    // We want the FIRST target where (Target > Now) or just (Target corresponding to Count=0)
+    int baseTarget = _alignedStartTime + phaseOffset;
+    int initialDelay = baseTarget - now;
+    
+    // STRICT FIX: Resume logic
     int sendCount = 0;
     if (initialDelay < 0) {
-      // We are past start time (Resume or Late Start).
-      // Jump to the current interval bucket.
-      sendCount = (now - _alignedStartTime) ~/ intervalMs;
-      initialDelay = 0; 
-      
-      // Note: By setting delay 0, we fire tick #sendCount immediately.
-      // This satisfies "Recover -> Upload Latest Immediately".
+       // We are past base target.
+       // Calculate how many intervals have passed.
+       int elapsed = now - baseTarget;
+       sendCount = (elapsed ~/ intervalMs) + 1; // Aim for NEXT slot
+       
+       // Recalculate delay for the next slot
+       int nextTarget = baseTarget + (sendCount * intervalMs);
+       initialDelay = nextTarget - now;
     }
 
     Timer timer = Timer(Duration(milliseconds: initialDelay), () {
-      _scheduleNextBasicPublish(client, clientId, context, intervalMs, sendCount, version);
+      _scheduleNextBasicPublish(client, clientId, context, intervalMs, sendCount, version, phaseOffset);
     });
     _addTimer(clientId, timer);
   }
@@ -106,6 +119,7 @@ class SchedulerService {
     int intervalMs, 
     int sendCount,
     int version,
+    int phaseOffset,
   ) {
     if (!_clientTimers.containsKey(clientId)) return; // Stopped
     if (_clientVersions[clientId] != version) return; // Wrong Session
@@ -116,7 +130,8 @@ class SchedulerService {
     final List<CustomKeyConfig> customKeys = context.customKeys;
 
     // 1. Generate Payload
-    int payloadTimestamp = _alignedStartTime + (sendCount * intervalMs);
+    // Timestamp aligned with the staggered time
+    int payloadTimestamp = _alignedStartTime + phaseOffset + (sendCount * intervalMs);
     Map<String, dynamic> data;
     
     if (format == 'tn') {
@@ -133,8 +148,8 @@ class SchedulerService {
     
     // 2. Schedule Next
     sendCount++;
-    _scheduleNext(clientId, intervalMs, sendCount, version, (actualCount) {
-      _scheduleNextBasicPublish(client, clientId, context, intervalMs, actualCount, version);
+    _scheduleNext(clientId, intervalMs, sendCount, version, phaseOffset, (actualCount) {
+      _scheduleNextBasicPublish(client, clientId, context, intervalMs, actualCount, version, phaseOffset);
     });
   }
 
@@ -144,38 +159,48 @@ class SchedulerService {
     final String topic = context.topic;
     
     int now = DateTime.now().millisecondsSinceEpoch;
-    int initialDelay = (_alignedStartTime - now);
-    if (initialDelay < 0) initialDelay = 0;
-
-    // 1. Full Report
-    int fullIntervalMs = group.fullIntervalSeconds * 1000;
-    int fullSendCount = 0;
-    int fullDelay = initialDelay;
     
-    // STRICT RESUME
+    // 1. Full Report Stagger
+    int fullIntervalMs = group.fullIntervalSeconds * 1000;
+    int fullPhaseOffset = 0;
+    if (fullIntervalMs > 0) fullPhaseOffset = clientId.hashCode % fullIntervalMs;
+
+    int fullBaseTarget = _alignedStartTime + fullPhaseOffset;
+    int fullDelay = fullBaseTarget - now;
+    int fullSendCount = 0;
+    
     if (fullDelay < 0) {
-       fullSendCount = (now - _alignedStartTime) ~/ fullIntervalMs;
-       fullDelay = 0;
+       int elapsed = now - fullBaseTarget;
+       fullSendCount = (elapsed ~/ fullIntervalMs) + 1;
+       fullDelay = (fullBaseTarget + (fullSendCount * fullIntervalMs)) - now;
     }
 
     Timer fullTimer = Timer(Duration(milliseconds: fullDelay), () {
-      _scheduleFullReport(client, clientId, topic, group, fullIntervalMs, fullSendCount, version, context.qos);
+      _scheduleFullReport(client, clientId, topic, group, fullIntervalMs, fullSendCount, version, context.qos, fullPhaseOffset);
     });
     _addTimer(clientId, fullTimer);
 
-    // 2. Change Report
+    // 2. Change Report Stagger
     if (group.changeRatio > 0 && group.changeIntervalSeconds < group.fullIntervalSeconds) {
       int changeIntervalMs = group.changeIntervalSeconds * 1000;
+      int changePhaseOffset = 0;
+      if (changeIntervalMs > 0) {
+        // Use a different salt for change report to mix it up
+        changePhaseOffset = (clientId.hashCode + 12345) % changeIntervalMs;
+      }
+      
+      int changeBaseTarget = _alignedStartTime + changePhaseOffset;
+      int changeDelay = changeBaseTarget - now;
       int changeSendCount = 0;
-      int changeDelay = initialDelay;
       
       if (changeDelay < 0) {
-         changeSendCount = (now - _alignedStartTime) ~/ changeIntervalMs;
-         changeDelay = 0;
+         int elapsed = now - changeBaseTarget;
+         changeSendCount = (elapsed ~/ changeIntervalMs) + 1;
+         changeDelay = (changeBaseTarget + (changeSendCount * changeIntervalMs)) - now;
       }
 
       Timer changeTimer = Timer(Duration(milliseconds: changeDelay), () {
-        _scheduleChangeReport(client, clientId, topic, group, changeIntervalMs, changeSendCount, version, context.qos);
+        _scheduleChangeReport(client, clientId, topic, group, changeIntervalMs, changeSendCount, version, context.qos, changePhaseOffset);
       });
       _addTimer(clientId, changeTimer);
     }
@@ -190,11 +215,12 @@ class SchedulerService {
     int sendCount,
     int version,
     int qos,
+    int phaseOffset,
   ) async {
     if (!_clientTimers.containsKey(clientId)) return;
     if (_clientVersions[clientId] != version) return; // Wrong Session
 
-    int payloadTimestamp = _alignedStartTime + (sendCount * intervalMs);
+    int payloadTimestamp = _alignedStartTime + phaseOffset + (sendCount * intervalMs);
     String payload;
 
       // Standard Format
@@ -227,8 +253,8 @@ class SchedulerService {
     _publish(client, topic, payload, group.name, 'success', '[$clientId] Full Report #$sendCount', null, _intToQos(qos));
 
     sendCount++;
-    _scheduleNext(clientId, intervalMs, sendCount, version, (actualCount) {
-      _scheduleFullReport(client, clientId, topic, group, intervalMs, actualCount, version, qos);
+    _scheduleNext(clientId, intervalMs, sendCount, version, phaseOffset, (actualCount) {
+      _scheduleFullReport(client, clientId, topic, group, intervalMs, actualCount, version, qos, phaseOffset);
     });
   }
 
@@ -241,11 +267,12 @@ class SchedulerService {
     int sendCount,
     int version,
     int qos,
+    int phaseOffset,
   ) async {
     if (!_clientTimers.containsKey(clientId)) return;
     if (_clientVersions[clientId] != version) return; // Wrong Session
 
-    int payloadTimestamp = _alignedStartTime + (sendCount * intervalMs);
+    int payloadTimestamp = _alignedStartTime + phaseOffset + (sendCount * intervalMs);
     
     // CRITICAL FIX: Conflict Resolution
     // If the current time aligns exactly with a Full Report interval, SKIP the Change Report.
@@ -259,8 +286,8 @@ class SchedulerService {
       // onLog('[$clientId] Skipped Change Report (Coincides with Full Report)', 'info', tag: group.name);
       
       sendCount++;
-      _scheduleNext(clientId, intervalMs, sendCount, version, (actualCount) {
-        _scheduleChangeReport(client, clientId, topic, group, intervalMs, actualCount, version, qos);
+      _scheduleNext(clientId, intervalMs, sendCount, version, phaseOffset, (actualCount) {
+        _scheduleChangeReport(client, clientId, topic, group, intervalMs, actualCount, version, qos, phaseOffset);
       });
       return; 
     }
@@ -313,8 +340,8 @@ class SchedulerService {
     _publish(client, topic, payload, group.name, 'info', msg, null, _intToQos(qos));
 
     sendCount++;
-    _scheduleNext(clientId, intervalMs, sendCount, version, (actualCount) {
-      _scheduleChangeReport(client, clientId, topic, group, intervalMs, actualCount, version, qos);
+    _scheduleNext(clientId, intervalMs, sendCount, version, phaseOffset, (actualCount) {
+      _scheduleChangeReport(client, clientId, topic, group, intervalMs, actualCount, version, qos, phaseOffset);
     });
   }
 
@@ -344,21 +371,20 @@ class SchedulerService {
     }
   }
 
-  void _scheduleNext(String clientId, int intervalMs, int sendCount, int version, Function(int) callback) {
+  void _scheduleNext(String clientId, int intervalMs, int sendCount, int version, int phaseOffset, Function(int) callback) {
     // Safety check BEFORE scheduling
     if (!_clientTimers.containsKey(clientId)) return;
     if (_clientVersions[clientId] != version) return;
 
     int now = DateTime.now().millisecondsSinceEpoch;
-    int nextTarget = _alignedStartTime + (sendCount * intervalMs);
+    int nextTarget = _alignedStartTime + phaseOffset + (sendCount * intervalMs);
     int delay = nextTarget - now;
     
     // STRICT MODE: Drop missed packets.
-    // If we are late (delay < 0), we don't catch up. We just aim for the NEXT future slot.
-    // Allow a tiny tolerance (e.g. -20ms) to run immediately, but if it's substantial, we skip.
     if (delay < -20) { // 20ms tolerance
-       // Calculate how many we missed
-       int correctCount = ((now - _alignedStartTime) ~/ intervalMs) + 1;
+       // Calculate how many we missed considering offset
+       int elapsed = now - (_alignedStartTime + phaseOffset);
+       int correctCount = (elapsed ~/ intervalMs) + 1;
        
        if (correctCount > sendCount) {
          int skipped = correctCount - sendCount;
@@ -367,12 +393,11 @@ class SchedulerService {
          if (enableLogs && skipped > 1) {
              onLog('[$clientId] STRICT MODE: Late by ${-delay}ms. Dropping $skipped ticks.', 'warning');
          }
-         
          statisticsCollector.incrementFailure(count: skipped);
          
          // Fast Forward
          sendCount = correctCount;
-         nextTarget = _alignedStartTime + (sendCount * intervalMs);
+         nextTarget = _alignedStartTime + phaseOffset + (sendCount * intervalMs);
          delay = nextTarget - now;
        }
     }
