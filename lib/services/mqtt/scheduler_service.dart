@@ -154,16 +154,27 @@ class SchedulerService {
   }
 
   // --- Advanced Mode Logic ---
+  // --- Advanced Mode Logic ---
   void _startAdvancedPublishing(MqttServerClient client, String clientId, AdvancedSimulationContext context, int version) {
     final GroupConfig group = context.group;
     final String topic = context.topic;
     
     int now = DateTime.now().millisecondsSinceEpoch;
     
-    // 1. Full Report Stagger
-    int fullIntervalMs = group.fullIntervalSeconds * 1000;
+    // OPTIMIZATION:
+    // If ChangeRatio is 100% (or more), then "Change Report" is identical to "Full Report".
+    // If the Change Frequency is higher (interval smaller) than Full Frequency,
+    // we should just run the Full Report at that higher frequency and disable the redundant slower timer.
+    bool runFullAtChangeSpeed = (group.changeRatio >= 1.0) && (group.changeIntervalSeconds < group.fullIntervalSeconds);
+    
+    // 1. Full Report Setup
+    // If optimization active, use change interval. Else use full interval.
+    int effectiveFullIntervalMs = runFullAtChangeSpeed 
+        ? group.changeIntervalSeconds * 1000 
+        : group.fullIntervalSeconds * 1000;
+        
     int fullPhaseOffset = 0;
-    if (fullIntervalMs > 0) fullPhaseOffset = clientId.hashCode % fullIntervalMs;
+    if (effectiveFullIntervalMs > 0) fullPhaseOffset = clientId.hashCode % effectiveFullIntervalMs;
 
     int fullBaseTarget = _alignedStartTime + fullPhaseOffset;
     int fullDelay = fullBaseTarget - now;
@@ -171,21 +182,22 @@ class SchedulerService {
     
     if (fullDelay < 0) {
        int elapsed = now - fullBaseTarget;
-       fullSendCount = (elapsed ~/ fullIntervalMs) + 1;
-       fullDelay = (fullBaseTarget + (fullSendCount * fullIntervalMs)) - now;
+       fullSendCount = (elapsed ~/ effectiveFullIntervalMs) + 1;
+       fullDelay = (fullBaseTarget + (fullSendCount * effectiveFullIntervalMs)) - now;
     }
 
     Timer fullTimer = Timer(Duration(milliseconds: fullDelay), () {
-      _scheduleFullReport(client, clientId, topic, group, fullIntervalMs, fullSendCount, version, context.qos, fullPhaseOffset);
+      _scheduleFullReport(client, clientId, topic, group, effectiveFullIntervalMs, fullSendCount, version, context.qos, fullPhaseOffset);
     });
     _addTimer(clientId, fullTimer);
 
-    // 2. Change Report Stagger
-    if (group.changeRatio > 0 && group.changeIntervalSeconds < group.fullIntervalSeconds) {
+    // 2. Change Report Setup
+    // Only schedule if NOT 100% change (mixed mode) AND valid interval.
+    // If runFullAtChangeSpeed is true, we have already "promoted" the change report to be the main Full Report above, so we skip this.
+    if (!runFullAtChangeSpeed && group.changeRatio > 0 && group.changeIntervalSeconds < group.fullIntervalSeconds) {
       int changeIntervalMs = group.changeIntervalSeconds * 1000;
       int changePhaseOffset = 0;
       if (changeIntervalMs > 0) {
-        // Use a different salt for change report to mix it up
         changePhaseOffset = (clientId.hashCode + 12345) % changeIntervalMs;
       }
       
