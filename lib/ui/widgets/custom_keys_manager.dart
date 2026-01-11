@@ -286,24 +286,6 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
               ),
             ),
             const SizedBox(width: 8),
-            // Type Dropdown
-            Expanded(
-              flex: 2,
-              child: DropdownButtonFormField<CustomKeyType>(
-                value: key.type,
-                decoration: InputDecoration(
-                  labelText: l10n.type, 
-                  isDense: true,
-                  border: const UnderlineInputBorder(),
-                ),
-                items: CustomKeyType.values.map((type) => DropdownMenuItem(
-                  value: type,
-                  child: Text(_getTypeLabel(type, l10n), style: const TextStyle(fontSize: 12)),
-                )).toList(),
-                onChanged: widget.isLocked ? null : (v) => _updateKey(key.copyWith(type: v!)),
-              ),
-            ),
-            const SizedBox(width: 8),
             // Mode Dropdown
             Expanded(
               flex: 2,
@@ -319,6 +301,24 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
                   child: Text(_getModeLabel(mode, l10n), style: const TextStyle(fontSize: 12)),
                 )).toList(),
                 onChanged: widget.isLocked ? null : (v) => _updateKey(key.copyWith(mode: v!)),
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Type Dropdown
+            Expanded(
+              flex: 2,
+              child: DropdownButtonFormField<CustomKeyType>(
+                value: key.type,
+                decoration: InputDecoration(
+                  labelText: l10n.type, 
+                  isDense: true,
+                  border: const UnderlineInputBorder(),
+                ),
+                items: CustomKeyType.values.map((type) => DropdownMenuItem(
+                  value: type,
+                  child: Text(_getTypeLabel(type, l10n), style: const TextStyle(fontSize: 12)),
+                )).toList(),
+                onChanged: widget.isLocked ? null : (v) => _updateKey(key.copyWith(type: v!)),
               ),
             ),
             const SizedBox(width: 8),
