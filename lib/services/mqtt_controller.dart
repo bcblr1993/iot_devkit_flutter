@@ -209,7 +209,9 @@ class MqttController extends ChangeNotifier {
     int dataPointCount = config['data']['data_point_count'] ?? 10;
     List<CustomKeyConfig> customKeys = [];
     if (config['custom_keys'] != null && config['custom_keys'] is List) {
-       customKeys = List<CustomKeyConfig>.from(config['custom_keys']);
+       customKeys = (config['custom_keys'] as List)
+           .map((e) => CustomKeyConfig.fromJson(e))
+           .toList();
     }
 
     // Connect in batches to avoid overwhelming the system while staying fast
