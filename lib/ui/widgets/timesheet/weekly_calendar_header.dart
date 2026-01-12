@@ -13,8 +13,10 @@ class WeeklyCalendarHeader extends StatelessWidget {
     final theme = Theme.of(context);
     final locale = Localizations.localeOf(context).toString();
 
-    // Calculate Range (±5 days around selected date)
-    final startDate = selectedDate.subtract(const Duration(days: 5));
+    // Calculate Range (Fixed past 10 days from today)
+    final now = DateTime.now();
+    final todayMidnight = DateTime(now.year, now.month, now.day);
+    final startDate = todayMidnight.subtract(const Duration(days: 9));
     
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -25,10 +27,10 @@ class WeeklyCalendarHeader extends StatelessWidget {
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
-          children: List.generate(11, (index) {
+          children: List.generate(10, (index) {
             final day = startDate.add(Duration(days: index));
             final isSelected = isSameDay(day, selectedDate);
-            final isToday = isSameDay(day, DateTime.now());
+            final isToday = isSameDay(day, now);
             
             final key = DateTime(day.year, day.month, day.day);
             final hours = provider.weekDailyTotals[key] ?? 0.0;

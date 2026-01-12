@@ -65,15 +65,16 @@ class TimesheetProvider extends ChangeNotifier {
   }
   
   Future<void> _loadWeekSummary() async {
-     // Fetch logs for sliding window (±5 days around selected date)
-     final start = TsDateUtils.dateOnly(_selectedDate).subtract(const Duration(days: 5));
-     final end = TsDateUtils.dateOnly(_selectedDate).add(const Duration(days: 6)).subtract(const Duration(seconds: 1));
+     // Fetch logs for fixed window (past 10 days from today)
+     final now = DateTime.now();
+     final today = TsDateUtils.dateOnly(now);
+     final start = today.subtract(const Duration(days: 9));
      
-     final logs = await _service.getLogsInRange(start, end);
+     final logs = await _service.getLogsInRange(start, now);
      
      final Map<DateTime, double> totals = {};
-     // Initialize 0 for 11 days
-     for (int i = 0; i < 11; i++) {
+     // Initialize 0 for 10 days
+     for (int i = 0; i < 10; i++) {
         final day = start.add(Duration(days: i));
         totals[TsDateUtils.dateOnly(day)] = 0.0;
      }
