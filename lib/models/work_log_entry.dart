@@ -5,8 +5,9 @@ class WorkLogEntry {
   final DateTime startTime;
   final DateTime endTime;
   final String content;
-  final String category;
-  final String projectId;
+  final String? projectCode;
+  final String? taskName;
+  final String? taskScope;
 
   WorkLogEntry({
     String? id,
@@ -15,6 +16,9 @@ class WorkLogEntry {
     required this.content,
     this.category = 'dev',
     this.projectId = 'default',
+    this.projectCode,
+    this.taskName,
+    this.taskScope,
   }) : id = id ?? const Uuid().v4();
 
   double get durationHours => endTime.difference(startTime).inMinutes / 60.0;
@@ -27,6 +31,9 @@ class WorkLogEntry {
       'content': content,
       'category': category,
       'projectId': projectId,
+      'projectCode': projectCode,
+      'taskName': taskName,
+      'taskScope': taskScope,
     };
   }
 
@@ -38,6 +45,9 @@ class WorkLogEntry {
       content: json['content'] ?? '',
       category: json['category'] ?? 'dev',
       projectId: json['projectId'] ?? 'default',
+      projectCode: json['projectCode'],
+      taskName: json['taskName'],
+      taskScope: json['taskScope'],
     );
   }
   
@@ -46,6 +56,9 @@ class WorkLogEntry {
     DateTime? endTime,
     String? content,
     String? category,
+    String? projectCode,
+    String? taskName,
+    String? taskScope,
   }) {
     return WorkLogEntry(
       id: id,
@@ -54,6 +67,9 @@ class WorkLogEntry {
       content: content ?? this.content,
       category: category ?? this.category,
       projectId: projectId,
+      projectCode: projectCode ?? this.projectCode,
+      taskName: taskName ?? this.taskName,
+      taskScope: taskScope ?? this.taskScope,
     );
   }
 }

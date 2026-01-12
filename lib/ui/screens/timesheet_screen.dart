@@ -5,6 +5,7 @@ import '../../l10n/generated/app_localizations.dart';
 import '../../viewmodels/timesheet_provider.dart';
 import '../../models/work_log_entry.dart';
 import 'package:intl/intl.dart';
+import '../../config/timesheet_constants.dart';
 
 class TimesheetScreen extends StatefulWidget {
   const TimesheetScreen({super.key});
@@ -240,7 +241,10 @@ class _LogEditorDialogState extends State<_LogEditorDialog> {
   late TextEditingController _contentCtrl;
   late TimeOfDay _startTime;
   late TimeOfDay _endTime;
-  late String _category;
+  
+  // Enterprise Standard Fields
+  TaskCategoryDefinition? _selectedCategory;
+  TaskDefinition? _selectedTask;
 
   @override
   void initState() {
@@ -250,14 +254,40 @@ class _LogEditorDialogState extends State<_LogEditorDialog> {
     if (widget.log != null) {
       _startTime = TimeOfDay.fromDateTime(widget.log!.startTime);
       _endTime = TimeOfDay.fromDateTime(widget.log!.endTime);
-      _category = widget.log!.category;
+      
+      // Attempt to restore selection from code
+      if (widget.log!.projectCode != null) {
+        for (var cat in TimesheetConstants.categories) {
+          for (var task in cat.tasks) {
+            if (task.code == widget.log!.projectCode) {
+              _selectedCategory = cat;
+              _selectedTask = task;
+              break;
+            }
+          }
+          if (_selectedTask != null) break;
+        }
+      }
+      
+      // Fallback if code lookup failed but category exists (Legacy support)
+      if (_selectedCategory == null && widget.log!.category.isNotEmpty) {
+         // Try to match category name loosely or just pick first default
+         // For now, leave null to force user to re-select compliant standard
+      }
     } else {
-      // Default: Now -> Now+1h
+      // Default: Now -> Now+30m
       final now = TimeOfDay.now();
-      _startTime = now;
-      _endTime = _addHour(now);
-      _category = 'dev';
+      _startTime = _roundTime(now);
+      _endTime = _addMinute(_startTime, 30);
     }
+  }
+  
+  TimeOfDay _roundTime(TimeOfDay t) {
+    int m = t.minute;
+    if (m < 15) m = 0;
+    else if (m < 45) m = 30;
+    else { m = 0; t = _addHour(t);}
+    return TimeOfDay(hour: t.hour, minute: m);
   }
   
   TimeOfDay _addHour(TimeOfDay time) {
@@ -266,61 +296,126 @@ class _LogEditorDialogState extends State<_LogEditorDialog> {
     return TimeOfDay(hour: hour, minute: time.minute);
   }
   
+  TimeOfDay _addMinute(TimeOfDay time, int min) {
+    int m = time.minute + min;
+    int h = time.hour;
+    while (m >= 60) {
+      m -= 60;
+      h++;
+    }
+    if (h > 23) h = 0;
+    return TimeOfDay(hour: h, minute: m);
+  }
+  
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
     
     return AlertDialog(
-      title: Text(widget.log == null ? l10n.tsDailyLog : l10n.tsDailyLog), // Reuse title "Daily Log" or "Edit Task"
+      title: Text(widget.log == null ? 'New Work Log' : 'Edit Work Log'),
       content: SizedBox(
-        width: 400,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextFormField(
-              controller: _contentCtrl,
-              decoration: InputDecoration(
-                labelText: l10n.tsTaskContent,
-                border: const OutlineInputBorder(),
+        width: 500, // Wider for scope text
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1. Category Selector
+              DropdownButtonFormField<TaskCategoryDefinition>(
+                value: _selectedCategory,
+                decoration: const InputDecoration(labelText: 'Task Category (任务类型)', border: OutlineInputBorder()),
+                items: TimesheetConstants.categories.map((cat) {
+                  return DropdownMenuItem(value: cat, child: Text(cat.name));
+                }).toList(),
+                onChanged: (v) {
+                  setState(() {
+                    _selectedCategory = v;
+                    _selectedTask = null; // Reset task when category changes
+                  });
+                },
               ),
-              maxLines: 3,
-              autofocus: true,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildTimePicker(l10n.tsStartTime, _startTime, (t) => setState(() => _startTime = t)),
+              const SizedBox(height: 16),
+              
+              // 2. Task Selector
+              DropdownButtonFormField<TaskDefinition>(
+                value: _selectedTask,
+                decoration: const InputDecoration(labelText: 'Standard Task (标准任务)', border: OutlineInputBorder()),
+                items: _selectedCategory?.tasks.map((task) {
+                  return DropdownMenuItem(value: task, child: Text(task.name, overflow: TextOverflow.ellipsis));
+                }).toList() ?? [],
+                onChanged: (v) => setState(() => _selectedTask = v),
+                disabledHint: const Text('Select a category first'),
+              ),
+              
+              // 3. Scope Hint (Crucial for compliance)
+              if (_selectedTask != null) 
+                Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: theme.colorScheme.primary.withOpacity(0.3)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.info_outline, size: 16, color: theme.colorScheme.primary),
+                          const SizedBox(width: 8),
+                          Text('Task Code: ${_selectedTask!.code}', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text('Goal: ${_selectedTask!.goal}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4),
+                      Text('Scope: ${_selectedTask!.scope}', style: const TextStyle(fontSize: 12)),
+                    ],
+                  ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildTimePicker(l10n.tsEndTime, _endTime, (t) => setState(() => _endTime = t)),
+                
+              const SizedBox(height: 16),
+              
+              // 4. Time
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildTimePicker(l10n.tsStartTime, _startTime, (t) => setState(() => _startTime = t)),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildTimePicker(l10n.tsEndTime, _endTime, (t) => setState(() => _endTime = t)),
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // 5. Specific Content
+              TextFormField(
+                controller: _contentCtrl,
+                decoration: InputDecoration(
+                  labelText: l10n.tsTaskContent,
+                  hintText: 'Specific work details...',
+                  border: const OutlineInputBorder(),
+                  filled: true,
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _category,
-              decoration: InputDecoration(labelText: l10n.tsCategory, border: const OutlineInputBorder()),
-              items: [
-                DropdownMenuItem(value: 'dev', child: Text(l10n.tsCatDev)),
-                DropdownMenuItem(value: 'meeting', child: Text(l10n.tsCatMeeting)),
-                DropdownMenuItem(value: 'review', child: Text(l10n.tsCatReview)),
-                DropdownMenuItem(value: 'other', child: Text(l10n.tsCatOther)),
-              ],
-              onChanged: (v) => setState(() => _category = v!),
-            ),
-          ],
+                maxLines: 3,
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
         TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.cancel)),
-        FilledButton(onPressed: _save, child: Text(l10n.save)),
+        FilledButton(onPressed: _selectedTask == null ? null : _save, child: Text(l10n.save)), // Validated
       ],
     );
   }
   
+  Widget _buildTimePicker(String label, TimeOfDay time, Function(TimeOfDay) onChanged) {
     return InkWell(
       onTap: () async {
         final picked = await showTimePicker(
@@ -329,19 +424,12 @@ class _LogEditorDialogState extends State<_LogEditorDialog> {
           helpText: 'Select Time (rounded to 30 min)',
         );
         if (picked != null) {
-          // Snap to nearest 30
           int minute = picked.minute;
           int hour = picked.hour;
           
-          if (minute < 15) {
-            minute = 0;
-          } else if (minute < 45) {
-            minute = 30;
-          } else {
-            minute = 0;
-            hour += 1;
-            if (hour > 23) hour = 0; 
-          }
+          if (minute < 15) { minute = 0; } 
+          else if (minute < 45) { minute = 30; } 
+          else { minute = 0; hour += 1; if (hour > 23) hour = 0; }
           
           onChanged(TimeOfDay(hour: hour, minute: minute));
         }
@@ -354,19 +442,21 @@ class _LogEditorDialogState extends State<_LogEditorDialog> {
   }
 
   void _save() {
-    // Convert TimeOfDay to DateTime on the selected date
+    if (_selectedTask == null) return;
+    
     final date = widget.selectedDate;
     final startDt = DateTime(date.year, date.month, date.day, _startTime.hour, _startTime.minute);
     final endDt = DateTime(date.year, date.month, date.day, _endTime.hour, _endTime.minute);
     
-    // Validate end > start? Not strictly required but good UX.
-    
     final newLog = WorkLogEntry(
-      id: widget.log?.id, // Keeps ID if editing
+      id: widget.log?.id,
       startTime: startDt,
       endTime: endDt,
       content: _contentCtrl.text,
-      category: _category,
+      category: _selectedCategory?.name ?? 'Other', // Store category name
+      projectCode: _selectedTask?.code,
+      taskName: _selectedTask?.name,
+      taskScope: _selectedTask?.scope,
     );
     
     if (widget.log == null) {

@@ -99,7 +99,12 @@ class TimesheetProvider extends ChangeNotifier {
         final end = "${log.endTime.hour.toString().padLeft(2,'0')}:${log.endTime.minute.toString().padLeft(2,'0')}";
         final duration = log.durationHours.toStringAsFixed(1);
         
-        buffer.writeln("- [${log.category}] $start-$end ${log.content} (${duration}h)");
+        String prefix = "[${log.category}]";
+        if (log.projectCode != null && log.projectCode!.isNotEmpty) {
+          prefix = "[${log.projectCode}] ${log.taskName}";
+        }
+        
+        buffer.writeln("- $prefix $start-$end ${log.content} (${duration}h)");
       }
       buffer.writeln();
     }
