@@ -34,15 +34,43 @@ class TimesheetService {
   Future<List<WorkLogEntry>> getWeekLogs(DateTime date) async {
      // Find Monday
     int daysToMonday = date.weekday - 1;
-    DateTime monday = DateUtils.dateOnly(date).subtract(Duration(days: daysToMonday));
-    List<WorkLogEntry> weekLogs = [];
+    DateTime monday = TsDateUtils.dateOnly(date).subtract(Duration(days: daysToMonday));
+    // End of Sunday
+    DateTime endOfWeek = monday.add(const Duration(days: 7)).subtract(const Duration(seconds: 1));
+    return getLogsInRange(monday, endOfWeek);
+  }
+
+  Future<List<WorkLogEntry>> getLogsInRange(DateTime start, DateTime end) async {
+    List<WorkLogEntry> rangeLogs = [];
     
-    // Iterate 7 days (might cross month boundary, so load carefully)
-    for (int i=0; i<7; i++) {
-      DateTime current = monday.add(Duration(days: i));
-      weekLogs.addAll(await getLogs(current));
+    // Normalize range to iterate months
+    // We iterate from start month to end month
+    DateTime currentMonth = DateTime(start.year, start.month);
+    DateTime lastMonth = DateTime(end.year, end.month);
+    
+    while (currentMonth.isBefore(lastMonth) || currentMonth.isAtSameMomentAs(lastMonth)) {
+       // Load logs for this month
+       final allLogs = await _loadMonthLogs(currentMonth);
+       
+       // Filter logs clearly within range
+       rangeLogs.addAll(allLogs.where((log) {
+         return log.startTime.isAfter(start.subtract(const Duration(seconds: 1))) && 
+                log.startTime.isBefore(end.add(const Duration(seconds: 1)));
+       }));
+       
+       // Move to next month
+       currentMonth = DateTime(currentMonth.year, currentMonth.month + 1);
     }
-    return weekLogs;
+    
+    rangeLogs.sort((a, b) => a.startTime.compareTo(b.startTime));
+    return rangeLogs;
+  }
+  
+  Future<List<WorkLogEntry>> _loadMonthLogs(DateTime monthDate) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = _getMonthKey(monthDate);
+    final jsonList = prefs.getStringList(key) ?? [];
+    return jsonList.map((e) => WorkLogEntry.fromJson(jsonDecode(e))).toList();
   }
 
   Future<void> saveLog(WorkLogEntry log) async {
@@ -80,7 +108,7 @@ class TimesheetService {
   }
 }
 
-class DateUtils {
+class TsDateUtils {
   static DateTime dateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
   static bool isSameDay(DateTime? a, DateTime? b) {
     if (a == null || b == null) return false;

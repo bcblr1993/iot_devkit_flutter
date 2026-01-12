@@ -388,7 +388,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tsNoTasks => 'No tasks recorded for this day.';
 
   @override
-  String get tsCatDev => 'Development';
+  String get tsCatDev => 'Dev';
 
   @override
   String get tsCatMeeting => 'Meeting';
@@ -398,6 +398,36 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tsCatOther => 'Other';
+
+  @override
+  String get tsNewLog => 'New Work Log';
+
+  @override
+  String get tsEditLog => 'Edit Work Log';
+
+  @override
+  String get tsTaskCategory => 'Task Category';
+
+  @override
+  String get tsStandardTask => 'Standard Task';
+
+  @override
+  String get tsSelectCategoryFirst => 'Select a category first';
+
+  @override
+  String get tsTaskCode => 'Task Code: ';
+
+  @override
+  String get tsGoal => 'Goal: ';
+
+  @override
+  String get tsScope => 'Scope: ';
+
+  @override
+  String get tsEnable => 'Enable Timesheet';
+
+  @override
+  String get tsDisable => 'Disable Timesheet';
 
   @override
   String get tsDeleteConfirm => 'Delete this log entry?';
@@ -647,4 +677,45 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noProfiles => 'No Profiles';
+
+  @override
+  String get tsOverlapError => 'Time overlap detected with existing log!';
+
+  @override
+  String get tsTimeError => 'End time must be after start time.';
+
+  @override
+  String get tsViewList => 'List';
+
+  @override
+  String get tsViewReport => 'Report';
+
+  @override
+  String get tsSelectRange => 'Select Range';
+
+  @override
+  String get tsNoRecords => 'No records found';
+
+  @override
+  String get tsEntries => 'entries';
+
+  @override
+  String tsTotalHours(Object hours) {
+    return 'Total: ${hours}h';
+  }
+
+  @override
+  String get tsCopied => 'Content copied to clipboard';
+
+  @override
+  String get tsOvertime => 'Overtime';
+
+  @override
+  String get tsLowHours => 'Less than 8h';
+
+  @override
+  String get tsLogAdded => 'Log added successfully';
+
+  @override
+  String get tsLogUpdated => 'Log updated successfully';
 }

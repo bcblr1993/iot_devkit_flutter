@@ -857,7 +857,7 @@ abstract class AppLocalizations {
   /// No description provided for @tsCatDev.
   ///
   /// In en, this message translates to:
-  /// **'Development'**
+  /// **'Dev'**
   String get tsCatDev;
 
   /// No description provided for @tsCatMeeting.
@@ -877,6 +877,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Other'**
   String get tsCatOther;
+
+  /// No description provided for @tsNewLog.
+  ///
+  /// In en, this message translates to:
+  /// **'New Work Log'**
+  String get tsNewLog;
+
+  /// No description provided for @tsEditLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Work Log'**
+  String get tsEditLog;
+
+  /// No description provided for @tsTaskCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Task Category'**
+  String get tsTaskCategory;
+
+  /// No description provided for @tsStandardTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard Task'**
+  String get tsStandardTask;
+
+  /// No description provided for @tsSelectCategoryFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a category first'**
+  String get tsSelectCategoryFirst;
+
+  /// No description provided for @tsTaskCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Task Code: '**
+  String get tsTaskCode;
+
+  /// No description provided for @tsGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal: '**
+  String get tsGoal;
+
+  /// No description provided for @tsScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Scope: '**
+  String get tsScope;
+
+  /// No description provided for @tsEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable Timesheet'**
+  String get tsEnable;
+
+  /// No description provided for @tsDisable.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable Timesheet'**
+  String get tsDisable;
 
   /// No description provided for @tsDeleteConfirm.
   ///
@@ -1369,6 +1429,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No Profiles'**
   String get noProfiles;
+
+  /// No description provided for @tsOverlapError.
+  ///
+  /// In en, this message translates to:
+  /// **'Time overlap detected with existing log!'**
+  String get tsOverlapError;
+
+  /// No description provided for @tsTimeError.
+  ///
+  /// In en, this message translates to:
+  /// **'End time must be after start time.'**
+  String get tsTimeError;
+
+  /// No description provided for @tsViewList.
+  ///
+  /// In en, this message translates to:
+  /// **'List'**
+  String get tsViewList;
+
+  /// No description provided for @tsViewReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Report'**
+  String get tsViewReport;
+
+  /// No description provided for @tsSelectRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Range'**
+  String get tsSelectRange;
+
+  /// No description provided for @tsNoRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'No records found'**
+  String get tsNoRecords;
+
+  /// No description provided for @tsEntries.
+  ///
+  /// In en, this message translates to:
+  /// **'entries'**
+  String get tsEntries;
+
+  /// No description provided for @tsTotalHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Total: {hours}h'**
+  String tsTotalHours(Object hours);
+
+  /// No description provided for @tsCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Content copied to clipboard'**
+  String get tsCopied;
+
+  /// No description provided for @tsOvertime.
+  ///
+  /// In en, this message translates to:
+  /// **'Overtime'**
+  String get tsOvertime;
+
+  /// No description provided for @tsLowHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Less than 8h'**
+  String get tsLowHours;
+
+  /// No description provided for @tsLogAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Log added successfully'**
+  String get tsLogAdded;
+
+  /// No description provided for @tsLogUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Log updated successfully'**
+  String get tsLogUpdated;
 }
 
 class _AppLocalizationsDelegate

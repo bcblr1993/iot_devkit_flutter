@@ -387,7 +387,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tsNoTasks => '今日暂无记录';
 
   @override
-  String get tsCatDev => '研发';
+  String get tsCatDev => '开发';
 
   @override
   String get tsCatMeeting => '会议';
@@ -397,6 +397,36 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get tsCatOther => '其他';
+
+  @override
+  String get tsNewLog => '新建工作日志';
+
+  @override
+  String get tsEditLog => '编辑工作日志';
+
+  @override
+  String get tsTaskCategory => '任务类型';
+
+  @override
+  String get tsStandardTask => '标准任务';
+
+  @override
+  String get tsSelectCategoryFirst => '请先选择任务类型';
+
+  @override
+  String get tsTaskCode => '任务代码：';
+
+  @override
+  String get tsGoal => '目标：';
+
+  @override
+  String get tsScope => '范围：';
+
+  @override
+  String get tsEnable => '启用工时表';
+
+  @override
+  String get tsDisable => '禁用工时表';
 
   @override
   String get tsDeleteConfirm => '确定删除这条记录吗？';
@@ -643,4 +673,45 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get noProfiles => '暂无配置';
+
+  @override
+  String get tsOverlapError => '检测到时间与现有记录冲突！';
+
+  @override
+  String get tsTimeError => '结束时间必须晚于开始时间。';
+
+  @override
+  String get tsViewList => '列表';
+
+  @override
+  String get tsViewReport => '报表';
+
+  @override
+  String get tsSelectRange => '选择范围';
+
+  @override
+  String get tsNoRecords => '暂无记录';
+
+  @override
+  String get tsEntries => '条记录';
+
+  @override
+  String tsTotalHours(Object hours) {
+    return '总计: $hours小时';
+  }
+
+  @override
+  String get tsCopied => '内容已复制';
+
+  @override
+  String get tsOvertime => '加班';
+
+  @override
+  String get tsLowHours => '工时不足';
+
+  @override
+  String get tsLogAdded => '日志添加成功';
+
+  @override
+  String get tsLogUpdated => '日志修改成功';
 }

@@ -5,6 +5,8 @@ class WorkLogEntry {
   final DateTime startTime;
   final DateTime endTime;
   final String content;
+  final String category;
+  final String projectId;
   final String? projectCode;
   final String? taskName;
   final String? taskScope;

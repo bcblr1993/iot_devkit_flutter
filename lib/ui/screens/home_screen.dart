@@ -14,6 +14,7 @@ import '../tools/timestamp_tool.dart';
 import '../tools/json_formatter_tool.dart';
 import '../../services/log_storage_service.dart';
 import 'timesheet_screen.dart';
+import '../../viewmodels/timesheet_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -89,149 +90,148 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           RepaintBoundary(
             child: NavigationRail(
-            selectedIndex: _selectedIndex,
-            onDestinationSelected: (int index) {
-              setState(() {
-                _selectedIndex = index;
-              });
-            },
-            minWidth: 48.0,
-            labelType: NavigationRailLabelType.all,
-            destinations: <NavigationRailDestination>[
-              NavigationRailDestination(
-                icon: const Icon(Icons.settings_input_component),
-                label: Text(l10n.navSimulator),
-              ),
-              NavigationRailDestination(
-                icon: const Icon(Icons.access_time),
-                label: Text(l10n.navTimestamp),
-              ),
-              NavigationRailDestination(
-                icon: const Icon(Icons.code),
-                label: Text(l10n.navJson),
-              ),
-                label: Text(l10n.navJson),
-              ),
-              if (tsProvider.isEnabled)
+              selectedIndex: _selectedIndex >= (tsProvider.isEnabled ? 4 : 3) ? 0 : _selectedIndex,
+              onDestinationSelected: (int index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
+              },
+              minWidth: 48.0,
+              labelType: NavigationRailLabelType.all,
+              destinations: <NavigationRailDestination>[
                 NavigationRailDestination(
-                  icon: const Icon(Icons.calendar_month),
-                  label: Text(l10n.toolTimesheet),
+                  icon: const Icon(Icons.settings_input_component),
+                  label: Text(l10n.navSimulator),
                 ),
-            ],
-            trailing: Expanded(
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Unified Settings Menu
-                      Tooltip(
-                        message: l10n.menuSettings ?? 'Settings',
-                        child: PopupMenuButton<String>(
-                          icon: Icon(Icons.settings, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                          tooltip: '', // Disable default tooltip to use custom one
-                          offset: const Offset(50, 0), // Position menu to the right
-                          position: PopupMenuPosition.over,
-                          onSelected: (String action) {
-                            switch (action) {
-                              case 'theme':
-                                _showThemeDialog(context);
-                                break;
-                              case 'language':
-                                _showLanguageDialog(context);
-                                break;
-                              case 'logs':
-                                LogStorageService.instance.openLogFolder();
-                                break;
-                              case 'about':
-                                AboutDialogHelper.showAboutDialog(context);
-                                break;
-                              case 'toggle_timesheet':
-                                tsProvider.toggleEnabled(!tsProvider.isEnabled);
-                                break;
-                            }
-                          },
-                          itemBuilder: (BuildContext context) {
-                            return [
-                              // Theme
-                              PopupMenuItem(
-                                value: 'theme',
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.palette_outlined, size: 20, color: Theme.of(context).colorScheme.onSurface),
-                                    const SizedBox(width: 12),
-                                    Text(l10n.selectTheme, style: const TextStyle(fontSize: 14)),
-                                  ],
+                NavigationRailDestination(
+                  icon: const Icon(Icons.access_time),
+                  label: Text(l10n.navTimestamp),
+                ),
+                NavigationRailDestination(
+                  icon: const Icon(Icons.code),
+                  label: Text(l10n.navJson),
+                ),
+                if (tsProvider.isEnabled)
+                  NavigationRailDestination(
+                    icon: const Icon(Icons.calendar_month),
+                    label: Text(l10n.toolTimesheet),
+                  ),
+              ],
+              trailing: Expanded(
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Unified Settings Menu
+                        Tooltip(
+                          message: l10n.menuSettings ?? 'Settings',
+                          child: PopupMenuButton<String>(
+                            icon: Icon(Icons.settings, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                            tooltip: '', // Disable default tooltip to use custom one
+                            offset: const Offset(50, 0), // Position menu to the right
+                            position: PopupMenuPosition.over,
+                            onSelected: (String action) {
+                              switch (action) {
+                                case 'theme':
+                                  _showThemeDialog(context);
+                                  break;
+                                case 'language':
+                                  _showLanguageDialog(context);
+                                  break;
+                                case 'logs':
+                                  LogStorageService.instance.openLogFolder();
+                                  break;
+                                case 'about':
+                                  AboutDialogHelper.showAboutDialog(context);
+                                  break;
+                                case 'toggle_timesheet':
+                                  if (tsProvider.isEnabled && _selectedIndex == 3) {
+                                    setState(() {
+                                      _selectedIndex = 0;
+                                    });
+                                  }
+                                  tsProvider.toggleEnabled(!tsProvider.isEnabled);
+                                  break;
+                              }
+                            },
+                            itemBuilder: (BuildContext context) {
+                              return [
+                                // Theme
+                                PopupMenuItem(
+                                  value: 'theme',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.palette_outlined, size: 20, color: Theme.of(context).colorScheme.onSurface),
+                                      const SizedBox(width: 12),
+                                      Text(l10n.selectTheme, style: const TextStyle(fontSize: 14)),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              // Language
-                              PopupMenuItem(
-                                value: 'language',
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.language, size: 20, color: Theme.of(context).colorScheme.onSurface),
-                                    const SizedBox(width: 12),
-                                    Text(l10n.selectLanguage, style: const TextStyle(fontSize: 14)),
-                                  ],
+                                // Language
+                                PopupMenuItem(
+                                  value: 'language',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.language, size: 20, color: Theme.of(context).colorScheme.onSurface),
+                                      const SizedBox(width: 12),
+                                      Text(l10n.selectLanguage, style: const TextStyle(fontSize: 14)),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                                    Text(l10n.selectLanguage, style: const TextStyle(fontSize: 14)),
-                                  ],
+                                const PopupMenuDivider(),
+                                // Timesheet Toggle
+                                PopupMenuItem(
+                                  value: 'toggle_timesheet',
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        tsProvider.isEnabled ? Icons.check_box : Icons.check_box_outline_blank, 
+                                        size: 20, 
+                                        color: Theme.of(context).colorScheme.primary
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        tsProvider.isEnabled ? l10n.tsDisable : l10n.tsEnable, 
+                                        style: const TextStyle(fontSize: 14)
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              const PopupMenuDivider(),
-                              // Timesheet Toggle
-                              PopupMenuItem(
-                                value: 'toggle_timesheet',
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      tsProvider.isEnabled ? Icons.check_box : Icons.check_box_outline_blank, 
-                                      size: 20, 
-                                      color: Theme.of(context).colorScheme.primary
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      tsProvider.isEnabled ? 'Disable Timesheet' : 'Enable Timesheet', 
-                                      style: const TextStyle(fontSize: 14)
-                                    ),
-                                  ],
+                                const PopupMenuDivider(),
+                                // Open Logs
+                                PopupMenuItem(
+                                  value: 'logs',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.folder_open, size: 20, color: Theme.of(context).colorScheme.onSurface),
+                                      const SizedBox(width: 12),
+                                      Text(l10n.menuOpenLogs ?? 'Open Logs', style: const TextStyle(fontSize: 14)),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              const PopupMenuDivider(),
-                              // Open Logs
-                              PopupMenuItem(
-                                value: 'logs',
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.folder_open, size: 20, color: Theme.of(context).colorScheme.onSurface),
-                                    const SizedBox(width: 12),
-                                    Text(l10n.menuOpenLogs ?? 'Open Logs', style: const TextStyle(fontSize: 14)),
-                                  ],
+                                // About
+                                PopupMenuItem(
+                                  value: 'about',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.info_outline, size: 20, color: Theme.of(context).colorScheme.onSurface),
+                                      const SizedBox(width: 12),
+                                      Text(l10n.menuAbout, style: const TextStyle(fontSize: 14)),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              // About
-                              PopupMenuItem(
-                                value: 'about',
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.info_outline, size: 20, color: Theme.of(context).colorScheme.onSurface),
-                                    const SizedBox(width: 12),
-                                    Text(l10n.menuAbout, style: const TextStyle(fontSize: 14)),
-                                  ],
-                                ),
-                              ),
-                            ];
-                          },
+                              ];
+                            },
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
             ),
           ),
           const VerticalDivider(thickness: 1, width: 1),
@@ -424,6 +424,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBody() {
+    final tsProvider = Provider.of<TimesheetProvider>(context);
     return IndexedStack(
       index: _selectedIndex,
       children: [
