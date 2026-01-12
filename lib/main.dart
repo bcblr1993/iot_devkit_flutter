@@ -16,6 +16,7 @@ import 'utils/statistics_collector.dart';
 import 'ui/screens/home_screen.dart';
 import 'utils/about_dialog_helper.dart';
 import 'services/log_storage_service.dart';
+import 'viewmodels/timesheet_provider.dart';
 
 import 'package:window_manager/window_manager.dart';
 
@@ -115,6 +116,7 @@ class IoTDevKitApp extends StatelessWidget {
         ChangeNotifierProvider<ThemeManager>(create: (_) => ThemeManager(initialTheme: initialTheme)),
         ChangeNotifierProvider<LanguageProvider>(create: (_) => LanguageProvider()),
         ChangeNotifierProvider<StatusRegistry>(create: (_) => StatusRegistry()),
+        ChangeNotifierProvider<TimesheetProvider>(create: (_) => TimesheetProvider()), // Added TimesheetProvider
         ChangeNotifierProvider<MqttController>(create: (_) => MqttController()),
         ChangeNotifierProxyProvider<MqttController, StatisticsCollector>(
           create: (_) => StatisticsCollector(), 

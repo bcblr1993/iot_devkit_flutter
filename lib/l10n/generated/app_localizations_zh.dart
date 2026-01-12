@@ -351,7 +351,58 @@ class AppLocalizationsZh extends AppLocalizations {
   String get importWarning => '配置文件校验通过。\n\n导入将覆盖当前所有配置，是否确认？';
 
   @override
+  String get save => '保存';
+
+  @override
   String get cancel => '取消';
+
+  @override
+  String get toolTimesheet => '工时管理';
+
+  @override
+  String get tsDailyLog => '每日记录';
+
+  @override
+  String get tsWeeklyReport => '周报导出';
+
+  @override
+  String get tsTaskContent => '工作内容';
+
+  @override
+  String get tsCategory => '分类';
+
+  @override
+  String get tsDuration => '时长';
+
+  @override
+  String get tsStartTime => '开始时间';
+
+  @override
+  String get tsEndTime => '结束时间';
+
+  @override
+  String get tsCopyReport => '复制周报';
+
+  @override
+  String get tsNoTasks => '今日暂无记录';
+
+  @override
+  String get tsCatDev => '研发';
+
+  @override
+  String get tsCatMeeting => '会议';
+
+  @override
+  String get tsCatReview => '评审';
+
+  @override
+  String get tsCatOther => '其他';
+
+  @override
+  String get tsDeleteConfirm => '确定删除这条记录吗？';
+
+  @override
+  String get tsExportHint => '周报已复制到剪贴板！';
 
   @override
   String get confirm => '确定';

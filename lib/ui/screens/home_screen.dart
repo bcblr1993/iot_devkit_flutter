@@ -13,6 +13,7 @@ import '../widgets/log_console.dart';
 import '../tools/timestamp_tool.dart';
 import '../tools/json_formatter_tool.dart';
 import '../../services/log_storage_service.dart';
+import 'timesheet_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -107,6 +108,10 @@ class _HomeScreenState extends State<HomeScreen> {
               NavigationRailDestination(
                 icon: const Icon(Icons.code),
                 label: Text(l10n.navJson),
+              ),
+              NavigationRailDestination(
+                icon: const Icon(Icons.calendar_month),
+                label: Text(l10n.toolTimesheet),
               ),
             ],
             trailing: Expanded(
@@ -460,6 +465,9 @@ class _HomeScreenState extends State<HomeScreen> {
         
         // Tab 2: JSON
         const JsonFormatterTool(),
+        
+        // Tab 3: Timesheet
+        const TimesheetScreen(),
       ],
     );
   }

@@ -782,11 +782,113 @@ abstract class AppLocalizations {
   /// **'Configuration file validation passed.\n\nImporting will overwrite all current settings. Do you want to continue?'**
   String get importWarning;
 
+  /// No description provided for @save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
   /// No description provided for @cancel.
   ///
   /// In en, this message translates to:
   /// **'Cancel'**
   String get cancel;
+
+  /// No description provided for @toolTimesheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Timesheet'**
+  String get toolTimesheet;
+
+  /// No description provided for @tsDailyLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily Log'**
+  String get tsDailyLog;
+
+  /// No description provided for @tsWeeklyReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly Report'**
+  String get tsWeeklyReport;
+
+  /// No description provided for @tsTaskContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Task Content'**
+  String get tsTaskContent;
+
+  /// No description provided for @tsCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get tsCategory;
+
+  /// No description provided for @tsDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get tsDuration;
+
+  /// No description provided for @tsStartTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Time'**
+  String get tsStartTime;
+
+  /// No description provided for @tsEndTime.
+  ///
+  /// In en, this message translates to:
+  /// **'End Time'**
+  String get tsEndTime;
+
+  /// No description provided for @tsCopyReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Report'**
+  String get tsCopyReport;
+
+  /// No description provided for @tsNoTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks recorded for this day.'**
+  String get tsNoTasks;
+
+  /// No description provided for @tsCatDev.
+  ///
+  /// In en, this message translates to:
+  /// **'Development'**
+  String get tsCatDev;
+
+  /// No description provided for @tsCatMeeting.
+  ///
+  /// In en, this message translates to:
+  /// **'Meeting'**
+  String get tsCatMeeting;
+
+  /// No description provided for @tsCatReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get tsCatReview;
+
+  /// No description provided for @tsCatOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get tsCatOther;
+
+  /// No description provided for @tsDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this log entry?'**
+  String get tsDeleteConfirm;
+
+  /// No description provided for @tsExportHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly report copied to clipboard!'**
+  String get tsExportHint;
 
   /// No description provided for @confirm.
   ///

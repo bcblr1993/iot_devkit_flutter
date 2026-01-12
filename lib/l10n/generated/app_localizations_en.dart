@@ -352,7 +352,58 @@ class AppLocalizationsEn extends AppLocalizations {
       'Configuration file validation passed.\n\nImporting will overwrite all current settings. Do you want to continue?';
 
   @override
+  String get save => 'Save';
+
+  @override
   String get cancel => 'Cancel';
+
+  @override
+  String get toolTimesheet => 'Timesheet';
+
+  @override
+  String get tsDailyLog => 'Daily Log';
+
+  @override
+  String get tsWeeklyReport => 'Weekly Report';
+
+  @override
+  String get tsTaskContent => 'Task Content';
+
+  @override
+  String get tsCategory => 'Category';
+
+  @override
+  String get tsDuration => 'Duration';
+
+  @override
+  String get tsStartTime => 'Start Time';
+
+  @override
+  String get tsEndTime => 'End Time';
+
+  @override
+  String get tsCopyReport => 'Copy Report';
+
+  @override
+  String get tsNoTasks => 'No tasks recorded for this day.';
+
+  @override
+  String get tsCatDev => 'Development';
+
+  @override
+  String get tsCatMeeting => 'Meeting';
+
+  @override
+  String get tsCatReview => 'Review';
+
+  @override
+  String get tsCatOther => 'Other';
+
+  @override
+  String get tsDeleteConfirm => 'Delete this log entry?';
+
+  @override
+  String get tsExportHint => 'Weekly report copied to clipboard!';
 
   @override
   String get confirm => 'Confirm';
