@@ -13,8 +13,34 @@ class TimesheetProvider extends ChangeNotifier {
   List<WorkLogEntry> get currentLogs => _currentLogs;
   bool get isLoading => _isLoading;
 
+  import 'package:shared_preferences/shared_preferences.dart';
+
+  bool _isEnabled = false;
+  bool get isEnabled => _isEnabled;
+
   TimesheetProvider() {
-    _loadLogs();
+    _loadState();
+  }
+
+  Future<void> _loadState() async {
+    final prefs = await SharedPreferences.getInstance();
+    _isEnabled = prefs.getBool('ts_enabled') ?? false;
+    if (_isEnabled) {
+      _loadLogs();
+    } else {
+      notifyListeners();
+    }
+  }
+
+  Future<void> toggleEnabled(bool value) async {
+    _isEnabled = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('ts_enabled', value);
+    if (_isEnabled) {
+      _loadLogs();
+    } else {
+      notifyListeners();
+    }
   }
 
   void selectDate(DateTime date) {

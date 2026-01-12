@@ -321,11 +321,30 @@ class _LogEditorDialogState extends State<_LogEditorDialog> {
     );
   }
   
-  Widget _buildTimePicker(String label, TimeOfDay time, Function(TimeOfDay) onChanged) {
     return InkWell(
       onTap: () async {
-        final picked = await showTimePicker(context: context, initialTime: time);
-        if (picked != null) onChanged(picked);
+        final picked = await showTimePicker(
+          context: context, 
+          initialTime: time,
+          helpText: 'Select Time (rounded to 30 min)',
+        );
+        if (picked != null) {
+          // Snap to nearest 30
+          int minute = picked.minute;
+          int hour = picked.hour;
+          
+          if (minute < 15) {
+            minute = 0;
+          } else if (minute < 45) {
+            minute = 30;
+          } else {
+            minute = 0;
+            hour += 1;
+            if (hour > 23) hour = 0; 
+          }
+          
+          onChanged(TimeOfDay(hour: hour, minute: minute));
+        }
       },
       child: InputDecorator(
         decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),

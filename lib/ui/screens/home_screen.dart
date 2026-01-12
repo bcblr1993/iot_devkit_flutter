@@ -82,6 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final tsProvider = Provider.of<TimesheetProvider>(context);
     
     return Scaffold(
       body: Row(
@@ -109,10 +110,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: const Icon(Icons.code),
                 label: Text(l10n.navJson),
               ),
-              NavigationRailDestination(
-                icon: const Icon(Icons.calendar_month),
-                label: Text(l10n.toolTimesheet),
+                label: Text(l10n.navJson),
               ),
+              if (tsProvider.isEnabled)
+                NavigationRailDestination(
+                  icon: const Icon(Icons.calendar_month),
+                  label: Text(l10n.toolTimesheet),
+                ),
             ],
             trailing: Expanded(
               child: Align(
@@ -144,6 +148,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               case 'about':
                                 AboutDialogHelper.showAboutDialog(context);
                                 break;
+                              case 'toggle_timesheet':
+                                tsProvider.toggleEnabled(!tsProvider.isEnabled);
+                                break;
                             }
                           },
                           itemBuilder: (BuildContext context) {
@@ -167,6 +174,29 @@ class _HomeScreenState extends State<HomeScreen> {
                                     Icon(Icons.language, size: 20, color: Theme.of(context).colorScheme.onSurface),
                                     const SizedBox(width: 12),
                                     Text(l10n.selectLanguage, style: const TextStyle(fontSize: 14)),
+                                  ],
+                                ),
+                              ),
+                                    Text(l10n.selectLanguage, style: const TextStyle(fontSize: 14)),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuDivider(),
+                              // Timesheet Toggle
+                              PopupMenuItem(
+                                value: 'toggle_timesheet',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      tsProvider.isEnabled ? Icons.check_box : Icons.check_box_outline_blank, 
+                                      size: 20, 
+                                      color: Theme.of(context).colorScheme.primary
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      tsProvider.isEnabled ? 'Disable Timesheet' : 'Enable Timesheet', 
+                                      style: const TextStyle(fontSize: 14)
+                                    ),
                                   ],
                                 ),
                               ),
@@ -467,7 +497,8 @@ class _HomeScreenState extends State<HomeScreen> {
         const JsonFormatterTool(),
         
         // Tab 3: Timesheet
-        const TimesheetScreen(),
+        if (tsProvider.isEnabled)
+          const TimesheetScreen(),
       ],
     );
   }
