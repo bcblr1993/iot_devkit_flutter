@@ -1,214 +1,186 @@
 import 'package:flutter/material.dart';
+
 import '../l10n/generated/app_localizations.dart';
-import 'package:iot_devkit/utils/platform_ui_helper.dart';
 import 'version_helper.dart';
 
-/// Utility class for displaying the About dialog across all platforms.
 class AboutDialogHelper {
-  /// Shows the About dialog with app info, author, and version details.
+  static const String _releaseDate = '2026-04-30';
+
   static Future<void> showAboutDialog(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
     final version = await VersionHelper.getAppVersion();
 
     if (!context.mounted) return;
 
-    final theme = Theme.of(context);
-    final primaryColor = theme.colorScheme.primary;
-    final isDark = theme.brightness == Brightness.dark;
-
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      barrierColor: Colors.black.withValues(alpha: 0.34),
+      builder: (dialogContext) {
+        final theme = Theme.of(dialogContext);
+        final colors = theme.colorScheme;
+        final isZh = Localizations.localeOf(dialogContext).languageCode == 'zh';
+
         return Dialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 420),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDark
-                    ? [
-                        theme.colorScheme.surface,
-                        theme.colorScheme.surface.withValues(alpha: 0.95),
-                      ]
-                    : [
-                        Colors.white,
-                        primaryColor.withValues(alpha: 0.03),
-                      ],
-              ),
-              boxShadow: PlatformUIHelper.optimizeShadows([
-                BoxShadow(
-                  color: primaryColor.withValues(alpha: 0.1),
-                  blurRadius: 20,
-                  spreadRadius: 2,
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 460),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: colors.surfaceContainerLowest,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: colors.outlineVariant.withValues(alpha: 0.5),
                 ),
-              ]),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(32.0),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.18),
+                    blurRadius: 28,
+                    offset: const Offset(0, 16),
+                  ),
+                ],
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // App Icon with decorative background
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          primaryColor.withValues(alpha: 0.1),
-                          primaryColor.withValues(alpha: 0.05),
-                        ],
-                      ),
-                      boxShadow: PlatformUIHelper.optimizeShadows([
-                        BoxShadow(
-                          color: primaryColor.withValues(alpha: 0.2),
-                          blurRadius: 16,
-                          spreadRadius: 2,
-                        ),
-                      ]),
-                    ),
-                    child: Image.asset(
-                      'assets/icon/original_icon.png',
-                      width: 80,
-                      height: 80,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // App Title
-                  Text(
-                    'IoT DevKit',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onSurface,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Version
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: primaryColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'v$version',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: primaryColor,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Release Date
-                  Text(
-                    '${l10n.releaseDate}: 2025-12-23',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-                  Divider(
-                      color:
-                          theme.colorScheme.onSurface.withValues(alpha: 0.1)),
-                  const SizedBox(height: 24),
-
-                  // Author
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        Icons.person_rounded,
-                        size: 18,
-                        color:
-                            theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${l10n.author}: ',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.7),
+                      Container(
+                        width: 58,
+                        height: 58,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: colors.primaryContainer.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(10),
                         ),
+                        child: Image.asset('assets/icon/original_icon.png'),
                       ),
-                      Text(
-                        l10n.authorName,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.onSurface,
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'IoT DevKit',
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                color: colors.onSurface,
+                                letterSpacing: 0,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              l10n.aboutDescription,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: colors.onSurfaceVariant,
+                                height: 1.35,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 18),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final compact = constraints.maxWidth < 380;
+                      final versionTile = _AboutInfoTile(
+                        icon: Icons.new_releases_outlined,
+                        label: isZh ? '版本' : 'Version',
+                        value: 'v$version',
+                      );
+                      final dateTile = _AboutInfoTile(
+                        icon: Icons.event_outlined,
+                        label: l10n.releaseDate,
+                        value: _releaseDate,
+                      );
 
-                  // Description
-                  Text(
-                    l10n.aboutDescription,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      height: 1.6,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                      if (compact) {
+                        return Column(
+                          children: [
+                            versionTile,
+                            const SizedBox(height: 8),
+                            dateTile,
+                          ],
+                        );
+                      }
+
+                      return Row(
+                        children: [
+                          Expanded(child: versionTile),
+                          const SizedBox(width: 10),
+                          Expanded(child: dateTile),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 14),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: colors.surfaceContainerLow.withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: colors.outlineVariant.withValues(alpha: 0.42),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.person_outline,
+                          size: 18,
+                          color: colors.primary,
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          '${l10n.author}:',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colors.onSurfaceVariant,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            l10n.authorName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: colors.onSurface,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-
-                  const SizedBox(height: 24),
-                  Divider(
-                      color:
-                          theme.colorScheme.onSurface.withValues(alpha: 0.1)),
-                  const SizedBox(height: 16),
-
-                  // Footer
+                  const SizedBox(height: 14),
                   Text(
                     l10n.aboutFooter,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 24),
-
-                  // Close Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 2,
-                      ),
-                      child: Text(
-                        l10n.close,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
+                  const SizedBox(height: 18),
+                  FilledButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(44),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
+                    child: Text(l10n.close),
                   ),
                 ],
               ),
@@ -216,6 +188,68 @@ class AboutDialogHelper {
           ),
         );
       },
+    );
+  }
+}
+
+class _AboutInfoTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _AboutInfoTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return Container(
+      constraints: const BoxConstraints(minHeight: 70),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colors.primaryContainer.withValues(alpha: 0.28),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: colors.primary.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: colors.primary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colors.primary,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

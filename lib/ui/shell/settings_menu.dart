@@ -155,40 +155,20 @@ class SettingsMenu extends StatelessWidget {
   }
 
   void _showLanguageDialog(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    AppDialogHelper.show(
+    showDialog<void>(
       context: context,
-      title: l10n.selectLanguage,
-      icon: Icons.language_outlined,
-      content: Consumer<LanguageProvider>(
+      barrierColor: Colors.black.withValues(alpha: 0.34),
+      builder: (dialogContext) => Consumer<LanguageProvider>(
         builder: (context, langProvider, child) {
-          final options = [
-            {'code': 'en', 'label': 'English'},
-            {'code': 'zh', 'label': '简体中文'},
-          ];
-
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: options.map((opt) {
-              final code = opt['code']!;
-              return _DialogOption(
-                label: opt['label']!,
-                isSelected: langProvider.currentLocale.languageCode == code,
-                onTap: () {
-                  langProvider.setLocale(Locale(code));
-                  Navigator.pop(context);
-                },
-              );
-            }).toList(),
+          return _LanguagePickerDialog(
+            selectedCode: langProvider.currentLocale.languageCode,
+            onSelected: (code) {
+              langProvider.setLocale(Locale(code));
+              Navigator.pop(dialogContext);
+            },
           );
         },
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(MaterialLocalizations.of(context).closeButtonLabel),
-        ),
-      ],
     );
   }
 
@@ -492,77 +472,251 @@ class _ThemeOptionCard extends StatelessWidget {
   }
 }
 
-class _DialogOption extends StatelessWidget {
-  final String label;
-  final bool isSelected;
+class _LanguagePickerDialog extends StatelessWidget {
+  final String selectedCode;
+  final ValueChanged<String> onSelected;
+
+  const _LanguagePickerDialog({
+    required this.selectedCode,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final isZh = Localizations.localeOf(context).languageCode == 'zh';
+    final languages = [
+      _LanguageOptionData(
+        code: 'zh',
+        badge: '中',
+        title: '简体中文',
+        subtitle: isZh ? '当前界面语言' : 'Chinese Simplified',
+      ),
+      _LanguageOptionData(
+        code: 'en',
+        badge: 'EN',
+        title: 'English',
+        subtitle: isZh ? '英文界面' : 'Interface language',
+      ),
+    ];
+
+    return Dialog(
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: colors.surfaceContainerLowest,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: colors.outlineVariant.withValues(alpha: 0.5),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 28,
+                offset: const Offset(0, 16),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: colors.primaryContainer.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(Icons.language, color: colors.primary),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      l10n.selectLanguage,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: colors.onSurface,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: MaterialLocalizations.of(context).closeButtonLabel,
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final compact = constraints.maxWidth < 440;
+                  if (compact) {
+                    return Column(
+                      children: [
+                        for (final language in languages) ...[
+                          _LanguageOptionCard(
+                            data: language,
+                            selected: selectedCode == language.code,
+                            onTap: () => onSelected(language.code),
+                          ),
+                          if (language != languages.last)
+                            const SizedBox(height: 10),
+                        ],
+                      ],
+                    );
+                  }
+
+                  return Row(
+                    children: [
+                      for (final language in languages) ...[
+                        Expanded(
+                          child: _LanguageOptionCard(
+                            data: language,
+                            selected: selectedCode == language.code,
+                            onTap: () => onSelected(language.code),
+                          ),
+                        ),
+                        if (language != languages.last)
+                          const SizedBox(width: 10),
+                      ],
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LanguageOptionData {
+  final String code;
+  final String badge;
+  final String title;
+  final String subtitle;
+
+  const _LanguageOptionData({
+    required this.code,
+    required this.badge,
+    required this.title,
+    required this.subtitle,
+  });
+}
+
+class _LanguageOptionCard extends StatelessWidget {
+  final _LanguageOptionData data;
+  final bool selected;
   final VoidCallback onTap;
 
-  const _DialogOption({
-    required this.label,
-    required this.isSelected,
+  const _LanguageOptionCard({
+    required this.data,
+    required this.selected,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = Theme.of(context).colorScheme.primary;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final primary = colors.primary;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(8),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? primaryColor.withValues(alpha: 0.08)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: isSelected
-                    ? primaryColor.withValues(alpha: 0.3)
-                    : Colors.transparent,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          constraints: const BoxConstraints(minHeight: 104),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: selected
+                ? colors.primaryContainer.withValues(alpha: 0.46)
+                : colors.surfaceContainerLow.withValues(alpha: 0.62),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: selected ? primary : colors.outlineVariant,
+              width: selected ? 1.4 : 1,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    height: 32,
+                    constraints: const BoxConstraints(minWidth: 40),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? primary.withValues(alpha: 0.14)
+                          : colors.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      data.badge,
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: selected ? primary : colors.onSurfaceVariant,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 160),
+                    child: selected
+                        ? Icon(
+                            Icons.check_circle,
+                            key: const ValueKey('selected-language'),
+                            color: primary,
+                            size: 20,
+                          )
+                        : Icon(
+                            Icons.radio_button_unchecked,
+                            key: const ValueKey('unselected-language'),
+                            color: colors.outline,
+                            size: 20,
+                          ),
+                  ),
+                ],
               ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isSelected ? primaryColor : Colors.transparent,
-                    border: Border.all(
-                      color: isSelected
-                          ? primaryColor
-                          : Theme.of(context).disabledColor,
-                      width: 2,
-                    ),
-                  ),
-                  child: isSelected
-                      ? const Center(
-                          child:
-                              Icon(Icons.check, size: 12, color: Colors.white),
-                        )
-                      : null,
+              const SizedBox(height: 14),
+              Text(
+                data.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: selected ? primary : colors.onSurface,
+                  fontWeight: FontWeight.w900,
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.normal,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                data.subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
