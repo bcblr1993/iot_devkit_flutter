@@ -14,7 +14,7 @@ class BasicSimulationContext extends SimulationContext {
   final String mode = 'basic';
   @override
   final int qos;
-  
+
   final int intervalSeconds;
   final String format;
   final int dataPointCount;
@@ -37,7 +37,7 @@ class AdvancedSimulationContext extends SimulationContext {
   final String mode = 'advanced';
   @override
   final int qos;
-  
+
   final GroupConfig group;
 
   AdvancedSimulationContext({

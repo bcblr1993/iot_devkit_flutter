@@ -13,7 +13,7 @@ class AppIcons {
   final IconData lock;
   final IconData unlock;
   final IconData download; // Export
-  final IconData upload;   // Import
+  final IconData upload; // Import
 
   const AppIcons({
     required this.play,
@@ -77,7 +77,7 @@ class AppIcons {
     download: Icons.download_sharp,
     upload: Icons.upload_sharp,
   );
-  
+
   // Outlined/Tech Icons (For Future/Cyber themes)
   static const tech = AppIcons(
     play: Icons.play_circle_outline,
@@ -118,6 +118,7 @@ class AppThemeEffect extends ThemeExtension<AppThemeEffect> {
     Curve? animationCurve,
     double? layoutDensity,
     double? borderRadius,
+    bool? useGlassEffect,
     AppIcons? icons,
     BoxShadow? innerShadow,
   }) {
@@ -147,7 +148,7 @@ class AppThemeEffect extends ThemeExtension<AppThemeEffect> {
       innerShadow: BoxShadow.lerp(innerShadow, other.innerShadow, t),
     );
   }
-  
+
   // Helper to easily lerp doubles without importing dart:ui everywhere
   double lerpDouble(double a, double b, double t) {
     return a + (b - a) * t;

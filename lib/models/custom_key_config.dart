@@ -1,6 +1,7 @@
 import 'package:uuid/uuid.dart';
 
 enum CustomKeyType { integer, float, string, boolean }
+
 enum CustomKeyMode { random, static, increment, toggle }
 
 class CustomKeyConfig {
@@ -8,11 +9,11 @@ class CustomKeyConfig {
   String name;
   CustomKeyType type;
   CustomKeyMode mode;
-  
+
   // Random Mode
   double? min;
   double? max;
-  
+
   // Static Mode
   String? staticValue;
 
@@ -61,8 +62,10 @@ class CustomKeyConfig {
     return CustomKeyConfig(
       id: json['id'],
       name: json['name'] ?? 'key_custom',
-      type: CustomKeyType.values.firstWhere((e) => e.name == json['type'], orElse: () => CustomKeyType.integer),
-      mode: CustomKeyMode.values.firstWhere((e) => e.name == json['mode'], orElse: () => CustomKeyMode.random),
+      type: CustomKeyType.values.firstWhere((e) => e.name == json['type'],
+          orElse: () => CustomKeyType.integer),
+      mode: CustomKeyMode.values.firstWhere((e) => e.name == json['mode'],
+          orElse: () => CustomKeyMode.random),
       min: json['min']?.toDouble(),
       max: json['max']?.toDouble(),
       staticValue: json['static_value'],

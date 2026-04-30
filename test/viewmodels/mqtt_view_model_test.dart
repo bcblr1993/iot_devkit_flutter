@@ -11,7 +11,7 @@ void main() {
       vm = MqttViewModel();
       await vm.loadConfig(); // Wait for initialization logic to complete
     });
-    
+
     tearDown(() {
       vm.dispose();
     });
@@ -27,13 +27,13 @@ void main() {
       vm.setEnableSsl(true);
       expect(vm.enableSsl, true);
     });
-    
+
     test('generatePreviewData returns data for basic mode', () {
       final data = vm.generatePreviewData(isBasic: true);
       expect(data, isNotNull);
       expect(data!.containsKey('key_1'), true);
     });
-    
+
     test('getCompleteConfig returns valid map', () {
       vm.hostController.text = 'test.host';
       final config = vm.getCompleteConfig();

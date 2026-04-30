@@ -80,12 +80,13 @@ class TimesheetConstants {
         ),
         TaskDefinition(
           code: 'SPXMJ2025123100013',
-          name: '知识体系运营与产权管理', // Note: ID same as Project Planning in screenshot row 1? Keeping unique based on name context.
+          name:
+              '知识体系运营与产权管理', // Note: ID same as Project Planning in screenshot row 1? Keeping unique based on name context.
           goal: '实现技术知识有效沉淀、复用与传承。',
           scope: '知识分享活动；知识产权申请（专利/软著）；产权风险排查；知识库搭建（内容更新/搜索优化）。',
         ),
         // Added manually based on "Row 1" in Management Image 3 which had ID 00013
-         TaskDefinition(
+        TaskDefinition(
           code: 'SPXMJ2025123100013', // Duplicate ID warning
           name: '项目统筹规划与流程管理',
           goal: '非单一项目统筹管控，多项目资源统筹。',

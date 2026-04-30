@@ -5,7 +5,8 @@ import 'package:iot_devkit/models/custom_key_config.dart';
 void main() {
   group('GroupConfig Logic', () {
     test('should serialize and deserialize correctly', () {
-      final customKey = CustomKeyConfig(name: 'temp', mode: CustomKeyMode.random);
+      final customKey =
+          CustomKeyConfig(name: 'temp', mode: CustomKeyMode.random);
       final group = GroupConfig(
         name: 'Test Group',
         startDeviceNumber: 1,

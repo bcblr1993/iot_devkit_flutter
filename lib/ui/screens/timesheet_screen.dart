@@ -1,11 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
-import '../../l10n/generated/app_localizations.dart';
-import '../../viewmodels/timesheet_provider.dart';
-import '../../models/work_log_entry.dart';
 import 'package:intl/intl.dart';
-import '../../config/timesheet_constants.dart';
+import 'package:provider/provider.dart';
+
+import '../../l10n/generated/app_localizations.dart';
+import '../../models/work_log_entry.dart';
+import '../../viewmodels/timesheet_provider.dart';
+import '../components/app_empty_state.dart';
+import '../components/app_input_decoration.dart';
 
 class TimesheetScreen extends StatefulWidget {
   const TimesheetScreen({super.key});
@@ -15,185 +19,413 @@ class TimesheetScreen extends StatefulWidget {
 }
 
 class _TimesheetScreenState extends State<TimesheetScreen> {
+  final TextEditingController _contentController = TextEditingController();
+  final TextEditingController _hoursController =
+      TextEditingController(text: '1');
+
+  WorkLogEntry? _editingLog;
+  Timer? _feedbackTimer;
+  String? _feedbackMessage;
+  bool _feedbackIsError = false;
+
+  @override
+  void dispose() {
+    _feedbackTimer?.cancel();
+    _contentController.dispose();
+    _hoursController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final provider = Provider.of<TimesheetProvider>(context);
+    final provider = context.watch<TimesheetProvider>();
     final theme = Theme.of(context);
-
-    // Format Date: "Mon, Jan 12"
-    final dateStr = DateFormat.MMMMEEEEd().format(provider.selectedDate);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Row(
-        children: [
-          // Sidebar: Calendar / Date Picker (Simplified to a vertical list of days for now or just a date picker button in header)
-          // For now, let's keep it simple: Single column layout with Header.
-          Expanded(
-            child: Column(
-              children: [
-                // Header
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    border: Border(bottom: BorderSide(color: theme.colorScheme.outlineVariant)),
-                  ),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.calendar_month),
-                        onPressed: () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            initialDate: provider.selectedDate,
-                            firstDate: DateTime(2020),
-                            lastDate: DateTime(2030),
-                          );
-                          if (picked != null) {
-                            provider.selectDate(picked);
-                          }
-                        },
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 980),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildHeader(context, provider),
+                  const SizedBox(height: 12),
+                  _buildQuickEditor(context, provider),
+                  const SizedBox(height: 12),
+                  if (provider.isLoading)
+                    Padding(
+                      padding: const EdgeInsets.all(48),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: theme.colorScheme.primary,
+                        ),
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        dateStr,
-                        style: theme.textTheme.headlineSmall,
-                      ),
-                      const Spacer(),
-                      FilledButton.icon(
-                        icon: const Icon(Icons.copy),
-                        label: Text(l10n.tsWeeklyReport),
-                        onPressed: () async {
-                           final report = await provider.generateWeeklyReport(provider.selectedDate);
-                           await Clipboard.setData(ClipboardData(text: report));
-                           if (mounted) {
-                             ScaffoldMessenger.of(context).showSnackBar(
-                               SnackBar(content: Text(l10n.tsExportHint)),
-                             );
-                           }
-                        },
-                      ),
-                      const SizedBox(width: 8),
-                      FloatingActionButton.small(
-                        heroTag: 'add_task',
-                        onPressed: () => _showEditDialog(context, null),
-                        child: const Icon(Icons.add),
-                      ),
-                    ],
-                  ),
-                ),
-                
-                // Content
-                Expanded(
-                  child: provider.isLoading 
-                    ? const Center(child: CircularProgressIndicator())
-                    : provider.currentLogs.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.bedtime_outlined, size: 64, color: theme.colorScheme.outline),
-                                const SizedBox(height: 16),
-                                Text(l10n.tsNoTasks, style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
-                              ],
-                            ),
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.all(16),
-                            itemCount: provider.currentLogs.length,
-                            itemBuilder: (context, index) {
-                              final log = provider.currentLogs[index];
-                              return _buildLogCard(context, log);
-                            },
-                          ),
-                ),
-              ],
+                    )
+                  else
+                    _buildDailyLogs(context, provider),
+                ],
+              ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, TimesheetProvider provider) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+    final selectedDate = provider.selectedDate;
+    final isToday = _isSameDay(selectedDate, DateTime.now());
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: _panelDecoration(context),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 720;
+          final title = Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: colors.primaryContainer.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.edit_note, color: colors.primary),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.toolTimesheet,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _dateLabel(context, selectedDate),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colors.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+
+          final actions = Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            alignment: compact ? WrapAlignment.start : WrapAlignment.end,
+            children: [
+              _TotalHoursPill(hours: provider.totalHours),
+              IconButton.outlined(
+                tooltip: _t(context, zh: '前一天', en: 'Previous day'),
+                icon: const Icon(Icons.chevron_left),
+                onPressed: () => _selectDate(
+                  context,
+                  provider.selectedDate.subtract(const Duration(days: 1)),
+                ),
+              ),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.calendar_month, size: 18),
+                label: Text(isToday
+                    ? _t(context, zh: '今天', en: 'Today')
+                    : DateFormat('MM-dd').format(selectedDate)),
+                onPressed: () => _pickDate(context, provider),
+              ),
+              IconButton.outlined(
+                tooltip: _t(context, zh: '后一天', en: 'Next day'),
+                icon: const Icon(Icons.chevron_right),
+                onPressed: () => _selectDate(
+                  context,
+                  provider.selectedDate.add(const Duration(days: 1)),
+                ),
+              ),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.copy_all, size: 18),
+                label: Text(l10n.tsCopyReport),
+                onPressed: () => _copyWeeklyReport(context, provider),
+              ),
+            ],
+          );
+
+          if (compact) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                title,
+                const SizedBox(height: 12),
+                actions,
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              Expanded(child: title),
+              const SizedBox(width: 16),
+              Flexible(child: actions),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildQuickEditor(BuildContext context, TimesheetProvider provider) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final isEditing = _editingLog != null;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: _panelDecoration(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.notes, size: 18, color: theme.colorScheme.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  isEditing
+                      ? _t(context, zh: '编辑这条记录', en: 'Edit entry')
+                      : _t(context, zh: '今天做了什么', en: 'What did you do today'),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              if (isEditing)
+                TextButton.icon(
+                  icon: const Icon(Icons.close, size: 16),
+                  label: Text(l10n.cancel),
+                  onPressed: _resetEditor,
+                ),
+            ],
+          ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+            child: _feedbackMessage == null
+                ? const SizedBox.shrink()
+                : Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: _InlineFeedback(
+                      message: _feedbackMessage!,
+                      isError: _feedbackIsError,
+                    ),
+                  ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _contentController,
+            minLines: 4,
+            maxLines: 8,
+            textInputAction: TextInputAction.newline,
+            decoration: AppInputDecoration.filled(
+              context,
+              label: l10n.tsTaskContent,
+            ).copyWith(
+              hintText: _t(
+                context,
+                zh: '例如：修复设备数据上送停止卡住问题；优化日志控制台布局',
+                en: 'Example: fixed upload stop issue; refined log console',
+              ),
+              alignLabelWithHint: true,
+            ),
+          ),
+          const SizedBox(height: 12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 560;
+              final hoursField = TextField(
+                controller: _hoursController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                ],
+                decoration: AppInputDecoration.filled(
+                  context,
+                  label: _t(context, zh: '几个小时', en: 'Hours'),
+                ),
+              );
+              final saveButton = FilledButton.icon(
+                icon: Icon(isEditing ? Icons.check : Icons.add),
+                label: Text(
+                    isEditing ? l10n.save : _t(context, zh: '记一笔', en: 'Add')),
+                onPressed: () => _saveEntry(context, provider),
+              );
+
+              if (compact) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    hoursField,
+                    const SizedBox(height: 10),
+                    SizedBox(height: 44, child: saveButton),
+                  ],
+                );
+              }
+
+              return Row(
+                children: [
+                  SizedBox(width: 180, child: hoursField),
+                  const Spacer(),
+                  SizedBox(width: 150, height: 44, child: saveButton),
+                ],
+              );
+            },
           ),
         ],
       ),
     );
   }
 
-  Widget _buildLogCard(BuildContext context, WorkLogEntry log) {
+  Widget _buildDailyLogs(BuildContext context, TimesheetProvider provider) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
-    final start = DateFormat.Hm().format(log.startTime);
-    final end = DateFormat.Hm().format(log.endTime);
-    final duration = log.durationHours.toStringAsFixed(1);
+    final logs = provider.currentLogs;
 
-    Color catColor = theme.colorScheme.primary;
-    String catLabel = log.category;
-    
-    // Map category to color/label
-    if (log.category == 'dev') { catColor = Colors.blue; catLabel = l10n.tsCatDev; }
-    else if (log.category == 'meeting') { catColor = Colors.orange; catLabel = l10n.tsCatMeeting; }
-    else if (log.category == 'review') { catColor = Colors.purple; catLabel = l10n.tsCatReview; }
-    else { catColor = Colors.grey; catLabel = l10n.tsCatOther; }
-
-    return Card(
-      elevation: 0,
-      color: theme.colorScheme.surfaceContainerLow,
-      margin: const EdgeInsets.only(bottom: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: theme.colorScheme.outlineVariant.withOpacity(0.5)),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () => _showEditDialog(context, log),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: _panelDecoration(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              // Time Pill
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: theme.colorScheme.outlineVariant),
-                ),
-                child: Column(
-                  children: [
-                    Text(start, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    Container(height: 12, width: 1, color: theme.colorScheme.outlineVariant, margin: const EdgeInsets.symmetric(vertical: 2)),
-                    Text(end, style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 12)),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              
-              // Content
+              Icon(Icons.today, size: 18, color: theme.colorScheme.primary),
+              const SizedBox(width: 8),
               Expanded(
+                child: Text(
+                  _t(context, zh: '当天记录', en: 'Daily entries'),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              Text(
+                _t(
+                  context,
+                  zh: '${logs.length} 条 / ${_formatHours(provider.totalHours)} 小时',
+                  en: '${logs.length} entries / ${_formatHours(provider.totalHours)} h',
+                ),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (logs.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 42),
+              child: AppEmptyState(
+                icon: Icons.note_add_outlined,
+                message: l10n.tsNoTasks,
+              ),
+            )
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: logs.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (context, index) {
+                return _buildLogItem(context, logs[index]);
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLogItem(BuildContext context, WorkLogEntry log) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return Material(
+      color: colors.surfaceContainerLow.withValues(alpha: 0.55),
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () => _startEdit(log),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: colors.outlineVariant.withValues(alpha: 0.42),
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 72,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: colors.primaryContainer.withValues(alpha: 0.42),
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                     Row(
-                       children: [
-                         Container(
-                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                           decoration: BoxDecoration(
-                             color: catColor.withOpacity(0.1),
-                             borderRadius: BorderRadius.circular(4),
-                           ),
-                           child: Text(catLabel, style: TextStyle(color: catColor, fontSize: 10, fontWeight: FontWeight.bold)),
-                         ),
-                         const SizedBox(width: 8),
-                         Text('${duration}h', style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 11)),
-                       ],
-                     ),
-                     const SizedBox(height: 4),
-                     Text(log.content, style: const TextStyle(fontSize: 14)),
+                    Text(
+                      _formatHours(log.durationHours),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: colors.primary,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    Text(
+                      _t(context, zh: '小时', en: 'hours'),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: colors.primary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ],
                 ),
               ),
-              
-              // Actions
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  log.content,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    height: 1.35,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
               IconButton(
-                icon: const Icon(Icons.delete_outline, size: 18),
+                tooltip: _t(context, zh: '编辑', en: 'Edit'),
+                icon: const Icon(Icons.edit_outlined, size: 18),
+                onPressed: () => _startEdit(log),
+              ),
+              IconButton(
+                tooltip: _t(context, zh: '删除', en: 'Delete'),
+                icon: Icon(Icons.delete_outline, size: 18, color: colors.error),
                 onPressed: () => _confirmDelete(context, log),
               ),
             ],
@@ -203,268 +435,440 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
     );
   }
 
-  void _confirmDelete(BuildContext context, WorkLogEntry log) {
-    // Show confirm dialog
-     final l10n = AppLocalizations.of(context)!;
-     showDialog(context: context, builder: (ctx) => AlertDialog(
-       title: Text(l10n.deleteConfirm),
-       content: Text(l10n.tsDeleteConfirm),
-       actions: [
-         TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
-         TextButton(onPressed: () {
-            Navigator.pop(ctx);
-            Provider.of<TimesheetProvider>(context, listen: false).deleteLog(log);
-         }, child: Text(l10n.deleteProfile, style: TextStyle(color: Theme.of(context).colorScheme.error))),
-       ],
-     ));
+  BoxDecoration _panelDecoration(BuildContext context) {
+    final theme = Theme.of(context);
+    return BoxDecoration(
+      color: theme.colorScheme.surfaceContainerLowest,
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(
+        color: theme.colorScheme.outlineVariant.withValues(alpha: 0.42),
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.035),
+          blurRadius: 12,
+          offset: const Offset(0, 2),
+        ),
+      ],
+    );
   }
 
-  void _showEditDialog(BuildContext context, WorkLogEntry? log) {
-    showDialog(
+  Future<void> _pickDate(
+    BuildContext context,
+    TimesheetProvider provider,
+  ) async {
+    final picked = await showDatePicker(
       context: context,
-      builder: (context) => _LogEditorDialog(log: log, selectedDate: Provider.of<TimesheetProvider>(context, listen: false).selectedDate),
+      initialDate: provider.selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2035),
+    );
+    if (!context.mounted || picked == null) return;
+    _selectDate(context, picked);
+  }
+
+  void _selectDate(BuildContext context, DateTime date) {
+    _resetEditor();
+    context.read<TimesheetProvider>().selectDate(date);
+  }
+
+  Future<void> _copyWeeklyReport(
+    BuildContext context,
+    TimesheetProvider provider,
+  ) async {
+    final l10n = AppLocalizations.of(context)!;
+    final report = await provider.generateWeeklyReport(provider.selectedDate);
+    await Clipboard.setData(ClipboardData(text: report));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(l10n.tsExportHint)));
+  }
+
+  Future<void> _saveEntry(
+    BuildContext context,
+    TimesheetProvider provider,
+  ) async {
+    final content = _contentController.text.trim();
+    final hours =
+        double.tryParse(_hoursController.text.trim().replaceAll(',', '.')) ?? 0;
+
+    if (content.isEmpty) {
+      _showMessage(
+        context,
+        _t(context, zh: '先写一下今天干了什么', en: 'Add a note first'),
+        isError: true,
+      );
+      return;
+    }
+
+    if (hours <= 0 || hours > 24) {
+      _showMessage(
+        context,
+        _t(
+          context,
+          zh: '小时数需要在 0 到 24 之间',
+          en: 'Hours must be between 0 and 24',
+        ),
+        isError: true,
+      );
+      return;
+    }
+
+    await provider.saveSimpleLog(
+      existing: _editingLog,
+      date: provider.selectedDate,
+      content: content,
+      hours: hours,
+    );
+    if (!context.mounted) return;
+    _resetEditor();
+    _showMessage(context, _t(context, zh: '已保存', en: 'Saved'));
+  }
+
+  void _startEdit(WorkLogEntry log) {
+    setState(() {
+      _editingLog = log;
+      _contentController.text = log.content;
+      _hoursController.text = _formatHours(log.durationHours);
+    });
+  }
+
+  void _resetEditor() {
+    setState(() {
+      _editingLog = null;
+      _contentController.clear();
+      _hoursController.text = '1';
+    });
+  }
+
+  Future<void> _confirmDelete(BuildContext context, WorkLogEntry log) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.36),
+      builder: (dialogContext) {
+        return _DeleteLogDialog(
+          log: log,
+          onCancel: () => Navigator.pop(dialogContext, false),
+          onConfirm: () => Navigator.pop(dialogContext, true),
+        );
+      },
+    );
+
+    if (!context.mounted || confirmed != true) return;
+    await context.read<TimesheetProvider>().deleteLog(log);
+    if (_editingLog?.id == log.id) {
+      _resetEditor();
+    }
+  }
+
+  void _showMessage(
+    BuildContext context,
+    String message, {
+    bool isError = false,
+  }) {
+    _feedbackTimer?.cancel();
+    if (!mounted) return;
+    setState(() {
+      _feedbackMessage = message;
+      _feedbackIsError = isError;
+    });
+    _feedbackTimer = Timer(const Duration(milliseconds: 2200), () {
+      if (!mounted) return;
+      setState(() => _feedbackMessage = null);
+    });
+  }
+
+  String _dateLabel(BuildContext context, DateTime date) {
+    final locale = Localizations.localeOf(context);
+    if (locale.languageCode == 'zh') {
+      final weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+      return '${date.year}年${date.month}月${date.day}日 ${weekdays[date.weekday - 1]}';
+    }
+    return DateFormat.yMMMMEEEEd(locale.toLanguageTag()).format(date);
+  }
+
+  String _formatHours(double hours) {
+    final text = hours.toStringAsFixed(2);
+    return text.replaceFirst(RegExp(r'\.?0+$'), '');
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  String _t(BuildContext context, {required String zh, required String en}) {
+    return Localizations.localeOf(context).languageCode == 'zh' ? zh : en;
+  }
+}
+
+class _TotalHoursPill extends StatelessWidget {
+  final double hours;
+
+  const _TotalHoursPill({required this.hours});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final isZh = Localizations.localeOf(context).languageCode == 'zh';
+    final text = hours.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0+$'), '');
+
+    return Container(
+      height: 40,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: colors.primaryContainer.withValues(alpha: 0.42),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: colors.primary.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.timer_outlined, size: 18, color: colors.primary),
+          const SizedBox(width: 8),
+          Text(
+            isZh ? '合计 $text 小时' : 'Total $text h',
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: colors.primary,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _LogEditorDialog extends StatefulWidget {
-  final WorkLogEntry? log;
-  final DateTime selectedDate;
+class _DeleteLogDialog extends StatelessWidget {
+  final WorkLogEntry log;
+  final VoidCallback onCancel;
+  final VoidCallback onConfirm;
 
-  const _LogEditorDialog({this.log, required this.selectedDate});
+  const _DeleteLogDialog({
+    required this.log,
+    required this.onCancel,
+    required this.onConfirm,
+  });
 
-  @override
-  State<_LogEditorDialog> createState() => _LogEditorDialogState();
-}
-
-class _LogEditorDialogState extends State<_LogEditorDialog> {
-  late TextEditingController _contentCtrl;
-  late TimeOfDay _startTime;
-  late TimeOfDay _endTime;
-  
-  // Enterprise Standard Fields
-  TaskCategoryDefinition? _selectedCategory;
-  TaskDefinition? _selectedTask;
-
-  @override
-  void initState() {
-    super.initState();
-    _contentCtrl = TextEditingController(text: widget.log?.content ?? '');
-    
-    if (widget.log != null) {
-      _startTime = TimeOfDay.fromDateTime(widget.log!.startTime);
-      _endTime = TimeOfDay.fromDateTime(widget.log!.endTime);
-      
-      // Attempt to restore selection from code
-      if (widget.log!.projectCode != null) {
-        for (var cat in TimesheetConstants.categories) {
-          for (var task in cat.tasks) {
-            if (task.code == widget.log!.projectCode) {
-              _selectedCategory = cat;
-              _selectedTask = task;
-              break;
-            }
-          }
-          if (_selectedTask != null) break;
-        }
-      }
-      
-      // Fallback if code lookup failed but category exists (Legacy support)
-      if (_selectedCategory == null && widget.log!.category.isNotEmpty) {
-         // Try to match category name loosely or just pick first default
-         // For now, leave null to force user to re-select compliant standard
-      }
-    } else {
-      // Default: Now -> Now+30m
-      final now = TimeOfDay.now();
-      _startTime = _roundTime(now);
-      _endTime = _addMinute(_startTime, 30);
-    }
-  }
-  
-  TimeOfDay _roundTime(TimeOfDay t) {
-    int m = t.minute;
-    if (m < 15) m = 0;
-    else if (m < 45) m = 30;
-    else { m = 0; t = _addHour(t);}
-    return TimeOfDay(hour: t.hour, minute: m);
-  }
-  
-  TimeOfDay _addHour(TimeOfDay time) {
-    int hour = time.hour + 1;
-    if (hour > 23) hour = 23;
-    return TimeOfDay(hour: hour, minute: time.minute);
-  }
-  
-  TimeOfDay _addMinute(TimeOfDay time, int min) {
-    int m = time.minute + min;
-    int h = time.hour;
-    while (m >= 60) {
-      m -= 60;
-      h++;
-    }
-    if (h > 23) h = 0;
-    return TimeOfDay(hour: h, minute: m);
-  }
-  
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    
-    return AlertDialog(
-      title: Text(widget.log == null ? 'New Work Log' : 'Edit Work Log'),
-      content: SizedBox(
-        width: 500, // Wider for scope text
-        child: SingleChildScrollView(
+    final colors = theme.colorScheme;
+    final isZh = Localizations.localeOf(context).languageCode == 'zh';
+    final error = colors.error;
+
+    return Dialog(
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
+        child: Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: colors.surfaceContainerLowest,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: colors.outlineVariant.withValues(alpha: 0.5),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 28,
+                offset: const Offset(0, 16),
+              ),
+            ],
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Category Selector
-              DropdownButtonFormField<TaskCategoryDefinition>(
-                value: _selectedCategory,
-                decoration: const InputDecoration(labelText: 'Task Category (任务类型)', border: OutlineInputBorder()),
-                items: TimesheetConstants.categories.map((cat) {
-                  return DropdownMenuItem(value: cat, child: Text(cat.name));
-                }).toList(),
-                onChanged: (v) {
-                  setState(() {
-                    _selectedCategory = v;
-                    _selectedTask = null; // Reset task when category changes
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-              
-              // 2. Task Selector
-              DropdownButtonFormField<TaskDefinition>(
-                value: _selectedTask,
-                decoration: const InputDecoration(labelText: 'Standard Task (标准任务)', border: OutlineInputBorder()),
-                items: _selectedCategory?.tasks.map((task) {
-                  return DropdownMenuItem(value: task, child: Text(task.name, overflow: TextOverflow.ellipsis));
-                }).toList() ?? [],
-                onChanged: (v) => setState(() => _selectedTask = v),
-                disabledHint: const Text('Select a category first'),
-              ),
-              
-              // 3. Scope Hint (Crucial for compliance)
-              if (_selectedTask != null) 
-                Container(
-                  margin: const EdgeInsets.only(top: 12),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: theme.colorScheme.primary.withOpacity(0.3)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.info_outline, size: 16, color: theme.colorScheme.primary),
-                          const SizedBox(width: 8),
-                          Text('Task Code: ${_selectedTask!.code}', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text('Goal: ${_selectedTask!.goal}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 4),
-                      Text('Scope: ${_selectedTask!.scope}', style: const TextStyle(fontSize: 12)),
-                    ],
-                  ),
-                ),
-                
-              const SizedBox(height: 16),
-              
-              // 4. Time
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: _buildTimePicker(l10n.tsStartTime, _startTime, (t) => setState(() => _startTime = t)),
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: error.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(Icons.delete_outline, color: error, size: 22),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   Expanded(
-                    child: _buildTimePicker(l10n.tsEndTime, _endTime, (t) => setState(() => _endTime = t)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isZh ? '删除这条记录？' : 'Delete this entry?',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            color: colors.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          isZh ? '删除后无法恢复。' : 'This cannot be undone.',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colors.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-              
               const SizedBox(height: 16),
-              
-              // 5. Specific Content
-              TextFormField(
-                controller: _contentCtrl,
-                decoration: InputDecoration(
-                  labelText: l10n.tsTaskContent,
-                  hintText: 'Specific work details...',
-                  border: const OutlineInputBorder(),
-                  filled: true,
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colors.surfaceContainerLow.withValues(alpha: 0.7),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: colors.outlineVariant.withValues(alpha: 0.42),
+                  ),
                 ),
-                maxLines: 3,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 58,
+                      padding: const EdgeInsets.symmetric(vertical: 7),
+                      decoration: BoxDecoration(
+                        color: colors.primaryContainer.withValues(alpha: 0.42),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            _formatDialogHours(log.durationHours),
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: colors.primary,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          Text(
+                            isZh ? '小时' : 'hours',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: colors.primary,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        log.content,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: onCancel,
+                    child: Text(isZh ? '取消' : 'Cancel'),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: error,
+                      foregroundColor: colors.onError,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                    icon: const Icon(Icons.delete_outline, size: 18),
+                    label: Text(isZh ? '删除' : 'Delete'),
+                    onPressed: onConfirm,
+                  ),
+                ],
               ),
             ],
           ),
         ),
       ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.cancel)),
-        FilledButton(onPressed: _selectedTask == null ? null : _save, child: Text(l10n.save)), // Validated
-      ],
-    );
-  }
-  
-  Widget _buildTimePicker(String label, TimeOfDay time, Function(TimeOfDay) onChanged) {
-    return InkWell(
-      onTap: () async {
-        final picked = await showTimePicker(
-          context: context, 
-          initialTime: time,
-          helpText: 'Select Time (rounded to 30 min)',
-        );
-        if (picked != null) {
-          int minute = picked.minute;
-          int hour = picked.hour;
-          
-          if (minute < 15) { minute = 0; } 
-          else if (minute < 45) { minute = 30; } 
-          else { minute = 0; hour += 1; if (hour > 23) hour = 0; }
-          
-          onChanged(TimeOfDay(hour: hour, minute: minute));
-        }
-      },
-      child: InputDecorator(
-        decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
-        child: Text(time.format(context), style: const TextStyle(fontSize: 14)),
-      ),
     );
   }
 
-  void _save() {
-    if (_selectedTask == null) return;
-    
-    final date = widget.selectedDate;
-    final startDt = DateTime(date.year, date.month, date.day, _startTime.hour, _startTime.minute);
-    final endDt = DateTime(date.year, date.month, date.day, _endTime.hour, _endTime.minute);
-    
-    final newLog = WorkLogEntry(
-      id: widget.log?.id,
-      startTime: startDt,
-      endTime: endDt,
-      content: _contentCtrl.text,
-      category: _selectedCategory?.name ?? 'Other', // Store category name
-      projectCode: _selectedTask?.code,
-      taskName: _selectedTask?.name,
-      taskScope: _selectedTask?.scope,
+  static String _formatDialogHours(double hours) {
+    final text = hours.toStringAsFixed(2);
+    return text.replaceFirst(RegExp(r'\.?0+$'), '');
+  }
+}
+
+class _InlineFeedback extends StatelessWidget {
+  final String message;
+  final bool isError;
+
+  const _InlineFeedback({
+    required this.message,
+    required this.isError,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final color = isError ? colors.error : colors.primary;
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 160),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        child: Container(
+          key: ValueKey('$message-$isError'),
+          constraints: const BoxConstraints(maxWidth: 420),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: color.withValues(alpha: 0.22)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isError ? Icons.error_outline : Icons.check_circle_outline,
+                size: 16,
+                color: color,
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  message,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
-    
-    if (widget.log == null) {
-      Provider.of<TimesheetProvider>(context, listen: false).addLog(newLog);
-    } else {
-       Provider.of<TimesheetProvider>(context, listen: false).updateLog(newLog);
-    }
-    
-    Navigator.pop(context);
   }
 }

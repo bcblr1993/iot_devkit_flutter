@@ -9,18 +9,19 @@ class AboutDialogHelper {
   static Future<void> showAboutDialog(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
     final version = await VersionHelper.getAppVersion();
-    
+
     if (!context.mounted) return;
-    
+
     final theme = Theme.of(context);
     final primaryColor = theme.colorScheme.primary;
     final isDark = theme.brightness == Brightness.dark;
-    
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           child: Container(
             constraints: const BoxConstraints(maxWidth: 420),
             decoration: BoxDecoration(
@@ -28,19 +29,19 @@ class AboutDialogHelper {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: isDark 
-                  ? [
-                      theme.colorScheme.surface,
-                      theme.colorScheme.surface.withOpacity(0.95),
-                    ]
-                  : [
-                      Colors.white,
-                      primaryColor.withOpacity(0.03),
-                    ],
+                colors: isDark
+                    ? [
+                        theme.colorScheme.surface,
+                        theme.colorScheme.surface.withValues(alpha: 0.95),
+                      ]
+                    : [
+                        Colors.white,
+                        primaryColor.withValues(alpha: 0.03),
+                      ],
               ),
               boxShadow: PlatformUIHelper.optimizeShadows([
                 BoxShadow(
-                  color: primaryColor.withOpacity(0.1),
+                  color: primaryColor.withValues(alpha: 0.1),
                   blurRadius: 20,
                   spreadRadius: 2,
                 ),
@@ -60,13 +61,13 @@ class AboutDialogHelper {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          primaryColor.withOpacity(0.1),
-                          primaryColor.withOpacity(0.05),
+                          primaryColor.withValues(alpha: 0.1),
+                          primaryColor.withValues(alpha: 0.05),
                         ],
                       ),
                       boxShadow: PlatformUIHelper.optimizeShadows([
                         BoxShadow(
-                          color: primaryColor.withOpacity(0.2),
+                          color: primaryColor.withValues(alpha: 0.2),
                           blurRadius: 16,
                           spreadRadius: 2,
                         ),
@@ -79,7 +80,7 @@ class AboutDialogHelper {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // App Title
                   Text(
                     'IoT DevKit',
@@ -91,12 +92,13 @@ class AboutDialogHelper {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  
+
                   // Version
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                     decoration: BoxDecoration(
-                      color: primaryColor.withOpacity(0.1),
+                      color: primaryColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -110,20 +112,22 @@ class AboutDialogHelper {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  
+
                   // Release Date
                   Text(
                     '${l10n.releaseDate}: 2025-12-23',
                     style: TextStyle(
                       fontSize: 13,
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  Divider(color: theme.colorScheme.onSurface.withOpacity(0.1)),
+                  Divider(
+                      color:
+                          theme.colorScheme.onSurface.withValues(alpha: 0.1)),
                   const SizedBox(height: 24),
-                  
+
                   // Author
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -131,7 +135,8 @@ class AboutDialogHelper {
                       Icon(
                         Icons.person_rounded,
                         size: 18,
-                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                       const SizedBox(width: 8),
                       Text(
@@ -139,7 +144,8 @@ class AboutDialogHelper {
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
-                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.7),
                         ),
                       ),
                       Text(
@@ -153,7 +159,7 @@ class AboutDialogHelper {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // Description
                   Text(
                     l10n.aboutDescription,
@@ -161,24 +167,26 @@ class AboutDialogHelper {
                     style: TextStyle(
                       fontSize: 14,
                       height: 1.6,
-                      color: theme.colorScheme.onSurface.withOpacity(0.8),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  Divider(color: theme.colorScheme.onSurface.withOpacity(0.1)),
+                  Divider(
+                      color:
+                          theme.colorScheme.onSurface.withValues(alpha: 0.1)),
                   const SizedBox(height: 16),
-                  
+
                   // Footer
                   Text(
                     l10n.aboutFooter,
                     style: TextStyle(
                       fontSize: 12,
-                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // Close Button
                   SizedBox(
                     width: double.infinity,

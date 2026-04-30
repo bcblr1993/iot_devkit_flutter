@@ -46,29 +46,32 @@ class ProfileService {
 
   /// Save or Update a profile
   /// If [id] is null, creates a new profile
-  Future<ProfileMetadata> saveProfile(String name, Map<String, dynamic> config, {String? id}) async {
+  Future<ProfileMetadata> saveProfile(String name, Map<String, dynamic> config,
+      {String? id}) async {
     final prefs = await SharedPreferences.getInstance();
     final profiles = await loadProfiles();
-    
+
     String profileId = id ?? const Uuid().v4();
     DateTime now = DateTime.now();
 
     // Update metadata list
     int index = profiles.indexWhere((p) => p.id == profileId);
-    final newMeta = ProfileMetadata(id: profileId, name: name, lastModified: now);
+    final newMeta =
+        ProfileMetadata(id: profileId, name: name, lastModified: now);
 
     if (index != -1) {
       profiles[index] = newMeta;
     } else {
       profiles.add(newMeta);
     }
-    
+
     // Save Data
     await prefs.setString('$_profileDataPrefix$profileId', jsonEncode(config));
-    
+
     // Save List
-    await prefs.setString(_profilesKey, jsonEncode(profiles.map((e) => e.toJson()).toList()));
-    
+    await prefs.setString(
+        _profilesKey, jsonEncode(profiles.map((e) => e.toJson()).toList()));
+
     return newMeta;
   }
 
@@ -76,12 +79,13 @@ class ProfileService {
   Future<void> deleteProfile(String id) async {
     final prefs = await SharedPreferences.getInstance();
     final profiles = await loadProfiles();
-    
+
     profiles.removeWhere((p) => p.id == id);
-    
-    await prefs.setString(_profilesKey, jsonEncode(profiles.map((e) => e.toJson()).toList()));
+
+    await prefs.setString(
+        _profilesKey, jsonEncode(profiles.map((e) => e.toJson()).toList()));
     await prefs.remove('$_profileDataPrefix$id');
-    
+
     // If deleted active profile, clear it
     if (prefs.getString(_activeProfileKey) == id) {
       await prefs.remove(_activeProfileKey);

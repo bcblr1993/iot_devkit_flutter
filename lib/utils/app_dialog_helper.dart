@@ -5,7 +5,7 @@ import 'platform_ui_helper.dart';
 /// 采用与关于对话框一致的现代设计风格
 class AppDialogHelper {
   /// 显示统一样式的对话框
-  /// 
+  ///
   /// [title] - 对话框标题
   /// [icon] - 标题图标
   /// [content] - 对话框内容Widget
@@ -22,7 +22,7 @@ class AppDialogHelper {
     final theme = Theme.of(context);
     final primaryColor = theme.colorScheme.primary;
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return showDialog<T>(
       context: context,
       barrierDismissible: barrierDismissible,
@@ -35,19 +35,19 @@ class AppDialogHelper {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: isDark 
-                ? [
-                    theme.colorScheme.surface,
-                    theme.colorScheme.surface.withOpacity(0.95),
-                  ]
-                : [
-                    Colors.white,
-                    primaryColor.withOpacity(0.02),
-                  ],
+              colors: isDark
+                  ? [
+                      theme.colorScheme.surface,
+                      theme.colorScheme.surface.withValues(alpha: 0.95),
+                    ]
+                  : [
+                      Colors.white,
+                      primaryColor.withValues(alpha: 0.02),
+                    ],
             ),
             boxShadow: PlatformUIHelper.optimizeShadows([
               BoxShadow(
-                color: primaryColor.withOpacity(0.1),
+                color: primaryColor.withValues(alpha: 0.1),
                 blurRadius: 20,
                 spreadRadius: 2,
               ),
@@ -63,7 +63,8 @@ class AppDialogHelper {
                 decoration: BoxDecoration(
                   border: Border(
                     bottom: BorderSide(
-                      color: theme.colorScheme.onSurface.withOpacity(0.08),
+                      color:
+                          theme.colorScheme.onSurface.withValues(alpha: 0.08),
                     ),
                   ),
                 ),
@@ -73,7 +74,7 @@ class AppDialogHelper {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: primaryColor.withOpacity(0.1),
+                          color: primaryColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(
@@ -97,7 +98,7 @@ class AppDialogHelper {
                   ],
                 ),
               ),
-              
+
               // 内容区域
               Flexible(
                 child: SingleChildScrollView(
@@ -105,7 +106,7 @@ class AppDialogHelper {
                   child: content,
                 ),
               ),
-              
+
               // 操作按钮区域
               if (actions != null && actions.isNotEmpty)
                 Container(
@@ -114,7 +115,8 @@ class AppDialogHelper {
                   decoration: BoxDecoration(
                     border: Border(
                       top: BorderSide(
-                        color: theme.colorScheme.onSurface.withOpacity(0.08),
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.08),
                       ),
                     ),
                   ),
@@ -135,7 +137,7 @@ class AppDialogHelper {
       ),
     );
   }
-  
+
   /// 显示确认对话框
   static Future<bool?> showConfirm({
     required BuildContext context,
@@ -148,7 +150,7 @@ class AppDialogHelper {
   }) {
     final theme = Theme.of(context);
     final l10n = Localizations.localeOf(context).languageCode == 'zh';
-    
+
     return show<bool>(
       context: context,
       title: title,
@@ -159,7 +161,7 @@ class AppDialogHelper {
         style: TextStyle(
           fontSize: 14,
           height: 1.6,
-          color: theme.colorScheme.onSurface.withOpacity(0.8),
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
         ),
       ),
       actions: [
@@ -170,9 +172,9 @@ class AppDialogHelper {
         ElevatedButton(
           onPressed: () => Navigator.of(context).pop(true),
           style: ElevatedButton.styleFrom(
-            backgroundColor: isDangerous 
-              ? theme.colorScheme.error 
-              : theme.colorScheme.primary,
+            backgroundColor: isDangerous
+                ? theme.colorScheme.error
+                : theme.colorScheme.primary,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             shape: RoundedRectangleBorder(
@@ -184,7 +186,7 @@ class AppDialogHelper {
       ],
     );
   }
-  
+
   /// 显示错误对话框
   static Future<void> showError({
     required BuildContext context,
@@ -194,7 +196,6 @@ class AppDialogHelper {
   }) {
     final theme = Theme.of(context);
     final l10n = Localizations.localeOf(context).languageCode == 'zh';
-    
     return show(
       context: context,
       title: title,
@@ -204,7 +205,7 @@ class AppDialogHelper {
         style: TextStyle(
           fontSize: 14,
           height: 1.6,
-          color: theme.colorScheme.onSurface.withOpacity(0.8),
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
         ),
       ),
       actions: [
@@ -223,7 +224,7 @@ class AppDialogHelper {
       ],
     );
   }
-  
+
   /// 显示代码预览对话框
   static Future<bool?> showCodePreview({
     required BuildContext context,
@@ -240,7 +241,7 @@ class AppDialogHelper {
     final primaryColor = theme.colorScheme.primary;
     final isDark = theme.brightness == Brightness.dark;
     final l10n = Localizations.localeOf(context).languageCode == 'zh';
-    
+
     return show<bool>(
       context: context,
       title: title,
@@ -253,23 +254,23 @@ class AppDialogHelper {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: isDark
-              ? [
-                  const Color(0xFF1E293B),
-                  const Color(0xFF0F172A),
-                ]
-              : [
-                  const Color(0xFFF8FAFC),
-                  primaryColor.withOpacity(0.02),
-                ],
+                ? [
+                    const Color(0xFF1E293B),
+                    const Color(0xFF0F172A),
+                  ]
+                : [
+                    const Color(0xFFF8FAFC),
+                    primaryColor.withValues(alpha: 0.02),
+                  ],
           ),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: primaryColor.withOpacity(0.2),
+            color: primaryColor.withValues(alpha: 0.2),
             width: 1.5,
           ),
           boxShadow: PlatformUIHelper.optimizeShadows([
             BoxShadow(
-              color: primaryColor.withOpacity(0.08),
+              color: primaryColor.withValues(alpha: 0.08),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -285,14 +286,18 @@ class AppDialogHelper {
           children: [
             // 1. Extra Widget (Top)
             if (extraWidget != null)
-               Container(
-                 decoration: BoxDecoration(
-                   border: Border(bottom: BorderSide(color: primaryColor.withOpacity(0.1))),
-                   color: isDark ? Colors.black12 : Colors.grey.withOpacity(0.02),
-                 ),
-                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-                 child: extraWidget,
-               ),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border(
+                      bottom: BorderSide(
+                          color: primaryColor.withValues(alpha: 0.1))),
+                  color: isDark
+                      ? Colors.black12
+                      : Colors.grey.withValues(alpha: 0.02),
+                ),
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                child: extraWidget,
+              ),
 
             // 2. Code Area (Flexible)
             Flexible(
@@ -309,9 +314,10 @@ class AppDialogHelper {
                         children: [
                           // 语言标签
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: primaryColor.withOpacity(0.12),
+                              color: primaryColor.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Row(
@@ -336,7 +342,7 @@ class AppDialogHelper {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          
+
                           // 代码文本
                           SelectableText(
                             code,
@@ -344,9 +350,9 @@ class AppDialogHelper {
                               fontFamily: 'Courier New',
                               fontSize: 13,
                               height: 1.6,
-                              color: isDark 
-                                ? const Color(0xFFE2E8F0) 
-                                : const Color(0xFF1E293B),
+                              color: isDark
+                                  ? const Color(0xFFE2E8F0)
+                                  : const Color(0xFF1E293B),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -354,7 +360,7 @@ class AppDialogHelper {
                       ),
                     ),
                   ),
-                  
+
                   // 复制按钮
                   if (onCopy != null)
                     Positioned(
@@ -366,18 +372,20 @@ class AppDialogHelper {
                           onTap: onCopy,
                           borderRadius: BorderRadius.circular(8),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
                             decoration: BoxDecoration(
                               color: isDark
-                                ? theme.colorScheme.surface.withOpacity(0.95)
-                                : Colors.white.withOpacity(0.95),
+                                  ? theme.colorScheme.surface
+                                      .withValues(alpha: 0.95)
+                                  : Colors.white.withValues(alpha: 0.95),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: primaryColor.withOpacity(0.3),
+                                color: primaryColor.withValues(alpha: 0.3),
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
+                                  color: Colors.black.withValues(alpha: 0.08),
                                   blurRadius: 8,
                                   offset: const Offset(0, 2),
                                 ),
@@ -435,7 +443,6 @@ class AppDialogHelper {
     );
   }
 
-
   /// 显示带文本输入框的对话框
   static Future<void> showTextFieldDialog({
     required BuildContext context,
@@ -448,7 +455,6 @@ class AppDialogHelper {
   }) {
     final controller = TextEditingController(text: initialValue);
     final theme = Theme.of(context);
-    final l10n = Localizations.localeOf(context).languageCode == 'zh';
 
     return show(
       context: context,
@@ -478,7 +484,8 @@ class AppDialogHelper {
             backgroundColor: theme.colorScheme.primary,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
           child: Text(confirmText),
         ),

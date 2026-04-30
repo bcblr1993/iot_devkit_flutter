@@ -13,12 +13,13 @@ class JsonTreeView extends StatefulWidget {
   final bool isRoot;
   final String? searchQuery;
   final bool isArrayItem;
-  
+
   // New props for navigation and control
   final List<dynamic> currentParamsPath; // Path from root to here
   final List<dynamic>? activeMatchPath; // The path that should be focused
-  final ValueNotifier<TreeControlState>? expandAllNotifier; // Signal to expand/collapse
-  
+  final ValueNotifier<TreeControlState>?
+      expandAllNotifier; // Signal to expand/collapse
+
   const JsonTreeView({
     super.key,
     required this.data,
@@ -40,9 +41,9 @@ class _JsonTreeViewState extends State<JsonTreeView> {
   int _localControlVersion = 0;
   int _searchExpandVersion = 0; // Forces rebuild when search triggers expansion
 
-  static const double _iconSize = 20.0; 
+  static const double _iconSize = 20.0;
   static const double _tileHPad = 4.0;
-  static const double _lineMargin = 13.5; 
+  static const double _lineMargin = 13.5;
 
   @override
   void initState() {
@@ -66,30 +67,30 @@ class _JsonTreeViewState extends State<JsonTreeView> {
     if (widget.activeMatchPath != oldWidget.activeMatchPath) {
       _checkActivePathExpansion();
     }
-    
+
     if (widget.expandAllNotifier != oldWidget.expandAllNotifier) {
       oldWidget.expandAllNotifier?.removeListener(_handleExpandAll);
       if (widget.expandAllNotifier != null) {
-         _applyGlobalState(widget.expandAllNotifier!.value);
-         widget.expandAllNotifier!.addListener(_handleExpandAll);
+        _applyGlobalState(widget.expandAllNotifier!.value);
+        widget.expandAllNotifier!.addListener(_handleExpandAll);
       }
     }
-    
+
     _checkSelfActiveScroll();
   }
-  
+
   @override
   void dispose() {
     widget.expandAllNotifier?.removeListener(_handleExpandAll);
     super.dispose();
   }
-  
+
   void _handleExpandAll() {
     if (widget.expandAllNotifier != null) {
       _applyGlobalState(widget.expandAllNotifier!.value);
     }
   }
-  
+
   void _applyGlobalState(TreeControlState state) {
     // Only apply if version is newer
     if (state.version > _localControlVersion) {
@@ -118,42 +119,48 @@ class _JsonTreeViewState extends State<JsonTreeView> {
       }
     }
   }
-  
+
   void _checkActivePathExpansion() {
-    if (widget.activeMatchPath != null && widget.activeMatchPath!.length > widget.currentParamsPath.length) {
-       bool match = true;
-       for (int i=0; i<widget.currentParamsPath.length; i++) {
-         if (widget.activeMatchPath![i] != widget.currentParamsPath[i]) {
-           match = false;
-           break;
-         }
-       }
-       if (match) {
-         if (!_isExpanded) {
-           setState(() {
-             _isExpanded = true;
-             _searchExpandVersion++;
-           });
-         }
-       }
+    if (widget.activeMatchPath != null &&
+        widget.activeMatchPath!.length > widget.currentParamsPath.length) {
+      bool match = true;
+      for (int i = 0; i < widget.currentParamsPath.length; i++) {
+        if (widget.activeMatchPath![i] != widget.currentParamsPath[i]) {
+          match = false;
+          break;
+        }
+      }
+      if (match) {
+        if (!_isExpanded) {
+          setState(() {
+            _isExpanded = true;
+            _searchExpandVersion++;
+          });
+        }
+      }
     }
   }
-  
+
   void _checkSelfActiveScroll() {
     if (_isSelfActive()) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          Scrollable.ensureVisible(context, alignment: 0.5, duration: const Duration(milliseconds: 300));
+          Scrollable.ensureVisible(context,
+              alignment: 0.5, duration: const Duration(milliseconds: 300));
         }
       });
     }
   }
-  
+
   bool _isSelfActive() {
     if (widget.activeMatchPath == null) return false;
-    if (widget.activeMatchPath!.length != widget.currentParamsPath.length) return false;
-    for (int i=0; i<widget.activeMatchPath!.length; i++) {
-      if (widget.activeMatchPath![i] != widget.currentParamsPath[i]) return false;
+    if (widget.activeMatchPath!.length != widget.currentParamsPath.length) {
+      return false;
+    }
+    for (int i = 0; i < widget.activeMatchPath!.length; i++) {
+      if (widget.activeMatchPath![i] != widget.currentParamsPath[i]) {
+        return false;
+      }
     }
     return true;
   }
@@ -161,16 +168,19 @@ class _JsonTreeViewState extends State<JsonTreeView> {
   bool _hasMatch(dynamic data) {
     final query = widget.searchQuery?.toLowerCase() ?? '';
     if (query.isEmpty) return false;
-    
-    if (widget.keyName != null && widget.keyName!.toLowerCase().contains(query)) return true;
-    
-    if (data is! Map && data is! List) {
-       return data.toString().toLowerCase().contains(query);
+
+    if (widget.keyName != null &&
+        widget.keyName!.toLowerCase().contains(query)) {
+      return true;
     }
-    
+
+    if (data is! Map && data is! List) {
+      return data.toString().toLowerCase().contains(query);
+    }
+
     return _deepCheck(data, query);
   }
-  
+
   bool _deepCheck(dynamic data, String query) {
     if (data is Map) {
       for (var entry in data.entries) {
@@ -205,20 +215,22 @@ class _JsonTreeViewState extends State<JsonTreeView> {
     final l10n = AppLocalizations.of(context);
     final itemsLabel = l10n != null ? l10n.itemsLabel : 'items';
     final theme = Theme.of(context);
-    
+
     return Theme(
       data: theme.copyWith(
-        dividerColor: Colors.transparent, 
-        iconTheme: theme.iconTheme.copyWith(size: _iconSize, color: theme.colorScheme.onSurface),
+        dividerColor: Colors.transparent,
+        iconTheme: theme.iconTheme
+            .copyWith(size: _iconSize, color: theme.colorScheme.onSurface),
         listTileTheme: const ListTileThemeData(
-          minLeadingWidth: 20, 
+          minLeadingWidth: 20,
           horizontalTitleGap: 4.0,
           dense: true,
         ),
       ),
       child: ExpansionTile(
         // Include Search Version in Key to force rebuild when auto-expanding
-        key: PageStorageKey('${widget.keyName}_${map.hashCode}_${_localControlVersion}_$_searchExpandVersion'),
+        key: PageStorageKey(
+            '${widget.keyName}_${map.hashCode}_${_localControlVersion}_$_searchExpandVersion'),
         initiallyExpanded: _isExpanded,
         tilePadding: const EdgeInsets.symmetric(horizontal: _tileHPad),
         dense: true,
@@ -227,35 +239,37 @@ class _JsonTreeViewState extends State<JsonTreeView> {
         collapsedShape: const Border(),
         expandedAlignment: Alignment.centerLeft,
         childrenPadding: EdgeInsets.zero,
-        leading: Icon(Icons.arrow_right),
+        leading: const Icon(Icons.arrow_right),
         controlAffinity: ListTileControlAffinity.leading,
         title: _buildTitle(context, '{', '}', count, itemsLabel),
         onExpansionChanged: (val) {
           setState(() => _isExpanded = val);
         },
         children: [
-           Container(
-             decoration: BoxDecoration(
-               border: Border(left: BorderSide(color: theme.colorScheme.outline, width: 1.0)),
-             ),
-             margin: const EdgeInsets.only(left: _lineMargin), 
-             padding: const EdgeInsets.only(left: 14.5),
-             child: Column(
-               crossAxisAlignment: CrossAxisAlignment.start,
-               children: map.entries.map((e) {
-                 final newPath = [...widget.currentParamsPath, e.key]; 
-                 return JsonTreeView(
-                   data: e.value, 
-                   keyName: e.key, 
-                   searchQuery: widget.searchQuery,
-                   isArrayItem: false,
-                   currentParamsPath: newPath,
-                   activeMatchPath: widget.activeMatchPath,
-                   expandAllNotifier: widget.expandAllNotifier,
-                 );
-               }).toList(),
-             ),
-           )
+          Container(
+            decoration: BoxDecoration(
+              border: Border(
+                  left:
+                      BorderSide(color: theme.colorScheme.outline, width: 1.0)),
+            ),
+            margin: const EdgeInsets.only(left: _lineMargin),
+            padding: const EdgeInsets.only(left: 14.5),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: map.entries.map((e) {
+                final newPath = [...widget.currentParamsPath, e.key];
+                return JsonTreeView(
+                  data: e.value,
+                  keyName: e.key,
+                  searchQuery: widget.searchQuery,
+                  isArrayItem: false,
+                  currentParamsPath: newPath,
+                  activeMatchPath: widget.activeMatchPath,
+                  expandAllNotifier: widget.expandAllNotifier,
+                );
+              }).toList(),
+            ),
+          )
         ],
       ),
     );
@@ -266,20 +280,22 @@ class _JsonTreeViewState extends State<JsonTreeView> {
     final l10n = AppLocalizations.of(context);
     final itemsLabel = l10n != null ? l10n.itemsLabel : 'items';
     final theme = Theme.of(context);
-    
+
     return Theme(
       data: theme.copyWith(
         dividerColor: Colors.transparent,
-        iconTheme: theme.iconTheme.copyWith(size: _iconSize, color: theme.colorScheme.onSurface),
+        iconTheme: theme.iconTheme
+            .copyWith(size: _iconSize, color: theme.colorScheme.onSurface),
         listTileTheme: const ListTileThemeData(
-          minLeadingWidth: 20, 
+          minLeadingWidth: 20,
           horizontalTitleGap: 4.0,
           dense: true,
         ),
       ),
       child: ExpansionTile(
         // Include Search Version in Key to force rebuild when auto-expanding
-        key: PageStorageKey('${widget.keyName}_${list.hashCode}_${_localControlVersion}_$_searchExpandVersion'),
+        key: PageStorageKey(
+            '${widget.keyName}_${list.hashCode}_${_localControlVersion}_$_searchExpandVersion'),
         initiallyExpanded: _isExpanded,
         tilePadding: const EdgeInsets.symmetric(horizontal: _tileHPad),
         dense: true,
@@ -288,69 +304,86 @@ class _JsonTreeViewState extends State<JsonTreeView> {
         collapsedShape: const Border(),
         expandedAlignment: Alignment.centerLeft,
         childrenPadding: EdgeInsets.zero,
-        leading: Icon(Icons.arrow_right),
+        leading: const Icon(Icons.arrow_right),
         controlAffinity: ListTileControlAffinity.leading,
         title: _buildTitle(context, '[', ']', count, itemsLabel),
         onExpansionChanged: (val) {
-           setState(() => _isExpanded = val);
+          setState(() => _isExpanded = val);
         },
         children: [
-           Container(
-             decoration: BoxDecoration(
-               border: Border(left: BorderSide(color: theme.colorScheme.outline, width: 1.0)),
-             ),
-             margin: const EdgeInsets.only(left: _lineMargin),
-             padding: const EdgeInsets.only(left: 14.5),
-             child: Column(
-               crossAxisAlignment: CrossAxisAlignment.start,
-               children: list.asMap().entries.map((e) {
-                 final newPath = [...widget.currentParamsPath, e.key];
-                 return JsonTreeView(
-                   data: e.value, 
-                   keyName: e.key.toString(), 
-                   searchQuery: widget.searchQuery,
-                   isArrayItem: true,
-                   currentParamsPath: newPath,
-                   activeMatchPath: widget.activeMatchPath,
-                   expandAllNotifier: widget.expandAllNotifier,
-                 );
-               }).toList(),
-             ),
-           )
+          Container(
+            decoration: BoxDecoration(
+              border: Border(
+                  left:
+                      BorderSide(color: theme.colorScheme.outline, width: 1.0)),
+            ),
+            margin: const EdgeInsets.only(left: _lineMargin),
+            padding: const EdgeInsets.only(left: 14.5),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: list.asMap().entries.map((e) {
+                final newPath = [...widget.currentParamsPath, e.key];
+                return JsonTreeView(
+                  data: e.value,
+                  keyName: e.key.toString(),
+                  searchQuery: widget.searchQuery,
+                  isArrayItem: true,
+                  currentParamsPath: newPath,
+                  activeMatchPath: widget.activeMatchPath,
+                  expandAllNotifier: widget.expandAllNotifier,
+                );
+              }).toList(),
+            ),
+          )
         ],
       ),
     );
   }
-  
-  Widget _buildTitle(BuildContext context, String open, String close, int count, String itemsLabel) {
+
+  Widget _buildTitle(BuildContext context, String open, String close, int count,
+      String itemsLabel) {
     final theme = Theme.of(context);
     final isMatch = _checkMatch(widget.keyName);
     final isActive = _isSelfActive();
-    
-    final highColor = theme.colorScheme.tertiary;
+
     final highBg = theme.colorScheme.tertiaryContainer;
-    
+
     final activeBg = theme.colorScheme.primaryContainer;
     final activeColor = theme.colorScheme.onPrimaryContainer;
 
     return RichText(
       text: TextSpan(
-        style: TextStyle(fontFamily: 'Courier', fontSize: 13, color: theme.colorScheme.onSurface),
+        style: TextStyle(
+            fontFamily: 'Courier',
+            fontSize: 13,
+            color: theme.colorScheme.onSurface),
         children: [
-          if (widget.keyName != null) 
-             TextSpan(
-               text: widget.isArrayItem ? '${widget.keyName}: ' : '"${widget.keyName}": ', 
-               style: TextStyle(
-                 color: isActive ? activeColor : (isMatch 
-                   ? theme.colorScheme.onTertiaryContainer 
-                   : (widget.isArrayItem ? theme.colorScheme.secondary : Colors.purple[800])), 
-                 fontWeight: widget.isArrayItem ? FontWeight.normal : FontWeight.bold,
-                 backgroundColor: isActive ? activeBg : (isMatch ? highBg : null),
-               )
-             ),
-          TextSpan(text: open, style: const TextStyle(fontWeight: FontWeight.bold)),
-          TextSpan(text: ' $count $itemsLabel ', style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 11)),
-          TextSpan(text: close, style: const TextStyle(fontWeight: FontWeight.bold)),
+          if (widget.keyName != null)
+            TextSpan(
+                text: widget.isArrayItem
+                    ? '${widget.keyName}: '
+                    : '"${widget.keyName}": ',
+                style: TextStyle(
+                  color: isActive
+                      ? activeColor
+                      : (isMatch
+                          ? theme.colorScheme.onTertiaryContainer
+                          : (widget.isArrayItem
+                              ? theme.colorScheme.secondary
+                              : Colors.purple[800])),
+                  fontWeight:
+                      widget.isArrayItem ? FontWeight.normal : FontWeight.bold,
+                  backgroundColor:
+                      isActive ? activeBg : (isMatch ? highBg : null),
+                )),
+          TextSpan(
+              text: open, style: const TextStyle(fontWeight: FontWeight.bold)),
+          TextSpan(
+              text: ' $count $itemsLabel ',
+              style: TextStyle(
+                  color: theme.colorScheme.onSurfaceVariant, fontSize: 11)),
+          TextSpan(
+              text: close, style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -363,13 +396,13 @@ class _JsonTreeViewState extends State<JsonTreeView> {
     final isKeyMatch = _checkMatch(widget.keyName);
     final isValueMatch = _checkMatch(valueStr);
     final isActive = _isSelfActive();
-    
+
     final highBg = theme.colorScheme.tertiaryContainer;
     final highColor = theme.colorScheme.onTertiaryContainer;
-    
+
     final activeBg = theme.colorScheme.primaryContainer;
     final activeColor = theme.colorScheme.onPrimaryContainer;
-    
+
     if (value is String) {
       color = Colors.green[800]!;
       if (theme.brightness == Brightness.dark) color = Colors.greenAccent[400]!;
@@ -379,15 +412,17 @@ class _JsonTreeViewState extends State<JsonTreeView> {
       if (theme.brightness == Brightness.dark) color = Colors.blueAccent[200]!;
     } else if (value is bool) {
       color = Colors.orange[800]!;
-      if (theme.brightness == Brightness.dark) color = Colors.orangeAccent[200]!;
+      if (theme.brightness == Brightness.dark) {
+        color = Colors.orangeAccent[200]!;
+      }
     } else {
       color = theme.colorScheme.onSurface;
     }
 
     return Theme(
-       data: theme.copyWith(
+      data: theme.copyWith(
         listTileTheme: const ListTileThemeData(
-          minLeadingWidth: 20, 
+          minLeadingWidth: 20,
           horizontalTitleGap: 4.0,
           dense: true,
         ),
@@ -397,48 +432,64 @@ class _JsonTreeViewState extends State<JsonTreeView> {
         dense: true,
         visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
         leading: const SizedBox(
-           width: 20, 
-           height: 20, 
-           child: Visibility(
-             visible: false, 
-             child: Icon(Icons.arrow_right)
-           )
-        ),
+            width: 20,
+            height: 20,
+            child: Visibility(visible: false, child: Icon(Icons.arrow_right))),
         title: RichText(
           text: TextSpan(
-            style: TextStyle(fontFamily: 'Courier', fontSize: 13, color: theme.colorScheme.onSurface),
+            style: TextStyle(
+                fontFamily: 'Courier',
+                fontSize: 13,
+                color: theme.colorScheme.onSurface),
             children: [
-               if (widget.keyName != null) 
-                  TextSpan(
-                    text: widget.isArrayItem ? '${widget.keyName}: ' : '"${widget.keyName}": ', 
+              if (widget.keyName != null)
+                TextSpan(
+                    text: widget.isArrayItem
+                        ? '${widget.keyName}: '
+                        : '"${widget.keyName}": ',
                     style: TextStyle(
-                      color: isActive ? activeColor : (isKeyMatch 
-                        ? highColor 
-                        : (widget.isArrayItem ? theme.colorScheme.secondary : Colors.purple[800])),
-                      fontWeight: widget.isArrayItem ? FontWeight.normal : FontWeight.bold,
-                      backgroundColor: isActive ? activeBg : (isKeyMatch ? highBg : null),
-                    )
-                  ),
-               TextSpan(
-                 text: valueStr, 
-                 style: TextStyle(
-                   color: isActive ? activeColor : (isValueMatch && !isKeyMatch ? highColor : (widget.data == null ? Colors.grey : color)),
-                   backgroundColor: isActive ? activeBg : (isValueMatch ? highBg : null),
-                 )
-               ),
+                      color: isActive
+                          ? activeColor
+                          : (isKeyMatch
+                              ? highColor
+                              : (widget.isArrayItem
+                                  ? theme.colorScheme.secondary
+                                  : Colors.purple[800])),
+                      fontWeight: widget.isArrayItem
+                          ? FontWeight.normal
+                          : FontWeight.bold,
+                      backgroundColor:
+                          isActive ? activeBg : (isKeyMatch ? highBg : null),
+                    )),
+              TextSpan(
+                  text: valueStr,
+                  style: TextStyle(
+                    color: isActive
+                        ? activeColor
+                        : (isValueMatch && !isKeyMatch
+                            ? highColor
+                            : (widget.data == null ? Colors.grey : color)),
+                    backgroundColor:
+                        isActive ? activeBg : (isValueMatch ? highBg : null),
+                  )),
             ],
           ),
         ),
       ),
     );
   }
-  
-  Widget _buildRow(BuildContext context, String valueStr, Color valueColor, {bool isNull = false}) {
-     return _buildPrimitive(context, widget.data);
+
+  Widget _buildRow(BuildContext context, String valueStr, Color valueColor,
+      {bool isNull = false}) {
+    return _buildPrimitive(context, widget.data);
   }
-  
+
   bool _checkMatch(String? text) {
-    if (widget.searchQuery == null || widget.searchQuery!.isEmpty || text == null) return false;
+    if (widget.searchQuery == null ||
+        widget.searchQuery!.isEmpty ||
+        text == null) {
+      return false;
+    }
     return text.toLowerCase().contains(widget.searchQuery!.toLowerCase());
   }
 }

@@ -22,7 +22,7 @@ class GroupConfig {
   int changeIntervalSeconds;
   double changeRatio;
   String format;
-  
+
   // Custom Keys
   List<CustomKeyConfig> customKeys;
 
@@ -73,7 +73,8 @@ class GroupConfig {
       passwordPrefix: passwordPrefix ?? this.passwordPrefix,
       totalKeyCount: totalKeyCount ?? this.totalKeyCount,
       fullIntervalSeconds: fullIntervalSeconds ?? this.fullIntervalSeconds,
-      changeIntervalSeconds: changeIntervalSeconds ?? this.changeIntervalSeconds,
+      changeIntervalSeconds:
+          changeIntervalSeconds ?? this.changeIntervalSeconds,
       changeRatio: changeRatio ?? this.changeRatio,
       format: format ?? this.format,
       customKeys: customKeys ?? this.customKeys,

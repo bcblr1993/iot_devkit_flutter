@@ -16,12 +16,12 @@ class LogStorageService {
   static const Duration _retentionPeriod = Duration(days: 7);
   static const String _currentLogFileName = 'IoT DevKit.log';
   static const String _logFolderName = 'IoT DevKit';
-  
+
   Directory? _logDirectory;
   File? _currentLogFile;
   IOSink? _sink;
   int _currentFileSize = 0;
-  
+
   final DateFormat _fileFormatter = DateFormat('yyyy-MM-dd_HH-mm-ss');
   final DateFormat _logFormatter = DateFormat('yyyy-MM-dd HH:mm:ss.SSS');
 
@@ -29,17 +29,17 @@ class LogStorageService {
     try {
       final Directory appDocDir = await getApplicationDocumentsDirectory();
       _logDirectory = Directory(p.join(appDocDir.path, _logFolderName, 'logs'));
-      
+
       if (!await _logDirectory!.exists()) {
         await _logDirectory!.create(recursive: true);
       }
-      
+
       // Cleanup old logs on startup
       await _cleanupOldLogs();
-      
+
       // Initialize logging
       await _initializeLogFile();
-      
+
       debugPrint('LogStorageService initialized at: ${_logDirectory!.path}');
     } catch (e) {
       debugPrint('Failed to initialize LogStorageService: $e');
@@ -49,8 +49,9 @@ class LogStorageService {
   Future<void> _initializeLogFile() async {
     if (_logDirectory == null) return;
 
-    final File fixedLog = File(p.join(_logDirectory!.path, _currentLogFileName));
-    
+    final File fixedLog =
+        File(p.join(_logDirectory!.path, _currentLogFileName));
+
     if (await fixedLog.exists()) {
       final int length = await fixedLog.length();
       if (length >= _maxFileSize) {
@@ -61,7 +62,8 @@ class LogStorageService {
         _currentLogFile = fixedLog;
         _currentFileSize = length;
         _sink = _currentLogFile!.openWrite(mode: FileMode.append);
-        debugPrint('Appending to existing log file: ${_currentLogFile!.path} (Current size: $_currentFileSize bytes)');
+        debugPrint(
+            'Appending to existing log file: ${_currentLogFile!.path} (Current size: $_currentFileSize bytes)');
       }
     } else {
       // Create new file
@@ -74,21 +76,23 @@ class LogStorageService {
 
     try {
       final String timestamp = _logFormatter.format(record.time);
-      final String logLine = '[$timestamp] [${record.level.name}] [${record.loggerName}] ${record.message}\n';
+      final String logLine =
+          '[$timestamp] [${record.level.name}] [${record.loggerName}] ${record.message}\n';
       // Use logic similar to before, but check rotation before/after interaction isn't strictly necessary for every line if we check size.
       // But we must convert to bytes to track size.
       final List<int> bytes = logLine.codeUnits;
-      
+
       _sink!.add(bytes);
       _currentFileSize += bytes.length;
 
       if (record.error != null) {
-        final String errorLine = 'Error: ${record.error}\nStack: ${record.stackTrace}\n';
+        final String errorLine =
+            'Error: ${record.error}\nStack: ${record.stackTrace}\n';
         final List<int> errorBytes = errorLine.codeUnits;
         _sink!.add(errorBytes);
         _currentFileSize += errorBytes.length;
       }
-      
+
       // Check for rotation
       if (_currentFileSize >= _maxFileSize) {
         await _rotateLogFile();
@@ -98,7 +102,7 @@ class LogStorageService {
       if (kDebugMode) print('Error writing to log file: $e');
     }
   }
-  
+
   /// Rotates the current log file (or specific file) to an archive name.
   /// Then opens a fresh 'IoT DevKit.log'.
   Future<void> _rotateLogFile({File? existingFile}) async {
@@ -109,22 +113,21 @@ class LogStorageService {
         await _sink!.close();
         _sink = null;
       }
-      
+
       final File targetFile = existingFile ?? _currentLogFile!;
-      
+
       // 2. Rename current file to timestamped archive
       if (await targetFile.exists()) {
         final String timestamp = _fileFormatter.format(DateTime.now());
         final String archiveName = 'IoT DevKit_$timestamp.log';
         final String archivePath = p.join(_logDirectory!.path, archiveName);
-        
+
         await targetFile.rename(archivePath);
         debugPrint('Archived log file to: $archivePath');
       }
-      
+
       // 3. Open new fixed log
       await _openNewFixedLog();
-      
     } catch (e) {
       debugPrint('Failed to rotate log file: $e');
       // If rotation failed, try to reopen current or just fail safe
@@ -132,19 +135,19 @@ class LogStorageService {
   }
 
   Future<void> _openNewFixedLog() async {
-     _currentLogFile = File(p.join(_logDirectory!.path, _currentLogFileName));
-     _sink = _currentLogFile!.openWrite(mode: FileMode.append);
-     _currentFileSize = 0;
-     debugPrint('Opened new log file: ${_currentLogFile!.path}');
+    _currentLogFile = File(p.join(_logDirectory!.path, _currentLogFileName));
+    _sink = _currentLogFile!.openWrite(mode: FileMode.append);
+    _currentFileSize = 0;
+    debugPrint('Opened new log file: ${_currentLogFile!.path}');
   }
 
   Future<void> _cleanupOldLogs() async {
     if (_logDirectory == null) return;
-    
+
     try {
       final DateTime now = DateTime.now();
       final List<FileSystemEntity> files = _logDirectory!.listSync();
-      
+
       int deletedCount = 0;
       for (var file in files) {
         if (file is File && file.path.endsWith('.log')) {
@@ -154,7 +157,7 @@ class LogStorageService {
 
           final FileStat stat = await file.stat();
           final Duration age = now.difference(stat.modified);
-          
+
           if (age > _retentionPeriod) {
             await file.delete();
             deletedCount++;
@@ -171,7 +174,7 @@ class LogStorageService {
 
   Future<void> openLogFolder() async {
     if (_logDirectory == null) return;
-    
+
     final String path = _logDirectory!.path;
     try {
       if (Platform.isWindows) {
@@ -185,7 +188,7 @@ class LogStorageService {
       debugPrint('Failed to open log folder: $e');
     }
   }
-  
+
   Future<void> dispose() async {
     if (_sink != null) {
       await _sink!.flush();
@@ -194,4 +197,3 @@ class LogStorageService {
     }
   }
 }
-

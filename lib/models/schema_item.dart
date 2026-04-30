@@ -5,7 +5,7 @@ class SchemaItem {
   SchemaItem({required this.name, required this.type});
 
   Map<String, dynamic> toJson() => {
-    'name': name,
-    'type': type,
-  };
+        'name': name,
+        'type': type,
+      };
 }

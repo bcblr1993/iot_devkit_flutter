@@ -8,7 +8,6 @@ import 'package:iot_devkit/services/profile_service.dart';
 import 'package:iot_devkit/models/profile_metadata.dart';
 
 class MqttViewModel extends ChangeNotifier {
-  
   // Forms
   final formKeyBasic = GlobalKey<FormState>();
   final formKeyAdvanced = GlobalKey<FormState>();
@@ -17,11 +16,12 @@ class MqttViewModel extends ChangeNotifier {
   // Controllers (Basic Mode & MQTT)
   final hostController = TextEditingController(text: 'localhost');
   final portController = TextEditingController(text: '1883');
-  final topicController = TextEditingController(text: 'v1/devices/me/telemetry');
+  final topicController =
+      TextEditingController(text: 'v1/devices/me/telemetry');
   final caPathController = TextEditingController();
   final certPathController = TextEditingController();
   final keyPathController = TextEditingController();
-  
+
   final startIdxController = TextEditingController(text: '1');
   final endIdxController = TextEditingController(text: '10');
   final intervalController = TextEditingController(text: '1');
@@ -34,19 +34,19 @@ class MqttViewModel extends ChangeNotifier {
   // State
   bool _enableSsl = false;
   bool get enableSsl => _enableSsl;
-  
+
   int _qos = 0;
   int get qos => _qos;
-  
+
   List<CustomKeyConfig> _basicCustomKeys = [];
   List<CustomKeyConfig> get basicCustomKeys => _basicCustomKeys;
-  
+
   List<GroupConfig> _groups = [];
   List<GroupConfig> get groups => _groups;
-  
+
   String _format = 'default';
   String get format => _format;
-  
+
   void setFormat(String val) {
     if (_format != val) {
       _format = val;
@@ -67,7 +67,7 @@ class MqttViewModel extends ChangeNotifier {
     _initListeners();
     _initProfile();
   }
-  
+
   Future<void> _initProfile() async {
     // 1. Try to get last active profile
     final lastId = await _profileService.getLastActiveProfileId();
@@ -77,7 +77,7 @@ class MqttViewModel extends ChangeNotifier {
         _currentProfileId = lastId;
         _applyConfig(config);
         notifyListeners();
-        return; 
+        return;
       }
     }
     // 2. Fallback to auto-save (default)
@@ -86,11 +86,20 @@ class MqttViewModel extends ChangeNotifier {
 
   void _initListeners() {
     final controllers = [
-      hostController, portController, topicController,
-      caPathController, certPathController, keyPathController,
-      startIdxController, endIdxController, intervalController,
-      dataPointController, devicePrefixController, clientIdPrefixController,
-      usernamePrefixController, passwordPrefixController
+      hostController,
+      portController,
+      topicController,
+      caPathController,
+      certPathController,
+      keyPathController,
+      startIdxController,
+      endIdxController,
+      intervalController,
+      dataPointController,
+      devicePrefixController,
+      clientIdPrefixController,
+      usernamePrefixController,
+      passwordPrefixController
     ];
     for (var c in controllers) {
       c.addListener(scheduleAutoSave);
@@ -134,7 +143,7 @@ class MqttViewModel extends ChangeNotifier {
       scheduleAutoSave();
     }
   }
-  
+
   void updateBasicCustomKeys(List<CustomKeyConfig> keys) {
     _basicCustomKeys = keys;
     notifyListeners();
@@ -155,7 +164,7 @@ class MqttViewModel extends ChangeNotifier {
       final config = getCompleteConfig();
       // Always save to local buffer (current session)
       ConfigService.saveToLocalStorage(config);
-      
+
       // If a profile is active, update it too
       if (_currentProfileId != null) {
         await updateCurrentProfile();
@@ -188,9 +197,10 @@ class MqttViewModel extends ChangeNotifier {
     startIdxController.text = (config['device_start_number'] ?? 1).toString();
     endIdxController.text = (config['device_end_number'] ?? 10).toString();
     intervalController.text = (config['send_interval'] ?? 1).toString();
-      _format = config['data']?['format'] ?? 'default';
-      dataPointController.text = (config['data']?['data_point_count'] ?? 10).toString();
-    
+    _format = config['data']?['format'] ?? 'default';
+    dataPointController.text =
+        (config['data']?['data_point_count'] ?? 10).toString();
+
     devicePrefixController.text = config['device_prefix'] ?? 'device';
     clientIdPrefixController.text = config['client_id_prefix'] ?? 'device';
     usernamePrefixController.text = config['username_prefix'] ?? 'user';
@@ -207,7 +217,7 @@ class MqttViewModel extends ChangeNotifier {
           .map((e) => GroupConfig.fromJson(e))
           .toList();
     }
-    
+
     notifyListeners();
   }
 
@@ -238,21 +248,21 @@ class MqttViewModel extends ChangeNotifier {
       'groups': _groups.map((e) => e.toJson()).toList(),
     };
   }
-  
+
   Map<String, dynamic>? generatePreviewData({required bool isBasic}) {
     try {
       if (isBasic) {
         final count = int.tryParse(dataPointController.text) ?? 10;
         if (_format == 'tn') {
-           return DataGenerator.generateTnPayload(count);
+          return DataGenerator.generateTnPayload(count);
         } else if (_format == 'tn-empty') {
-           return DataGenerator.generateTnEmptyPayload();
+          return DataGenerator.generateTnEmptyPayload();
         } else {
-           return DataGenerator.generateBatteryStatus(
-             count,
-             customKeys: _basicCustomKeys,
-             clientId: 'preview_client',
-           );
+          return DataGenerator.generateBatteryStatus(
+            count,
+            customKeys: _basicCustomKeys,
+            clientId: 'preview_client',
+          );
         }
       } else {
         // Advanced Mode
@@ -276,57 +286,62 @@ class MqttViewModel extends ChangeNotifier {
     }
   } // End generatePreviewData
 
-    // --- Profile Actions ---
-  
+  // --- Profile Actions ---
+
   Future<void> loadProfile(String id) async {
     final config = await _profileService.loadProfileConfig(id);
     if (config != null) {
       _currentProfileId = id;
       _applyConfig(config);
       await _profileService.setActiveProfileId(id);
-      
+
       // Also update auto-save immediate
       ConfigService.saveToLocalStorage(config);
       notifyListeners();
     }
   }
-  
+
   Future<void> saveCurrentAsProfile(String name) async {
     final config = getCompleteConfig();
-    final meta = await _profileService.saveProfile(name, config, id: _currentProfileId); // Update existing if ID set?
+    await _profileService.saveProfile(name, config,
+        id: _currentProfileId); // Update existing if ID set?
     // Actually, usually "Save As" creates new, "Save" updates existing.
     // Let's split logic:
     // If _currentProfileId is null, create new.
     // If _currentProfileId is set, update it?
     // But user might want to Save As New...
-    // For now simple approach: User provides Name. If ID exists and Name matches, update. 
+    // For now simple approach: User provides Name. If ID exists and Name matches, update.
     // Wait, the UI will likely have "Save" (update current) and "Save As New".
-    
+
     // Let's make this method just "Save/Update current active profile or create new if none"
     // BUT we need a way to Create New from UI explicitly.
-    
+
     // Changing signature: saveProfile(name, {bool isNew = false})
     // But for now let's just stick to "Save" updates current, "Save As" creates new.
   }
 
   Future<void> createNewProfile(String name) async {
     final config = getCompleteConfig();
-    final meta = await _profileService.saveProfile(name, config); // id null = new
+    final meta =
+        await _profileService.saveProfile(name, config); // id null = new
     _currentProfileId = meta.id;
     await _profileService.setActiveProfileId(meta.id);
     notifyListeners();
   }
-  
+
   Future<void> updateCurrentProfile() async {
     if (_currentProfileId == null) return;
     // We need the name... ProfileService stores name in metadata list.
     // Let's find current name
     final profiles = await _profileService.loadProfiles();
-    final current = profiles.cast<ProfileMetadata?>().firstWhere((p) => p?.id == _currentProfileId, orElse: () => null);
-    
+    final current = profiles
+        .cast<ProfileMetadata?>()
+        .firstWhere((p) => p?.id == _currentProfileId, orElse: () => null);
+
     if (current != null) {
       final config = getCompleteConfig();
-      await _profileService.saveProfile(current.name, config, id: _currentProfileId);
+      await _profileService.saveProfile(current.name, config,
+          id: _currentProfileId);
     }
   }
 
@@ -336,25 +351,28 @@ class MqttViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  
-  bool startBasicSimulation(BuildContext context, Function(Map<String, dynamic>, bool) showPreviewCallback) {
-    if (formKeyBasic.currentState!.validate() && formKeyMqtt.currentState!.validate()) {
-       final config = getCompleteConfig();
-       config['mode'] = 'basic';
-       ConfigService.saveToLocalStorage(config);
-       showPreviewCallback(config, true);
-       return true;
+  bool startBasicSimulation(BuildContext context,
+      Function(Map<String, dynamic>, bool) showPreviewCallback) {
+    if (formKeyBasic.currentState!.validate() &&
+        formKeyMqtt.currentState!.validate()) {
+      final config = getCompleteConfig();
+      config['mode'] = 'basic';
+      ConfigService.saveToLocalStorage(config);
+      showPreviewCallback(config, true);
+      return true;
     }
     return false;
   }
 
-  bool startAdvancedSimulation(BuildContext context, Function(Map<String, dynamic>, bool) showPreviewCallback) {
-    if (formKeyAdvanced.currentState!.validate() && formKeyMqtt.currentState!.validate()) {
-       final config = getCompleteConfig();
-       config['mode'] = 'advanced';
-       ConfigService.saveToLocalStorage(config);
-       showPreviewCallback(config, false);
-       return true;
+  bool startAdvancedSimulation(BuildContext context,
+      Function(Map<String, dynamic>, bool) showPreviewCallback) {
+    if (formKeyAdvanced.currentState!.validate() &&
+        formKeyMqtt.currentState!.validate()) {
+      final config = getCompleteConfig();
+      config['mode'] = 'advanced';
+      ConfigService.saveToLocalStorage(config);
+      showPreviewCallback(config, false);
+      return true;
     }
     return false;
   }

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/work_log_entry.dart';
 import '../services/timesheet_service.dart';
 
 class TimesheetProvider extends ChangeNotifier {
   final TimesheetService _service = TimesheetService.instance;
-  
+
   DateTime _selectedDate = DateTime.now();
   List<WorkLogEntry> _currentLogs = [];
   bool _isLoading = false;
@@ -12,8 +13,8 @@ class TimesheetProvider extends ChangeNotifier {
   DateTime get selectedDate => _selectedDate;
   List<WorkLogEntry> get currentLogs => _currentLogs;
   bool get isLoading => _isLoading;
-
-  import 'package:shared_preferences/shared_preferences.dart';
+  double get totalHours =>
+      _currentLogs.fold<double>(0, (sum, log) => sum + log.durationHours);
 
   bool _isEnabled = false;
   bool get isEnabled => _isEnabled;
@@ -51,67 +52,106 @@ class TimesheetProvider extends ChangeNotifier {
   Future<void> _loadLogs() async {
     _isLoading = true;
     notifyListeners();
-    
+
     _currentLogs = await _service.getLogs(_selectedDate);
-    
+
     _isLoading = false;
     notifyListeners();
   }
-  
+
   Future<void> addLog(WorkLogEntry log) async {
     await _service.saveLog(log);
     await _loadLogs();
   }
-  
+
   Future<void> updateLog(WorkLogEntry log) async {
     await _service.saveLog(log);
     await _loadLogs();
   }
-  
+
+  Future<void> saveSimpleLog({
+    WorkLogEntry? existing,
+    required DateTime date,
+    required String content,
+    required double hours,
+  }) async {
+    final now = DateTime.now();
+    final startTime = existing?.startTime ??
+        DateTime(
+          date.year,
+          date.month,
+          date.day,
+          now.hour,
+          now.minute,
+          now.second,
+          now.millisecond,
+        );
+    final normalizedStart = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      startTime.hour,
+      startTime.minute,
+      startTime.second,
+      startTime.millisecond,
+    );
+    final minutes = (hours * 60).round().clamp(1, 24 * 60).toInt();
+    final log = WorkLogEntry(
+      id: existing?.id,
+      startTime: normalizedStart,
+      endTime: normalizedStart.add(Duration(minutes: minutes)),
+      content: content.trim(),
+      hours: hours,
+      category: 'note',
+      projectId: 'simple',
+    );
+
+    await _service.saveLog(log);
+    await _loadLogs();
+  }
+
   Future<void> deleteLog(WorkLogEntry log) async {
     await _service.deleteLog(log);
     await _loadLogs();
   }
-  
+
   Future<String> generateWeeklyReport(DateTime date) async {
     final logs = await _service.getWeekLogs(date);
-    
+
     // Group by Day
     final Map<String, List<WorkLogEntry>> grouped = {};
     for (var log in logs) {
-      final key = "${log.startTime.year}-${log.startTime.month}-${log.startTime.day}";
+      final key = [
+        log.startTime.year.toString(),
+        log.startTime.month.toString().padLeft(2, '0'),
+        log.startTime.day.toString().padLeft(2, '0'),
+      ].join('-');
       grouped.putIfAbsent(key, () => []).add(log);
     }
-    
+
     final buffer = StringBuffer();
     final keys = grouped.keys.toList()..sort();
-    
+
     for (var key in keys) {
       final dayLogs = grouped[key]!;
       if (dayLogs.isEmpty) continue;
-      
+
       final dateObj = dayLogs.first.startTime;
       final weekday = _getWeekdayName(dateObj.weekday);
-      
-      buffer.writeln("$key ($weekday)");
+      final totalHours =
+          dayLogs.fold<double>(0, (sum, log) => sum + log.durationHours);
+
+      buffer.writeln("$key ($weekday) ${totalHours.toStringAsFixed(1)}h");
       for (var log in dayLogs) {
-        final start = "${log.startTime.hour.toString().padLeft(2,'0')}:${log.startTime.minute.toString().padLeft(2,'0')}";
-        final end = "${log.endTime.hour.toString().padLeft(2,'0')}:${log.endTime.minute.toString().padLeft(2,'0')}";
         final duration = log.durationHours.toStringAsFixed(1);
-        
-        String prefix = "[${log.category}]";
-        if (log.projectCode != null && log.projectCode!.isNotEmpty) {
-          prefix = "[${log.projectCode}] ${log.taskName}";
-        }
-        
-        buffer.writeln("- $prefix $start-$end ${log.content} (${duration}h)");
+        buffer.writeln("- ${duration}h ${log.content}");
       }
       buffer.writeln();
     }
-    
+
     return buffer.toString();
   }
-  
+
   String _getWeekdayName(int weekday) {
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     return days[weekday - 1];

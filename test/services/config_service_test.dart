@@ -23,7 +23,7 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       final storedString = prefs.getString('simulator_config');
       expect(storedString, isNotNull);
-      
+
       final storedJson = jsonDecode(storedString!);
       expect(storedJson['version'], '1.0');
       expect((storedJson['groups'] as List).length, 1);
@@ -35,14 +35,13 @@ void main() {
     });
 
     test('loadFromLocalStorage returns data if exists', () async {
-       final config = {'test_key': 'test_val'};
-       SharedPreferences.setMockInitialValues({
-         'simulator_config': jsonEncode(config)
-       });
-       
-       final loaded = await ConfigService.loadFromLocalStorage();
-       expect(loaded, isNotNull);
-       expect(loaded!['test_key'], 'test_val');
+      final config = {'test_key': 'test_val'};
+      SharedPreferences.setMockInitialValues(
+          {'simulator_config': jsonEncode(config)});
+
+      final loaded = await ConfigService.loadFromLocalStorage();
+      expect(loaded, isNotNull);
+      expect(loaded!['test_key'], 'test_val');
     });
   });
 }

@@ -14,7 +14,8 @@ import '../utils/isolate_worker.dart';
 
 class MqttController extends ChangeNotifier {
   final _logger = Logger('MqttController');
-  
+  final Duration _stabilizationDelay;
+
   bool _isRunning = false;
   bool get isRunning => _isRunning;
 
@@ -24,10 +25,12 @@ class MqttController extends ChangeNotifier {
 
   // Callback for logs (UI)
   Function(String message, String type, {String? tag})? onLog;
-  
+
   // Performance: Global Log Switch
   bool _isBusy = false;
   bool get isBusy => _isBusy;
+  bool get isStarting => _isStarting;
+  bool get isStopping => _isStopping;
 
   bool _enableDetailedLogs = true;
   bool get enableDetailedLogs => _enableDetailedLogs;
@@ -36,13 +39,16 @@ class MqttController extends ChangeNotifier {
     if (_enableDetailedLogs == value) return;
     _enableDetailedLogs = value;
     _schedulerService.enableLogs = value;
-    
+
     // Log visible only in console/system log, not UI if disabled (optional, but keep system log generally)
     log('Detailed logging ${value ? 'ENABLED' : 'DISABLED'}', 'info');
     notifyListeners();
   }
 
-  MqttController() {
+  MqttController({
+    bool initializeWorkers = true,
+    Duration stabilizationDelay = const Duration(seconds: 3),
+  }) : _stabilizationDelay = stabilizationDelay {
     _clientManager = MqttClientManager(
       onConnected: _onClientConnected,
       onDisconnected: _onClientDisconnected,
@@ -52,8 +58,18 @@ class MqttController extends ChangeNotifier {
       statisticsCollector: statisticsCollector,
       onLog: log,
     );
-    // Init Background Worker
-    PersistentIsolateManager.instance.init();
+    if (initializeWorkers) {
+      PersistentIsolateManager.instance.init();
+    }
+  }
+
+  @override
+  void dispose() {
+    _schedulerService.stopAll();
+    unawaited(_clientManager.stopAll());
+    PersistentIsolateManager.instance.dispose();
+    statisticsCollector.dispose();
+    super.dispose();
   }
 
   void log(String message, String type, {String? tag}) {
@@ -67,12 +83,12 @@ class MqttController extends ChangeNotifier {
         level = Level.WARNING;
         break;
       case 'success':
-        level = Level.INFO; 
+        level = Level.INFO;
         break;
       default:
         level = Level.INFO;
     }
-    
+
     final String msg = tag != null ? '[$tag] $message' : message;
     _logger.log(level, msg);
 
@@ -85,18 +101,35 @@ class MqttController extends ChangeNotifier {
   // --- Public API ---
 
   bool _isStopping = false;
+  bool _isStarting = false;
+  Future<void>? _stopFuture;
 
   Future<void> stop() async {
-    if (!isRunning) return;
-    
+    if (_isStopping) {
+      return _stopFuture ?? Future<void>.value();
+    }
+    if (!isRunning && !isBusy) return;
+
+    _stopFuture = _stopInternal();
+    return _stopFuture!;
+  }
+
+  Future<void> _stopInternal() async {
     _isBusy = true;
     _isStopping = true; // Signal loops to break
+    _isStarting = false;
     notifyListeners();
     log('Stopping simulation...', 'info');
 
     try {
       _schedulerService.stopAll();
-      await _clientManager.stopAll();
+      await _clientManager.stopAll().timeout(
+        const Duration(seconds: 3),
+        onTimeout: () {
+          log('Stop timed out while disconnecting MQTT clients. Forcing UI state reset.',
+              'warning');
+        },
+      );
       log('Simulation stopped.', 'info');
     } catch (e) {
       log('Error during stop: $e', 'error');
@@ -105,6 +138,9 @@ class MqttController extends ChangeNotifier {
       _isRunning = false;
       _isBusy = false;
       _isStopping = false;
+      _isStarting = false;
+      _stopFuture = null;
+      statisticsCollector.setOnlineDevices(0);
       notifyListeners();
     }
   }
@@ -113,23 +149,24 @@ class MqttController extends ChangeNotifier {
   bool _isInitializing = false;
 
   Future<void> start(Map<String, dynamic> config) async {
-    if (isRunning) {
+    if (isRunning || isBusy) {
       log('Simulation already running.', 'error');
       return;
     }
 
     _isBusy = true;
     _isRunning = true;
+    _isStarting = true;
     _isStopping = false;
     _isInitializing = true; // Block auto-start in onConnected
     notifyListeners();
-    
+
     statisticsCollector.reset();
-    
+
     try {
       // Determine Mode
       String mode = config['mode'] ?? 'basic';
-      
+
       // Phase 1: Connect All Devices
       if (mode == 'basic') {
         await _startBasicMode(config);
@@ -144,29 +181,32 @@ class MqttController extends ChangeNotifier {
       // Phase 2: Stabilization Delay
       if (isRunning && !_isStopping) {
         log('All devices connected. Waiting 3s for stabilization...', 'info');
-        await Future.delayed(const Duration(seconds: 3));
-        
+        await Future.delayed(_stabilizationDelay);
+        if (!isRunning || _isStopping) return;
+
         // Phase 3: Start Data Upload
         log('Stabilization complete. Starting data upload...', 'info');
         _isInitializing = false;
-        
+
         // Reset scheduler time to now (so data starts from t=0)
         _schedulerService.reset();
-        
+
         _clientManager.forEachClient((clientId, client) {
-           final ctx = _clientManager.getClientContext(clientId);
-           if (ctx != null) {
-             _schedulerService.startPublishing(client, clientId, ctx);
-           }
+          final ctx = _clientManager.getClientContext(clientId);
+          if (ctx != null) {
+            _schedulerService.startPublishing(client, clientId, ctx);
+          }
         });
       }
-
     } catch (e) {
       log('Error starting simulation: $e', 'error');
       _isRunning = false;
     } finally {
-      _isBusy = false;
+      _isStarting = false;
       _isInitializing = false; // Ensure reset
+      if (!_isStopping) {
+        _isBusy = false;
+      }
       notifyListeners();
     }
   }
@@ -177,48 +217,49 @@ class MqttController extends ChangeNotifier {
     int startIdx = config['device_start_number'] ?? 1;
     int endIdx = config['device_end_number'] ?? 10;
     int total = endIdx - startIdx + 1;
-    
+
     statisticsCollector.setTotalDevices(total);
-    log('Starting Basic Mode: Devices $startIdx - $endIdx ($total total)', 'info');
-    
+    log('Starting Basic Mode: Devices $startIdx - $endIdx ($total total)',
+        'info');
+
     DataGenerator.resetKey1Counter();
     DataGenerator.resetCustomKeyCounters();
-    
+
     String host = config['mqtt']['host'] ?? 'localhost';
     int port = config['mqtt']['port'] ?? 1883;
     String topic = config['mqtt']['topic'] ?? 'v1/devices/me/telemetry';
     int qos = config['mqtt']['qos'] ?? 0;
-    
+
     // SSL Config
     bool enableSsl = config['mqtt']['enable_ssl'] ?? false;
     String? caPath = config['mqtt']['ca_path'];
     String? certPath = config['mqtt']['cert_path'];
     String? keyPath = config['mqtt']['key_path'];
-    
+
     String clientIdPrefix = config['client_id_prefix'] ?? 'device';
     String userPrefix = config['username_prefix'] ?? 'user';
     String passPrefix = config['password_prefix'] ?? 'pass';
-    
+
     // Prepare common config context
     // We need to pass protocol-specific config so Scheduler can use it.
     // In Basic Mode, each client shares the same interval/format/customKeys except for identity.
     // We'll store this in the context map.
-    
+
     int sendInterval = config['send_interval'] ?? 1;
     String format = config['data']['format'] ?? 'default';
     int dataPointCount = config['data']['data_point_count'] ?? 10;
     List<CustomKeyConfig> customKeys = [];
     if (config['custom_keys'] != null && config['custom_keys'] is List) {
-       customKeys = (config['custom_keys'] as List)
-           .map((e) => CustomKeyConfig.fromJson(e))
-           .toList();
+      customKeys = (config['custom_keys'] as List)
+          .map((e) => CustomKeyConfig.fromJson(e))
+          .toList();
     }
 
     // Connect in batches to avoid overwhelming the system while staying fast
     const int batchSize = 10;
     for (int i = startIdx; i <= endIdx; i += batchSize) {
       if (!isRunning || _isStopping) break;
-      
+
       List<Future<void>> batch = [];
       for (int j = i; j < i + batchSize && j <= endIdx; j++) {
         String idxStr = j.toString();
@@ -227,13 +268,12 @@ class MqttController extends ChangeNotifier {
         String password = '$passPrefix$idxStr';
 
         final context = BasicSimulationContext(
-          topic: topic,
-          qos: qos,
-          intervalSeconds: sendInterval,
-          format: format,
-          dataPointCount: dataPointCount,
-          customKeys: customKeys
-        );
+            topic: topic,
+            qos: qos,
+            intervalSeconds: sendInterval,
+            format: format,
+            dataPointCount: dataPointCount,
+            customKeys: customKeys);
 
         batch.add(_clientManager.createClient(
           host: host,
@@ -249,7 +289,7 @@ class MqttController extends ChangeNotifier {
           keyPath: keyPath,
         ));
       }
-      
+
       await Future.wait(batch);
       // Small pause between batches
       await Future.delayed(const Duration(milliseconds: 100));
@@ -266,20 +306,22 @@ class MqttController extends ChangeNotifier {
         groups.add(GroupConfig.fromJson(g));
       }
     }
-    
+
     if (groups.isEmpty) {
       log('No groups configured for Advanced Mode.', 'warning');
-      stop();
+      await stop();
       return;
     }
-    
-    int total = groups.fold(0, (sum, g) => sum + (g.endDeviceNumber - g.startDeviceNumber + 1));
+
+    int total = groups.fold(
+        0, (sum, g) => sum + (g.endDeviceNumber - g.startDeviceNumber + 1));
     statisticsCollector.setTotalDevices(total);
-    log('Starting Advanced Mode: ${groups.length} Groups, $total Devices total.', 'info');
-    
+    log('Starting Advanced Mode: ${groups.length} Groups, $total Devices total.',
+        'info');
+
     DataGenerator.resetKey1Counter();
     DataGenerator.resetCustomKeyCounters();
-    
+
     String host = config['mqtt']['host'] ?? 'localhost';
     int port = config['mqtt']['port'] ?? 1883;
     String topic = config['mqtt']['topic'] ?? 'v1/devices/me/telemetry';
@@ -294,24 +336,23 @@ class MqttController extends ChangeNotifier {
     const int batchSize = 5; // Smaller batch for advanced mode groups
     for (var group in groups) {
       if (!isRunning || _isStopping) break;
-      
+
       log('Starting Group: ${group.name}', 'info');
-      
-      for (int i = group.startDeviceNumber; i <= group.endDeviceNumber; i += batchSize) {
+
+      for (int i = group.startDeviceNumber;
+          i <= group.endDeviceNumber;
+          i += batchSize) {
         if (!isRunning || _isStopping) break;
 
         List<Future<void>> batch = [];
         for (int j = i; j < i + batchSize && j <= group.endDeviceNumber; j++) {
-          String idxStr = j.toString(); 
+          String idxStr = j.toString();
           String clientId = '${group.clientIdPrefix}$idxStr';
           String username = '${group.usernamePrefix}$idxStr';
           String password = '${group.passwordPrefix}$idxStr';
 
-          final context = AdvancedSimulationContext(
-            topic: topic, 
-            qos: qos,
-            group: group
-          );
+          final context =
+              AdvancedSimulationContext(topic: topic, qos: qos, group: group);
 
           batch.add(_clientManager.createClient(
             host: host,
@@ -338,10 +379,10 @@ class MqttController extends ChangeNotifier {
 
   void _onClientConnected(String clientId, MqttServerClient client) {
     if (!isRunning) return;
-    
+
     // Update stats
     statisticsCollector.setOnlineDevices(_clientManager.activeClientCount);
-    
+
     // Start Scheduler
     // If initializing (Phase 1), do NOT start scheduler yet.
     if (_isInitializing) return;
@@ -354,6 +395,7 @@ class MqttController extends ChangeNotifier {
 
   void _onClientDisconnected(String clientId) {
     statisticsCollector.setOnlineDevices(_clientManager.activeClientCount);
-    _schedulerService.stopPublishing(clientId); // Stop scheduler for this client
+    _schedulerService
+        .stopPublishing(clientId); // Stop scheduler for this client
   }
 }

@@ -7,10 +7,10 @@ import '../../models/simulation_context.dart';
 
 class MqttClientManager {
   final _logger = Logger('MqttClientManager');
-  
+
   // Active Clients
   final Map<String, MqttServerClient> _clients = {};
-  
+
   // Reconnection Logic
   final Map<String, Map<String, dynamic>> _clientConfigs = {};
   final Map<String, int> _reconnectAttempts = {};
@@ -37,7 +37,8 @@ class MqttClientManager {
     return _clientConfigs[clientId]?['context'] as SimulationContext?;
   }
 
-  void forEachClient(void Function(String clientId, MqttServerClient client) action) {
+  void forEachClient(
+      void Function(String clientId, MqttServerClient client) action) {
     _clients.forEach(action);
   }
 
@@ -54,8 +55,9 @@ class MqttClientManager {
     String? certPath,
     String? keyPath,
   }) async {
-    // Store config for reconnection
-    _clientConfigs[clientId] = {
+    // Store config for reconnection. The map instance is also the generation
+    // token for this async connect attempt.
+    final clientConfig = <String, dynamic>{
       'host': host,
       'port': port,
       'clientId': clientId,
@@ -68,6 +70,7 @@ class MqttClientManager {
       'certPath': certPath,
       'keyPath': keyPath,
     };
+    _clientConfigs[clientId] = clientConfig;
 
     // Ensure old client is cleaned up if it exists
     // Ensure old client is cleaned up if it exists
@@ -79,30 +82,35 @@ class MqttClientManager {
       _logger.info('[$clientId] Force replacing existing client');
       final oldClient = _clients.remove(clientId); // Remove first
       try {
-        oldClient?.disconnect(); // This triggers _handleDisconnect, but map is empty/different
+        oldClient
+            ?.disconnect(); // This triggers _handleDisconnect, but map is empty/different
       } catch (_) {}
-      
+
       // Ensure UI knows it's disconnected (though we are about to reconnect)
-      // onDisconnected(clientId); 
+      // onDisconnected(clientId);
     }
 
     final client = MqttServerClient(host, clientId);
     client.port = port;
+    client.socketTimeout = 3000;
     client.keepAlivePeriod = 60;
     client.logging(on: false);
     client.autoReconnect = false; // Manual handling
-    
+
     if (enableSsl) {
       client.secure = true;
       client.securityContext = SecurityContext.defaultContext;
-      
+
       try {
         if (caPath != null && caPath.isNotEmpty) {
-           client.securityContext.setTrustedCertificates(caPath);
+          client.securityContext.setTrustedCertificates(caPath);
         }
-        if (certPath != null && certPath.isNotEmpty && keyPath != null && keyPath.isNotEmpty) {
-           client.securityContext.useCertificateChain(certPath);
-           client.securityContext.usePrivateKey(keyPath);
+        if (certPath != null &&
+            certPath.isNotEmpty &&
+            keyPath != null &&
+            keyPath.isNotEmpty) {
+          client.securityContext.useCertificateChain(certPath);
+          client.securityContext.usePrivateKey(keyPath);
         }
       } catch (e) {
         onLog('SSL Configuration Error: $e', 'error', tag: _getTag(clientId));
@@ -125,15 +133,31 @@ class MqttClientManager {
     try {
       await client.connect();
     } catch (e) {
+      if (!identical(_clientConfigs[clientId], clientConfig)) {
+        _disconnectQuietly(client);
+        return;
+      }
       _handleConnectionFailure(clientId, e);
+      return;
+    }
+
+    if (!identical(_clientConfigs[clientId], clientConfig)) {
+      _disconnectQuietly(client);
       return;
     }
 
     if (client.connectionStatus!.state == MqttConnectionState.connected) {
       _handleConnectionSuccess(clientId, client);
     } else {
-      _handleConnectionFailure(clientId, 'Status: ${client.connectionStatus!.state}');
+      _handleConnectionFailure(
+          clientId, 'Status: ${client.connectionStatus!.state}');
     }
+  }
+
+  void _disconnectQuietly(MqttServerClient client) {
+    try {
+      client.disconnect();
+    } catch (_) {}
   }
 
   void _handleConnectionSuccess(String clientId, MqttServerClient client) {
@@ -144,7 +168,8 @@ class MqttClientManager {
   }
 
   void _handleConnectionFailure(String clientId, dynamic error) {
-    onLog('[$clientId] Connection failed: $error', 'error', tag: _getTag(clientId));
+    onLog('[$clientId] Connection failed: $error', 'error',
+        tag: _getTag(clientId));
     _scheduleReconnect(clientId);
   }
 
@@ -153,7 +178,8 @@ class MqttClientManager {
     if (_clients[clientId] == client) {
       _clients.remove(clientId);
       onDisconnected(clientId);
-      onLog('[$clientId] Disconnected, will retry...', 'warning', tag: _getTag(clientId));
+      onLog('[$clientId] Disconnected, will retry...', 'warning',
+          tag: _getTag(clientId));
       _scheduleReconnect(clientId);
     } else {
       // Logic: Client mismatch (replaced or removed already). Do not reconnect.
@@ -166,13 +192,16 @@ class MqttClientManager {
     int attempts = _reconnectAttempts[clientId] ?? 0;
 
     // Infinite retry: no max attempts check
-    
+
     _reconnectTimers[clientId]?.cancel();
 
-    int delayMs = (_baseReconnectDelayMs * (1 << attempts.clamp(0, 5))).clamp(0, _maxReconnectDelayMs);
+    int delayMs = (_baseReconnectDelayMs * (1 << attempts.clamp(0, 5)))
+        .clamp(0, _maxReconnectDelayMs);
     _reconnectAttempts[clientId] = attempts + 1;
 
-    onLog('Reconnecting in ${delayMs ~/ 1000}s (attempt ${attempts + 1})...', 'warning', tag: _getTag(clientId));
+    onLog('Reconnecting in ${delayMs ~/ 1000}s (attempt ${attempts + 1})...',
+        'warning',
+        tag: _getTag(clientId));
 
     _reconnectTimers[clientId] = Timer(Duration(milliseconds: delayMs), () {
       if (!_clientConfigs.containsKey(clientId)) return;
@@ -195,7 +224,7 @@ class MqttClientManager {
 
   Future<void> stopAll() async {
     _logger.info('Stopping all clients...');
-    
+
     // 1. Clear configs to prevent reconnects
     for (var timer in _reconnectTimers.values) {
       timer?.cancel();
@@ -207,7 +236,7 @@ class MqttClientManager {
     // 2. Disconnect clients safely
     // Create a copy of values to avoid concurrent modification issues during iteration
     final clientsToDisconnect = List<MqttServerClient>.from(_clients.values);
-    
+
     // Clear the map immediately so callbacks know we are shutting down
     _clients.clear();
 
@@ -222,6 +251,7 @@ class MqttClientManager {
     }
   }
 
+  // ignore: unused_element
   void _cleanupClient(String clientId) {
     _reconnectTimers[clientId]?.cancel();
     _reconnectTimers.remove(clientId);
@@ -229,13 +259,13 @@ class MqttClientManager {
     _reconnectAttempts.remove(clientId);
     _clients.remove(clientId);
     // Notify controller that this client is dead?
-    onDisconnected(clientId); 
+    onDisconnected(clientId);
   }
 
   String _getTag(String clientId) {
     final config = _clientConfigs[clientId];
     if (config == null) return clientId;
-    
+
     final context = config['context'];
     if (context is AdvancedSimulationContext) {
       return context.group.name;

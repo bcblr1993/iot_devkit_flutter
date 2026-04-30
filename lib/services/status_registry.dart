@@ -9,7 +9,8 @@ class StatusRegistry extends ChangeNotifier {
   String get message => _message;
   Color get color => _color;
 
-  void setStatus(String msg, Color color, {Duration duration = const Duration(seconds: 8)}) {
+  void setStatus(String msg, Color color,
+      {Duration duration = const Duration(seconds: 8)}) {
     _clearTimer?.cancel();
     _message = msg;
     _color = color;

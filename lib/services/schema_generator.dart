@@ -4,9 +4,10 @@ class SchemaGenerator {
   /// Generate a simplified schema based on ratios
   /// [keyCount] Total number of keys
   /// [typeRatio] Map of type ratios, e.g., {'float': 0.5, 'int': 0.5}
-  static List<SchemaItem> generate(int keyCount, Map<String, double> typeRatio) {
+  static List<SchemaItem> generate(
+      int keyCount, Map<String, double> typeRatio) {
     List<SchemaItem> schema = [];
-    
+
     // Normalize ratios
     double totalRatio = typeRatio.values.fold(0.0, (a, b) => a + b);
     if (totalRatio == 0) {
@@ -32,7 +33,7 @@ class SchemaGenerator {
     }
 
     int keyIndex = 1;
-    
+
     // 1. Float
     for (int i = 0; i < (counts['float'] ?? 0); i++) {
       schema.add(SchemaItem(name: 'key_${keyIndex++}', type: 'float'));

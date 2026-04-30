@@ -16,7 +16,7 @@ class AppToast {
   static OverlayEntry? _currentToast;
   static Timer? _dismissTimer;
   static int _toastId = 0;
-  
+
   /// 显示Toast通知 (单实例模式,新通知替换旧通知)
   static void show({
     required BuildContext context,
@@ -28,17 +28,17 @@ class AppToast {
     // 取消之前的定时器
     _dismissTimer?.cancel();
     _dismissTimer = null;
-    
+
     // 移除当前的Toast
     _currentToast?.remove();
     _currentToast = null;
-    
+
     // 增加ID防止旧回调影响新Toast
     _toastId++;
     final currentId = _toastId;
-    
+
     final overlay = Overlay.of(context);
-    
+
     final entry = OverlayEntry(
       builder: (context) => _ToastWidget(
         key: ValueKey(currentId),
@@ -48,16 +48,16 @@ class AppToast {
         onDismiss: () => _dismiss(currentId),
       ),
     );
-    
+
     _currentToast = entry;
     overlay.insert(entry);
-    
+
     // 设置自动消失定时器
     _dismissTimer = Timer(duration, () {
       _dismiss(currentId);
     });
   }
-  
+
   /// 内部dismiss方法,检查ID
   static void _dismiss(int id) {
     if (id == _toastId && _currentToast != null) {
@@ -67,9 +67,10 @@ class AppToast {
       _currentToast = null;
     }
   }
-  
+
   /// 显示成功通知
-  static void success(BuildContext context, String message, {Duration? duration}) {
+  static void success(BuildContext context, String message,
+      {Duration? duration}) {
     show(
       context: context,
       message: message,
@@ -77,9 +78,10 @@ class AppToast {
       duration: duration ?? const Duration(seconds: 2),
     );
   }
-  
+
   /// 显示错误通知
-  static void error(BuildContext context, String message, {Duration? duration}) {
+  static void error(BuildContext context, String message,
+      {Duration? duration}) {
     show(
       context: context,
       message: message,
@@ -87,9 +89,10 @@ class AppToast {
       duration: duration ?? const Duration(seconds: 3),
     );
   }
-  
+
   /// 显示警告通知
-  static void warning(BuildContext context, String message, {Duration? duration}) {
+  static void warning(BuildContext context, String message,
+      {Duration? duration}) {
     show(
       context: context,
       message: message,
@@ -97,7 +100,7 @@ class AppToast {
       duration: duration ?? const Duration(seconds: 2),
     );
   }
-  
+
   /// 显示信息通知
   static void info(BuildContext context, String message, {Duration? duration}) {
     show(
@@ -107,7 +110,7 @@ class AppToast {
       duration: duration ?? const Duration(seconds: 2),
     );
   }
-  
+
   /// 清除当前Toast
   static void clear() {
     _dismissTimer?.cancel();
@@ -123,7 +126,7 @@ class _ToastWidget extends StatefulWidget {
   final ToastType type;
   final IconData? icon;
   final VoidCallback onDismiss;
-  
+
   const _ToastWidget({
     super.key,
     required this.message,
@@ -131,16 +134,17 @@ class _ToastWidget extends StatefulWidget {
     this.icon,
     required this.onDismiss,
   });
-  
+
   @override
   State<_ToastWidget> createState() => _ToastWidgetState();
 }
 
-class _ToastWidgetState extends State<_ToastWidget> with SingleTickerProviderStateMixin {
+class _ToastWidgetState extends State<_ToastWidget>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-  
+
   @override
   void initState() {
     super.initState();
@@ -148,25 +152,25 @@ class _ToastWidgetState extends State<_ToastWidget> with SingleTickerProviderSta
       vsync: this,
       duration: const Duration(milliseconds: 200),
     );
-    
+
     _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOut),
     );
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0.2, 0),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-    
+
     _controller.forward();
   }
-  
+
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-  
+
   Color _getTypeColor(ToastType type, ThemeData theme) {
     final primary = theme.colorScheme.primary;
     switch (type) {
@@ -180,7 +184,7 @@ class _ToastWidgetState extends State<_ToastWidget> with SingleTickerProviderSta
         return primary;
     }
   }
-  
+
   IconData _getTypeIcon(ToastType type) {
     switch (type) {
       case ToastType.success:
@@ -193,14 +197,14 @@ class _ToastWidgetState extends State<_ToastWidget> with SingleTickerProviderSta
         return Icons.info_rounded;
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final typeColor = _getTypeColor(widget.type, theme);
     final icon = widget.icon ?? _getTypeIcon(widget.type);
-    
+
     return Positioned(
       top: 20,
       right: 20,
@@ -217,21 +221,20 @@ class _ToastWidgetState extends State<_ToastWidget> with SingleTickerProviderSta
                   maxWidth: 300,
                   minWidth: 180,
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: isDark 
-                      ? theme.colorScheme.surface 
-                      : Colors.white,
+                  color: isDark ? theme.colorScheme.surface : Colors.white,
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: [
                     BoxShadow(
-                      color: typeColor.withOpacity(0.25),
+                      color: typeColor.withValues(alpha: 0.25),
                       blurRadius: 10,
                       offset: const Offset(0, 3),
                     ),
                   ],
                   border: Border.all(
-                    color: typeColor.withOpacity(0.4),
+                    color: typeColor.withValues(alpha: 0.4),
                     width: 1,
                   ),
                 ),
@@ -256,7 +259,7 @@ class _ToastWidgetState extends State<_ToastWidget> with SingleTickerProviderSta
                     Icon(
                       Icons.close_rounded,
                       size: 14,
-                      color: theme.colorScheme.onSurface.withOpacity(0.4),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                     ),
                   ],
                 ),

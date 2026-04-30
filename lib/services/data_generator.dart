@@ -4,7 +4,7 @@ import '../models/custom_key_config.dart';
 
 class DataGenerator {
   static final Random _random = Random();
-  
+
   // ======================== key_1 Counter ========================
   static final Map<String, int> _key1Counters = {};
   static const int _key1MaxValue = 9007199254740991; // JS Safe Max Int
@@ -12,15 +12,15 @@ class DataGenerator {
   static int getKey1Value(String? clientId) {
     String key = clientId ?? '__default__';
     int current = _key1Counters[key] ?? 1;
-    
+
     int returnValue = current;
-    
+
     current++;
     if (current > _key1MaxValue) {
       current = 1;
     }
     _key1Counters[key] = current;
-    
+
     return returnValue;
   }
 
@@ -29,7 +29,7 @@ class DataGenerator {
   }
 
   // ======================== Helpers ========================
-  
+
   static double getRandomFloat(double min, double max, int decimalPlaces) {
     double val = _random.nextDouble() * (max - min) + min;
     return double.parse(val.toStringAsFixed(decimalPlaces));
@@ -41,15 +41,16 @@ class DataGenerator {
 
   // ======================== Generators ========================
 
-  static Map<String, dynamic> generateBatteryStatus(int count, {String? clientId, List<CustomKeyConfig>? customKeys}) {
+  static Map<String, dynamic> generateBatteryStatus(int count,
+      {String? clientId, List<CustomKeyConfig>? customKeys}) {
     final Map<String, dynamic> data = {};
-    
+
     // Custom keys are part of the total count
     final int customCount = customKeys?.length ?? 0;
     // We prioritize custom keys but only up to 'count'
     final int effectiveCustomCount = min(customCount, count);
     final int autoGenerateCount = count - effectiveCustomCount;
-    
+
     // First, add auto-generated keys (if any space left)
     for (int i = 1; i <= autoGenerateCount; i++) {
       if (i == 1) {
@@ -72,7 +73,7 @@ class DataGenerator {
         }
       }
     }
-    
+
     // Then, add custom keys (up to effective limit)
     if (customKeys != null && customKeys.isNotEmpty) {
       for (int i = 0; i < effectiveCustomCount; i++) {
@@ -95,29 +96,29 @@ class DataGenerator {
       });
     }
 
-    DateTime now = timestamp != null 
-        ? DateTime.fromMillisecondsSinceEpoch(timestamp) 
+    DateTime now = timestamp != null
+        ? DateTime.fromMillisecondsSinceEpoch(timestamp)
         : DateTime.now();
-        
-    String timeStr = now.toIso8601String().replaceAll('T', ' ').substring(0, 19);
+
+    String timeStr =
+        now.toIso8601String().replaceAll('T', ' ').substring(0, 19);
 
     return {
       "type": "real",
       "sn": "TN001",
       "sendStartTime": timeStr,
       "time": now.millisecondsSinceEpoch,
-      "data": {
-        "C24_D1": arr
-      }
+      "data": {"C24_D1": arr}
     };
   }
-  
+
   static Map<String, dynamic> generateTnEmptyPayload({int? timestamp}) {
-    DateTime now = timestamp != null 
-        ? DateTime.fromMillisecondsSinceEpoch(timestamp) 
+    DateTime now = timestamp != null
+        ? DateTime.fromMillisecondsSinceEpoch(timestamp)
         : DateTime.now();
-        
-    String timeStr = now.toIso8601String().replaceAll('T', ' ').substring(0, 19);
+
+    String timeStr =
+        now.toIso8601String().replaceAll('T', ' ').substring(0, 19);
 
     return {
       "type": "real",
@@ -128,7 +129,9 @@ class DataGenerator {
     };
   }
 
-  static Map<String, dynamic> generateTypedData(List<SchemaItem> schema, int count, {String? clientId, int? timestamp}) {
+  static Map<String, dynamic> generateTypedData(
+      List<SchemaItem> schema, int count,
+      {String? clientId, int? timestamp}) {
     final Map<String, dynamic> data = {};
     int effectiveCount = min(count, schema.length);
 
@@ -164,7 +167,7 @@ class DataGenerator {
 
     return data;
   }
-  
+
   // ======================== Custom Keys ========================
   static final Map<String, int> _customKeyCounters = {};
   static final Map<String, int> _customKeyToggleStates = {};
@@ -201,7 +204,6 @@ class DataGenerator {
       case CustomKeyMode.toggle:
         return _getCustomKeyToggleValue(key.name);
       case CustomKeyMode.random:
-      default:
         return _generateRandomValue(key);
     }
   }
@@ -216,7 +218,6 @@ class DataGenerator {
       case CustomKeyType.boolean:
         return value.toLowerCase() == 'true' || value == '1';
       case CustomKeyType.string:
-      default:
         return value;
     }
   }
@@ -228,9 +229,9 @@ class DataGenerator {
         int max = key.max?.toInt() ?? 100;
         return getRandomInt(min, max);
       case CustomKeyType.float:
-         double min = key.min ?? 0;
-         double max = key.max ?? 100;
-         return getRandomFloat(min, max, 2);
+        double min = key.min ?? 0;
+        double max = key.max ?? 100;
+        return getRandomFloat(min, max, 2);
       case CustomKeyType.string:
         return '${key.name}_${getRandomInt(0, 1000)}';
       case CustomKeyType.boolean:
@@ -238,7 +239,8 @@ class DataGenerator {
     }
   }
 
-  static Map<String, dynamic> generateCustomKeys(List<CustomKeyConfig> customKeys) {
+  static Map<String, dynamic> generateCustomKeys(
+      List<CustomKeyConfig> customKeys) {
     final Map<String, dynamic> data = {};
     for (var key in customKeys) {
       data[key.name] = _generateSingleCustomValue(key);
@@ -246,17 +248,21 @@ class DataGenerator {
     return data;
   }
 
-  static Map<String, dynamic> mergeCustomKeys(Map<String, dynamic> generatedData, List<CustomKeyConfig> customKeys) {
+  static Map<String, dynamic> mergeCustomKeys(
+      Map<String, dynamic> generatedData, List<CustomKeyConfig> customKeys) {
     if (customKeys.isEmpty) return generatedData;
     final customData = generateCustomKeys(customKeys);
     // Custom keys usually come first or override
     return {...customData, ...generatedData};
   }
 
-  // FORCE TIMESTAMP: Ensures that the payload carries the logical timestamp, 
+  // FORCE TIMESTAMP: Ensures that the payload carries the logical timestamp,
   // preventing server-side arrival time artifacts under jitter/load.
-  static Map<String, dynamic> wrapWithTimestamp(Map<String, dynamic> data, int timestamp) {
-    if (data.containsKey('ts')) return data; // Don't overwrite if already exists (e.g. from Tn payload)
+  static Map<String, dynamic> wrapWithTimestamp(
+      Map<String, dynamic> data, int timestamp) {
+    if (data.containsKey('ts')) {
+      return data; // Don't overwrite if already exists (e.g. from Tn payload)
+    }
     return {
       'ts': timestamp,
       'values': data,

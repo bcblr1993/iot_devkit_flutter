@@ -1,7 +1,5 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:ui';
 import 'dart:convert';
 import 'package:provider/provider.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -15,12 +13,15 @@ import '../../services/config_service.dart';
 import 'log_console.dart';
 import 'performance_monitor.dart';
 import 'profile_sidebar.dart';
-import '../../services/profile_service.dart';
 import '../styles/app_theme_effect.dart';
-import '../styles/app_constants.dart';
-import '../../services/theme_manager.dart';
+import '../components/app_input_decoration.dart';
+import '../components/app_section.dart';
+import '../components/form_grid.dart';
+import '../components/metric_chip.dart';
+import '../simulator/keep_alive_wrapper.dart';
+import '../simulator/simulator_header.dart';
+import '../simulator/simulator_log_dock.dart';
 import '../../viewmodels/mqtt_view_model.dart';
-import '../../services/data_generator.dart';
 
 class SimulatorPanel extends StatefulWidget {
   final List<LogEntry> logs;
@@ -42,7 +43,8 @@ class SimulatorPanel extends StatefulWidget {
   State<SimulatorPanel> createState() => _SimulatorPanelState();
 }
 
-class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProviderStateMixin {
+class _SimulatorPanelState extends State<SimulatorPanel>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isLogMaximized = false;
 
@@ -54,8 +56,7 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
   }
 
   void _handleTabSelection() {
-    if (_tabController.indexIsChanging) {
-      // Rebuild to update button logic (isBasic check)
+    if (mounted) {
       setState(() {});
     }
   }
@@ -73,7 +74,8 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
       AppToast.success(context, msg);
     } else if (color == Colors.orange) {
       AppToast.warning(context, msg);
-    } else if (color == Theme.of(context).colorScheme.error || color == Colors.red) {
+    } else if (color == Theme.of(context).colorScheme.error ||
+        color == Colors.red) {
       AppToast.error(context, msg);
     } else {
       AppToast.info(context, msg);
@@ -81,8 +83,9 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
   }
 
   // --- Dialogs ---
-  
-  void _showUnifiedPreviewDialog(BuildContext context, Map<String, dynamic> data, VoidCallback? onConfirm) async {
+
+  void _showUnifiedPreviewDialog(BuildContext context,
+      Map<String, dynamic> data, VoidCallback? onConfirm) async {
     final l10n = AppLocalizations.of(context)!;
     final jsonStr = const JsonEncoder.withIndent('  ').convert(data);
     final isConfirmMode = onConfirm != null;
@@ -100,45 +103,55 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
       showConfirmButton: isConfirmMode,
       confirmText: l10n.startNow,
       cancelText: isConfirmMode ? l10n.cancel : l10n.close,
-      extraWidget: isConfirmMode ? StatefulBuilder(
-        builder: (context, setState) {
-          final controller = Provider.of<MqttController>(context, listen: false);
-          bool isPerformanceMode = !controller.enableDetailedLogs;
-          return Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2)),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.speed_rounded, color: theme.colorScheme.primary),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(l10n.performanceMode ?? 'Performance Mode', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
-                      Text('Disables detailed logs for speed', style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withOpacity(0.6))),
-                    ],
-                  ),
+      extraWidget: isConfirmMode
+          ? StatefulBuilder(builder: (context, setState) {
+              final controller =
+                  Provider.of<MqttController>(context, listen: false);
+              bool isPerformanceMode = !controller.enableDetailedLogs;
+              return Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color:
+                      theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.2)),
                 ),
-                Switch(
-                  value: isPerformanceMode,
-                  onChanged: (val) {
-                    setState(() {
-                      controller.toggleDetailedLogs(!val);
-                    });
-                  },
+                child: Row(
+                  children: [
+                    Icon(Icons.speed_rounded, color: theme.colorScheme.primary),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(l10n.performanceMode,
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.primary)),
+                          Text('Disables detailed logs for speed',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: theme.colorScheme.onSurface
+                                      .withValues(alpha: 0.6))),
+                        ],
+                      ),
+                    ),
+                    Switch(
+                      value: isPerformanceMode,
+                      onChanged: (val) {
+                        setState(() {
+                          controller.toggleDetailedLogs(!val);
+                        });
+                      },
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          );
-        }
-      ) : null,
+              );
+            })
+          : null,
     );
-    
+
     if (result == true) {
       onConfirm?.call();
     }
@@ -150,77 +163,65 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
   Widget build(BuildContext context) {
     // Inject MqttViewModel here.
     final mqttController = Provider.of<MqttController>(context);
-    
+
     return ChangeNotifierProvider(
       create: (_) => MqttViewModel(),
-      child: Consumer<MqttViewModel>(
-        builder: (context, vm, _) {
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Sidebar
-              ProfileSidebar(
-                isVisible: _showProfileSidebar,
-                onClose: () => setState(() => _showProfileSidebar = false),
-              ),
-              
-              // Main Content
-              Expanded(
-                child: _buildContent(context, vm, mqttController),
-              ),
-            ],
-          );
-        }
-      ),
+      child: Consumer<MqttViewModel>(builder: (context, vm, _) {
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Sidebar
+            ProfileSidebar(
+              isVisible: _showProfileSidebar,
+              onClose: () => setState(() => _showProfileSidebar = false),
+            ),
+
+            // Main Content
+            Expanded(
+              child: _buildContent(context, vm, mqttController),
+            ),
+          ],
+        );
+      }),
     );
   }
 
-  Widget _buildContent(BuildContext context, MqttViewModel vm, MqttController mqttController) {
+  Widget _buildContent(
+      BuildContext context, MqttViewModel vm, MqttController mqttController) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final effect = theme.extension<AppThemeEffect>() ?? 
-                   const AppThemeEffect(animationCurve: Curves.easeInOut, layoutDensity: 1.0, borderRadius: 8.0, icons: AppIcons.standard);
+    final effect = theme.extension<AppThemeEffect>() ??
+        const AppThemeEffect(
+            animationCurve: Curves.easeInOut,
+            layoutDensity: 1.0,
+            borderRadius: 8.0,
+            icons: AppIcons.standard);
     final isRunning = mqttController.isRunning;
 
     return Stack(
       children: [
         Positioned.fill(
-          bottom: 40,
+          bottom: SimulatorLogDock.collapsedHeight,
           child: Column(
             children: [
               // Top Bar with Toggle
               Padding(
                 padding: EdgeInsets.symmetric(
-                  horizontal: 12.0 * effect.layoutDensity, 
-                  vertical: 8.0 * effect.layoutDensity
-                ),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(_showProfileSidebar ? Icons.menu_open : Icons.menu),
-                      tooltip: l10n.profiles ?? 'Profiles',
-                      onPressed: () => setState(() => _showProfileSidebar = !_showProfileSidebar),
-                    ),
-                    const SizedBox(width: 8),
-                    if (vm.currentProfileId != null)
-                       Chip(
-                         label: FutureBuilder<String?>(
-                           future: vm.currentProfileId == null ? null : ProfileService().loadProfiles().then((list) => list.firstWhere((p) => p.id == vm.currentProfileId).name),
-                           builder: (context, snapshot) {
-                             return Text(snapshot.data ?? l10n.profileName ?? 'Profile');
-                           },
-                         ),
-                         onDeleted: () => vm.clearCurrentProfile(),
-                         deleteIcon: const Icon(Icons.close, size: 16),
-                         visualDensity: VisualDensity.compact,
-                       ),
-                  ],
+                    horizontal: 12.0 * effect.layoutDensity,
+                    vertical: 10.0 * effect.layoutDensity),
+                child: SimulatorHeader(
+                  isProfileSidebarVisible: _showProfileSidebar,
+                  currentProfileId: vm.currentProfileId,
+                  onToggleProfileSidebar: () => setState(
+                      () => _showProfileSidebar = !_showProfileSidebar),
+                  onClearProfile: vm.clearCurrentProfile,
                 ),
               ),
 
               // MQTT Section
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12.0 * effect.layoutDensity),
+                padding: EdgeInsets.symmetric(
+                    horizontal: 12.0 * effect.layoutDensity),
                 child: Form(
                   key: vm.formKeyMqtt,
                   autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -243,93 +244,83 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
               // Config Tabs or Performance Monitor (Collapsible)
               Expanded(
                 child: (isRunning && _showMonitor)
-                  ? Stack(
-                      children: [
-                        const PerformanceMonitor(),
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: IconButton.filledTonal(
-                            icon: const Icon(Icons.close, size: 18),
-                            onPressed: () => setState(() => _showMonitor = false),
-                            tooltip: l10n.close ?? 'Close',
+                    ? Stack(
+                        children: [
+                          const PerformanceMonitor(),
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: IconButton.filledTonal(
+                              icon: const Icon(Icons.close, size: 18),
+                              onPressed: () =>
+                                  setState(() => _showMonitor = false),
+                              tooltip: l10n.close,
+                            ),
                           ),
-                        ),
-                      ],
-                    )
-                  : IgnorePointer(
-                  ignoring: mqttController.isBusy, // Only ignore when starting/stopping, not just running
-                  child: Opacity(
-                    opacity: mqttController.isBusy ? 0.7 : 1.0,
-                    child: Column(
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 12.0 * effect.layoutDensity),
-                          child: TabBar(
-                            controller: _tabController,
-                            labelColor: theme.colorScheme.primary,
-                            unselectedLabelColor: theme.colorScheme.onSurface.withOpacity(0.6),
-                            indicatorColor: theme.colorScheme.primary,
-                            dividerColor: Colors.transparent,
-                            tabs: [
-                              Tab(text: l10n.basicMode),
-                              Tab(text: l10n.advancedMode),
-                            ],
-                          ),
-                        ),
-                        Expanded(
-                          child: TabBarView(
-                            controller: _tabController,
-                            physics: const BouncingScrollPhysics(),
+                        ],
+                      )
+                    : IgnorePointer(
+                        ignoring: mqttController
+                            .isBusy, // Only ignore when starting/stopping, not just running
+                        child: Opacity(
+                          opacity: mqttController.isBusy ? 0.7 : 1.0,
+                          child: Column(
                             children: [
-                              KeepAliveWrapper(child: _buildBasicTab(context, vm, isRunning, l10n)),
-                              KeepAliveWrapper(child: _buildAdvancedTab(context, vm, isRunning, l10n)),
+                              _buildModeSelector(context, l10n, theme, effect),
+                              Expanded(
+                                child: TabBarView(
+                                  controller: _tabController,
+                                  physics: const BouncingScrollPhysics(),
+                                  children: [
+                                    KeepAliveWrapper(
+                                        child: _buildBasicTab(
+                                            context, vm, isRunning, l10n)),
+                                    KeepAliveWrapper(
+                                        child: _buildAdvancedTab(
+                                            context, vm, isRunning, l10n)),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
+                      ),
               ),
-              Divider(height: 1, thickness: 1, color: theme.colorScheme.primary.withOpacity(0.08)),
+              Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: theme.colorScheme.primary.withValues(alpha: 0.08)),
 
               // Action Buttons
               Padding(
-                padding: EdgeInsets.all(12.0 * effect.layoutDensity),
-                child: _buildActionButtons(context, vm, mqttController, l10n, effect),
+                padding: EdgeInsets.fromLTRB(
+                  12.0 * effect.layoutDensity,
+                  10.0 * effect.layoutDensity,
+                  12.0 * effect.layoutDensity,
+                  12.0 * effect.layoutDensity,
+                ),
+                child: _buildActionButtons(
+                    context, vm, mqttController, l10n, effect),
               ),
             ],
           ),
         ),
-
-        // Log Console (Unchanged logic roughly)
-        AnimatedPositioned(
-          duration: const Duration(milliseconds: 300),
-          curve: effect.animationCurve,
-          left: 0, right: 0, bottom: 0,
-          height: _isLogMaximized 
-              ? MediaQuery.of(context).size.height 
-              : (widget.isLogExpanded ? MediaQuery.of(context).size.height * 0.5 : 40),
-          child: Material(
-            elevation: 16,
-            shadowColor: Colors.black.withOpacity(0.5),
-            child: LogConsole(
-              logs: widget.logs,
-              isExpanded: widget.isLogExpanded,
-              onToggle: widget.onToggleLog,
-              onClear: widget.onClearLog,
-              isMaximized: _isLogMaximized,
-              onMaximize: () => setState(() => _isLogMaximized = !_isLogMaximized),
-              headerContent: _buildLogToolbarStats(context, l10n),
-            ),
-          ),
+        SimulatorLogDock(
+          logs: widget.logs,
+          isExpanded: widget.isLogExpanded,
+          isMaximized: _isLogMaximized,
+          onToggle: widget.onToggleLog,
+          onClear: widget.onClearLog,
+          onMaximize: () => setState(() => _isLogMaximized = !_isLogMaximized),
+          headerContent: _buildLogToolbarStats(context, l10n),
+          effect: effect,
         ),
       ],
     );
   }
 
-  Widget _buildBasicTab(BuildContext context, MqttViewModel vm, bool isRunning, AppLocalizations l10n) {
+  Widget _buildBasicTab(BuildContext context, MqttViewModel vm, bool isRunning,
+      AppLocalizations l10n) {
     // Need to parse count for UI display
     int start = int.tryParse(vm.startIdxController.text) ?? 1;
     int end = int.tryParse(vm.endIdxController.text) ?? 10;
@@ -337,71 +328,95 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
     final theme = Theme.of(context);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(12.0),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
       child: Form(
         key: vm.formKeyBasic,
         autovalidateMode: AutovalidateMode.onUserInteraction,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionHeader(context, l10n.deviceConfig, trailing: '${l10n.unitDevices}: $count'),
-            Container(
-              margin: const EdgeInsets.only(bottom: AppSpacing.lg),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    theme.colorScheme.surfaceVariant.withOpacity(0.4),
-                    theme.colorScheme.surfaceVariant.withOpacity(0.2),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(color: theme.dividerColor.withOpacity(0.15)),
+            AppSection(
+              title: l10n.deviceConfig,
+              icon: Icons.devices_other,
+              trailing: MetricChip(
+                label: l10n.unitDevices,
+                value: count.toString(),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: Column(
-                  children: [
-                    Row(children: [
-                      Expanded(child: _buildTextField(l10n.startIndex, vm.startIdxController, isRunning, isNumber: true, onChanged: (_) => setState(() {}))), 
-                      const SizedBox(width: 8),
-                      Expanded(child: _buildTextField(l10n.endIndex, vm.endIdxController, isRunning, isNumber: true, onChanged: (_) => setState(() {}))),
-                      const SizedBox(width: 8),
-                      Expanded(child: _buildTextField(l10n.deviceName, vm.devicePrefixController, isRunning)),
-                      const SizedBox(width: 8),
-                      Expanded(child: _buildTextField(l10n.clientId, vm.clientIdPrefixController, isRunning)),
-                    ]),
-                    const SizedBox(height: 10),
-                    Row(children: [
-                      Expanded(child: _buildTextField(l10n.username, vm.usernamePrefixController, isRunning)),
-                      const SizedBox(width: 8),
-                      Expanded(child: _buildTextField(l10n.password, vm.passwordPrefixController, isRunning)),
-                      const SizedBox(width: 8),
-                      Expanded(child: _buildTextField(l10n.interval, vm.intervalController, isRunning, isNumber: true)),
-                      const SizedBox(width: 8),
-                      Expanded(child: _buildTextField(l10n.dataPointCount, vm.dataPointController, isRunning, isNumber: true)),
-                    ]),
-                    const SizedBox(height: 10),
-                     DropdownButtonFormField<String>(
-                        borderRadius: BorderRadius.circular(8),
-                        dropdownColor: theme.colorScheme.surface,
-                        decoration: InputDecoration(
-                          border: const OutlineInputBorder(),
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                          labelText: l10n.dataFormat,
-                        ),
-                        value: vm.format,
-                        items: [
-                          DropdownMenuItem(value: 'default', child: Text(l10n.formatDefault)),
-                          DropdownMenuItem(value: 'tn', child: Text(l10n.formatTieNiu)),
-                          DropdownMenuItem(value: 'tn-empty', child: Text(l10n.formatTieNiuEmpty)),
-                        ],
-                        onChanged: isRunning ? null : (v) {
-                          if (v != null) vm.setFormat(v);
-                        },
+              child: Column(
+                children: [
+                  FormGrid(
+                    children: [
+                      _buildTextField(
+                        l10n.startIndex,
+                        vm.startIdxController,
+                        isRunning,
+                        isNumber: true,
+                        onChanged: (_) => setState(() {}),
                       ),
-                  ],
-                ),
+                      _buildTextField(
+                        l10n.endIndex,
+                        vm.endIdxController,
+                        isRunning,
+                        isNumber: true,
+                        onChanged: (_) => setState(() {}),
+                      ),
+                      _buildTextField(
+                        l10n.deviceName,
+                        vm.devicePrefixController,
+                        isRunning,
+                      ),
+                      _buildTextField(
+                        l10n.clientId,
+                        vm.clientIdPrefixController,
+                        isRunning,
+                      ),
+                      _buildTextField(
+                        l10n.username,
+                        vm.usernamePrefixController,
+                        isRunning,
+                      ),
+                      _buildTextField(
+                        l10n.password,
+                        vm.passwordPrefixController,
+                        isRunning,
+                      ),
+                      _buildTextField(
+                        l10n.interval,
+                        vm.intervalController,
+                        isRunning,
+                        isNumber: true,
+                      ),
+                      _buildTextField(
+                        l10n.dataPointCount,
+                        vm.dataPointController,
+                        isRunning,
+                        isNumber: true,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  DropdownButtonFormField<String>(
+                    borderRadius: BorderRadius.circular(8),
+                    dropdownColor: theme.colorScheme.surface,
+                    decoration: AppInputDecoration.filled(context,
+                        label: l10n.dataFormat),
+                    initialValue: vm.format,
+                    items: [
+                      DropdownMenuItem(
+                          value: 'default', child: Text(l10n.formatDefault)),
+                      DropdownMenuItem(
+                          value: 'tn', child: Text(l10n.formatTieNiu)),
+                      DropdownMenuItem(
+                          value: 'tn-empty',
+                          child: Text(l10n.formatTieNiuEmpty)),
+                    ],
+                    onChanged: isRunning
+                        ? null
+                        : (v) {
+                            if (v != null) vm.setFormat(v);
+                          },
+                  ),
+                ],
               ),
             ),
             CustomKeysManager(
@@ -417,9 +432,10 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
     );
   }
 
-  Widget _buildAdvancedTab(BuildContext context, MqttViewModel vm, bool isRunning, AppLocalizations l10n) {
+  Widget _buildAdvancedTab(BuildContext context, MqttViewModel vm,
+      bool isRunning, AppLocalizations l10n) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
       child: Form(
         key: vm.formKeyAdvanced,
         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -443,147 +459,247 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
 
   // ... (existing helper methods)
 
-  Widget _buildActionButtons(BuildContext context, MqttViewModel vm, MqttController controller, AppLocalizations l10n, AppThemeEffect effect) {
-    final theme = Theme.of(context);
-    final errorColor = theme.colorScheme.error;
-    final primaryColor = theme.colorScheme.primary;
-    final isBusy = controller.isBusy;
-    final isRunning = controller.isRunning;
-    final isBasic = _tabController.index == 0;
-
-    return Column(
-      children: [
-        SizedBox(
-          width: double.infinity,
-          height: 48,
-          child: FilledButton.icon(
-            onPressed: (isBusy && !isRunning) ? null : (isRunning 
-              ? () {
-                 controller.stop();
-                 _showMonitor = false; // Reset on stop 
-              }
-              : () {
-                if (isBasic) {
-                  bool valid = vm.startBasicSimulation(context, (config, basic) {
-                     _showUnifiedPreviewDialog(context, vm.generatePreviewData(isBasic: true)!, () {
-                       controller.start(config);
-                       // Auto-show disabled
-                       widget.onSimulationStarted?.call();
-                     });
-                  });
-                  if (!valid) _setStatus(l10n.formValidationFailed ?? 'Please check invalid fields', theme.colorScheme.error);
-                } else {
-                  bool valid = vm.startAdvancedSimulation(context, (config, basic) {
-                     final data = vm.generatePreviewData(isBasic: false);
-                     if (data == null) {
-                       _setStatus('No groups configured', Colors.orange);
-                       return;
-                     }
-                     _showUnifiedPreviewDialog(context, data, () {
-                        controller.start(config);
-                        // Auto-show disabled
-                        widget.onSimulationStarted?.call();
-                     });
-                  });
-                  if (!valid) _setStatus(l10n.formValidationFailed ?? 'Please check invalid fields', theme.colorScheme.error);
-                }
-              }),
-            icon: isBusy 
-               ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5, color: theme.colorScheme.onPrimary))
-               : Icon(isRunning ? Icons.stop : Icons.play_arrow),
-            label: Text(isBusy 
-                ? (isRunning ? l10n.stopping : l10n.starting) 
-                : (isRunning ? l10n.stopSimulation : l10n.startSimulation),
-                style: const TextStyle(fontWeight: FontWeight.bold),
+  Widget _buildModeSelector(BuildContext context, AppLocalizations l10n,
+      ThemeData theme, AppThemeEffect effect) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        12.0 * effect.layoutDensity,
+        10,
+        12.0 * effect.layoutDensity,
+        6,
+      ),
+      child: SizedBox(
+        width: double.infinity,
+        child: SegmentedButton<int>(
+          segments: [
+            ButtonSegment(
+              value: 0,
+              icon: const Icon(Icons.dashboard_customize_outlined),
+              label: Text(l10n.basicMode),
             ),
-            style: FilledButton.styleFrom(
-              backgroundColor: isRunning ? errorColor : primaryColor,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ButtonSegment(
+              value: 1,
+              icon: const Icon(Icons.account_tree_outlined),
+              label: Text(l10n.advancedMode),
+            ),
+          ],
+          selected: {_tabController.index},
+          showSelectedIcon: true,
+          onSelectionChanged: (selection) {
+            final next = selection.first;
+            if (next != _tabController.index) {
+              _tabController.animateTo(next);
+            }
+          },
+          style: SegmentedButton.styleFrom(
+            minimumSize: const Size.fromHeight(46),
+            selectedBackgroundColor: theme.colorScheme.primary,
+            selectedForegroundColor: theme.colorScheme.onPrimary,
+            foregroundColor: theme.colorScheme.onSurfaceVariant,
+            backgroundColor: theme.colorScheme.surfaceContainerLowest,
+            side: BorderSide(
+              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.55),
+            ),
+            textStyle: const TextStyle(fontWeight: FontWeight.w800),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
             ),
           ),
         ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(child: OutlinedButton.icon(
-              onPressed: isRunning 
-                ? () => setState(() => _showMonitor = !_showMonitor) // Toggle Dashboard
-                : () {
-                final data = vm.generatePreviewData(isBasic: isBasic);
-                if (data != null) _showUnifiedPreviewDialog(context, data, null);
-                else _setStatus('Cannot generate preview', Colors.orange);
-              },
-              icon: Icon(isRunning ? (_showMonitor ? Icons.visibility_off : Icons.dashboard) : Icons.remove_red_eye_outlined),
-              label: Text(isRunning 
-                 ? (_showMonitor ? (l10n.close ?? 'Close Monitor') : (l10n.statistics ?? 'Dashboard')) 
-                 : l10n.previewPayload),
-            )),
-            const SizedBox(width: 8),
-            Expanded(child: OutlinedButton.icon(
-              onPressed: isRunning ? null : () async {
-                final res = await ConfigService.importFromFile();
-                if (res.config != null) {
-                   await ConfigService.saveToLocalStorage(res.config!);
-                   await vm.loadConfig();
-                   _setStatus(l10n.configImported ?? 'Imported', Colors.green);
-                } else if (res.error != null) {
-                   _setStatus(res.error!, theme.colorScheme.error);
-                }
-              },
-              icon: Icon(Icons.upload),
-              label: Text(l10n.importConfig),
-            )),
-            const SizedBox(width: 8),
-            Expanded(child: OutlinedButton.icon(
-              onPressed: isRunning ? null : () async {
-                final res = await ConfigService.exportToFile(vm.getCompleteConfig());
-                if (res.success) _setStatus(l10n.configExported ?? 'Exported', Colors.green);
-                else if (res.error != null) _setStatus(res.error!, theme.colorScheme.error);
-              },
-              icon: Icon(Icons.download),
-              label: Text(l10n.exportConfig),
-            )),
-          ],
-        )
-      ],
-    );
-  }
-
-  // Helper Widgets
-  Widget _buildSectionHeader(BuildContext context, String title, {String? trailing}) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Container(width: 4, height: 16, color: theme.colorScheme.primary, margin: const EdgeInsets.only(right: 8)),
-              Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            ],
-          ),
-          if (trailing != null)
-            Text(trailing, style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 13)),
-        ],
       ),
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, bool isLocked, {bool isNumber = false, Function(String)? onChanged}) {
+  Widget _buildActionButtons(BuildContext context, MqttViewModel vm,
+      MqttController controller, AppLocalizations l10n, AppThemeEffect effect) {
+    final theme = Theme.of(context);
+    final errorColor = theme.colorScheme.error;
+    final primaryColor = theme.colorScheme.primary;
+    final isBusy = controller.isBusy;
+    final isStarting = controller.isStarting;
+    final isStopping = controller.isStopping;
+    final isRunning = controller.isRunning;
+    final isBasic = _tabController.index == 0;
+    final showProgress = isStarting || isStopping;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 760;
+        final startButton = SizedBox(
+          height: 44,
+          child: FilledButton.icon(
+            onPressed: isStopping
+                ? null
+                : (isRunning
+                    ? () async {
+                        await controller.stop();
+                        _showMonitor = false; // Reset on stop
+                      }
+                    : () {
+                        if (isBasic) {
+                          bool valid =
+                              vm.startBasicSimulation(context, (config, basic) {
+                            _showUnifiedPreviewDialog(
+                                context, vm.generatePreviewData(isBasic: true)!,
+                                () {
+                              controller.start(config);
+                              // Auto-show disabled
+                              widget.onSimulationStarted?.call();
+                            });
+                          });
+                          if (!valid) {
+                            _setStatus(l10n.formValidationFailed,
+                                theme.colorScheme.error);
+                          }
+                        } else {
+                          bool valid = vm.startAdvancedSimulation(context,
+                              (config, basic) {
+                            final data = vm.generatePreviewData(isBasic: false);
+                            if (data == null) {
+                              _setStatus('No groups configured', Colors.orange);
+                              return;
+                            }
+                            _showUnifiedPreviewDialog(context, data, () {
+                              controller.start(config);
+                              // Auto-show disabled
+                              widget.onSimulationStarted?.call();
+                            });
+                          });
+                          if (!valid) {
+                            _setStatus(l10n.formValidationFailed,
+                                theme.colorScheme.error);
+                          }
+                        }
+                      }),
+            icon: showProgress
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2.5, color: theme.colorScheme.onPrimary))
+                : Icon(isRunning ? Icons.stop : Icons.play_arrow),
+            label: Text(
+              showProgress
+                  ? (isStopping ? l10n.stopping : l10n.starting)
+                  : (isRunning ? l10n.stopSimulation : l10n.startSimulation),
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            style: FilledButton.styleFrom(
+              backgroundColor: isRunning ? errorColor : primaryColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+        );
+
+        final previewButton = SizedBox(
+          height: 40,
+          child: OutlinedButton.icon(
+            onPressed: isBusy
+                ? null
+                : isRunning
+                    ? () => setState(
+                        () => _showMonitor = !_showMonitor) // Toggle Dashboard
+                    : () {
+                        final data = vm.generatePreviewData(isBasic: isBasic);
+                        if (data != null) {
+                          _showUnifiedPreviewDialog(context, data, null);
+                        } else {
+                          _setStatus('Cannot generate preview', Colors.orange);
+                        }
+                      },
+            icon: Icon(isRunning
+                ? (_showMonitor ? Icons.visibility_off : Icons.dashboard)
+                : Icons.remove_red_eye_outlined),
+            label: Text(isRunning
+                ? (_showMonitor ? l10n.close : l10n.statistics)
+                : l10n.previewPayload),
+          ),
+        );
+        final importButton = SizedBox(
+          height: 40,
+          child: OutlinedButton.icon(
+            onPressed: (isRunning || isBusy)
+                ? null
+                : () async {
+                    final res = await ConfigService.importFromFile();
+                    if (res.config != null) {
+                      await ConfigService.saveToLocalStorage(res.config!);
+                      await vm.loadConfig();
+                      _setStatus(l10n.configImported, Colors.green);
+                    } else if (res.error != null) {
+                      _setStatus(res.error!, theme.colorScheme.error);
+                    }
+                  },
+            icon: const Icon(Icons.upload),
+            label: Text(l10n.importConfig),
+          ),
+        );
+        final exportButton = SizedBox(
+          height: 40,
+          child: OutlinedButton.icon(
+            onPressed: (isRunning || isBusy)
+                ? null
+                : () async {
+                    final res = await ConfigService.exportToFile(
+                        vm.getCompleteConfig());
+                    if (res.success) {
+                      _setStatus(l10n.configExported, Colors.green);
+                    } else if (res.error != null) {
+                      _setStatus(res.error!, theme.colorScheme.error);
+                    }
+                  },
+            icon: const Icon(Icons.download),
+            label: Text(l10n.exportConfig),
+          ),
+        );
+
+        if (compact) {
+          return Column(
+            children: [
+              SizedBox(width: double.infinity, child: startButton),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(child: previewButton),
+                  const SizedBox(width: 8),
+                  Expanded(child: importButton),
+                  const SizedBox(width: 8),
+                  Expanded(child: exportButton),
+                ],
+              ),
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(flex: 2, child: startButton),
+            const SizedBox(width: 10),
+            Expanded(child: previewButton),
+            const SizedBox(width: 10),
+            Expanded(child: importButton),
+            const SizedBox(width: 10),
+            Expanded(child: exportButton),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildTextField(
+      String label, TextEditingController controller, bool isLocked,
+      {bool isNumber = false, Function(String)? onChanged}) {
     return TextFormField(
       controller: controller,
       enabled: !isLocked,
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
       inputFormatters: isNumber ? [FilteringTextInputFormatter.digitsOnly] : [],
       onChanged: onChanged,
-      decoration: InputDecoration(
-        labelText: label,
-        isDense: true,
-        border: const OutlineInputBorder(),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      ),
-      validator: (v) => (v == null || v.isEmpty) ? AppLocalizations.of(context)!.fieldRequired : null,
+      decoration: AppInputDecoration.filled(context, label: label),
+      validator: (v) => (v == null || v.isEmpty)
+          ? AppLocalizations.of(context)!.fieldRequired
+          : null,
     );
   }
 
@@ -599,22 +715,45 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
         return Row(
           children: [
             if (!isSmallScreen) ...[
-              _buildStatItem(context, l10n.totalDevices, stats.totalDevices.toString(), Colors.blue),
+              MetricChip(
+                  label: l10n.totalDevices,
+                  value: stats.totalDevices.toString(),
+                  color: Colors.blue),
               const SizedBox(width: 12),
-              _buildStatItem(context, l10n.online, stats.onlineDevices.toString(), Colors.green),
+              MetricChip(
+                  label: l10n.online,
+                  value: stats.onlineDevices.toString(),
+                  color: Colors.green),
               const SizedBox(width: 12),
-              _buildStatItem(context, l10n.statSent, stats.totalMessages.toString(), theme.colorScheme.onSurface),
+              MetricChip(
+                  label: l10n.statSent,
+                  value: stats.totalMessages.toString(),
+                  color: theme.colorScheme.onSurface),
               const SizedBox(width: 12),
-              _buildStatItem(context, l10n.statSuccess, stats.successCount.toString(), Colors.green),
+              MetricChip(
+                  label: l10n.statSuccess,
+                  value: stats.successCount.toString(),
+                  color: Colors.green),
               const SizedBox(width: 12),
-              _buildStatItem(context, l10n.statFailed, stats.failureCount.toString(), theme.colorScheme.error),
+              MetricChip(
+                  label: l10n.statFailed,
+                  value: stats.failureCount.toString(),
+                  color: theme.colorScheme.error),
               const SizedBox(width: 12),
               // Resources
-              _buildStatItem(context, l10n.cpuUsage ?? 'CPU', '${stats.cpuUsage.toStringAsFixed(1)}%', Colors.purple),
+              MetricChip(
+                  label: l10n.cpuUsage,
+                  value: '${stats.cpuUsage.toStringAsFixed(1)}%',
+                  color: Colors.purple),
               const SizedBox(width: 12),
-              _buildStatItem(context, l10n.memoryUsage ?? 'Mem', '${(stats.memoryUsage / 1024 / 1024).toStringAsFixed(0)} MB', Colors.indigo),
-            ] else 
-              Expanded(child: Text(
+              MetricChip(
+                  label: l10n.memoryUsage,
+                  value:
+                      '${(stats.memoryUsage / 1024 / 1024).toStringAsFixed(0)} MB',
+                  color: Colors.indigo),
+            ] else
+              Expanded(
+                  child: Text(
                 'D:${stats.onlineDevices}/${stats.totalDevices} S:${stats.successCount} F:${stats.failureCount}',
                 style: const TextStyle(fontSize: 11),
                 overflow: TextOverflow.ellipsis,
@@ -624,31 +763,5 @@ class _SimulatorPanelState extends State<SimulatorPanel> with SingleTickerProvid
         );
       },
     );
-  }
-
-  Widget _buildStatItem(BuildContext context, String label, String value, Color color) {
-    return Row(
-      children: [
-        Text('$label: ', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
-        Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
-      ],
-    );
-  }
-}
-
-// Helper for KeepAlive
-class KeepAliveWrapper extends StatefulWidget {
-  final Widget child;
-  const KeepAliveWrapper({super.key, required this.child});
-  @override
-  _KeepAliveWrapperState createState() => _KeepAliveWrapperState();
-}
-class _KeepAliveWrapperState extends State<KeepAliveWrapper> with AutomaticKeepAliveClientMixin {
-  @override
-  bool get wantKeepAlive => true;
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    return widget.child;
   }
 }

@@ -5,6 +5,9 @@ class WorkLogEntry {
   final DateTime startTime;
   final DateTime endTime;
   final String content;
+  final double? hours;
+  final String category;
+  final String projectId;
   final String? projectCode;
   final String? taskName;
   final String? taskScope;
@@ -14,6 +17,7 @@ class WorkLogEntry {
     required this.startTime,
     required this.endTime,
     required this.content,
+    this.hours,
     this.category = 'dev',
     this.projectId = 'default',
     this.projectCode,
@@ -21,7 +25,8 @@ class WorkLogEntry {
     this.taskScope,
   }) : id = id ?? const Uuid().v4();
 
-  double get durationHours => endTime.difference(startTime).inMinutes / 60.0;
+  double get durationHours =>
+      hours ?? endTime.difference(startTime).inMinutes / 60.0;
 
   Map<String, dynamic> toJson() {
     return {
@@ -29,6 +34,7 @@ class WorkLogEntry {
       'startTime': startTime.toIso8601String(),
       'endTime': endTime.toIso8601String(),
       'content': content,
+      'hours': hours,
       'category': category,
       'projectId': projectId,
       'projectCode': projectCode,
@@ -43,6 +49,7 @@ class WorkLogEntry {
       startTime: DateTime.parse(json['startTime']),
       endTime: DateTime.parse(json['endTime']),
       content: json['content'] ?? '',
+      hours: (json['hours'] as num?)?.toDouble(),
       category: json['category'] ?? 'dev',
       projectId: json['projectId'] ?? 'default',
       projectCode: json['projectCode'],
@@ -50,12 +57,14 @@ class WorkLogEntry {
       taskScope: json['taskScope'],
     );
   }
-  
+
   WorkLogEntry copyWith({
     DateTime? startTime,
     DateTime? endTime,
     String? content,
+    double? hours,
     String? category,
+    String? projectId,
     String? projectCode,
     String? taskName,
     String? taskScope,
@@ -65,8 +74,9 @@ class WorkLogEntry {
       startTime: startTime ?? this.startTime,
       endTime: endTime ?? this.endTime,
       content: content ?? this.content,
+      hours: hours ?? this.hours,
       category: category ?? this.category,
-      projectId: projectId,
+      projectId: projectId ?? this.projectId,
       projectCode: projectCode ?? this.projectCode,
       taskName: taskName ?? this.taskName,
       taskScope: taskScope ?? this.taskScope,

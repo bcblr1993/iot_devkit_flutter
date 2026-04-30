@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 /// Helper to provide platform-specific UI rendering strategies.
 /// Primarily used to optimize performance on Windows/Linux by disabling excessive blur/shadows.
 class PlatformUIHelper {
-  
   /// Returns determined platform performance capability.
   /// MacOS and iOS generally handle blur (BackdropFilter) well.
   /// Windows (Skia/Angle) often struggles with BackdropFilter.
@@ -16,7 +15,7 @@ class PlatformUIHelper {
   }
 
   /// Conditionally applies a glass effect (blur) or a simple semi-transparent background.
-  /// 
+  ///
   /// [child]: The widget content.
   /// [sigmaX], [sigmaY]: Blur intensity (ignored on Windows/Linux).
   /// [fallbackColor]: The background color to use when blur is disabled (e.g., Colors.black54).
@@ -38,7 +37,7 @@ class PlatformUIHelper {
       );
     } else {
       // On Windows/Linux, return simple container or just the child.
-      // If fallbackColor is transparent, we might want to ensure the child has its own color, 
+      // If fallbackColor is transparent, we might want to ensure the child has its own color,
       // or wrap it in a colored container if requested.
       if (fallbackColor != Colors.transparent) {
         return Container(
@@ -59,10 +58,10 @@ class PlatformUIHelper {
     if (isHighPerformancePlatform) {
       return shadows;
     }
-    
+
     // On Windows, simplify: take only the first shadow, or reduce blur.
     if (shadows.isEmpty) return [];
-    
+
     // Return a simplified single shadow with less spread/blur if possible
     final original = shadows.first;
     return [
