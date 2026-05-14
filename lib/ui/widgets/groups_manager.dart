@@ -252,6 +252,7 @@ class _GroupsManagerState extends State<GroupsManager> {
                           index, group.copyWith(passwordPrefix: v)),
                       enabled: !widget.isLocked),
                   DropdownButtonFormField<String>(
+                    isExpanded: true,
                     initialValue: group.format,
                     decoration:
                         AppInputDecoration.filled(context, label: l10n.format),
@@ -259,14 +260,17 @@ class _GroupsManagerState extends State<GroupsManager> {
                       DropdownMenuItem(
                           value: 'default',
                           child: Text(l10n.formatDefault,
+                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(fontSize: 12))),
                       DropdownMenuItem(
                           value: 'tn',
                           child: Text(l10n.formatTieNiu,
+                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(fontSize: 12))),
                       DropdownMenuItem(
                           value: 'tn-empty',
                           child: Text(l10n.formatTieNiuEmpty,
+                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(fontSize: 12))),
                     ],
                     onChanged: widget.isLocked

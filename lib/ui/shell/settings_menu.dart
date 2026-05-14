@@ -39,8 +39,8 @@ class SettingsMenu extends StatelessWidget {
           side: BorderSide(color: colorScheme.outlineVariant),
         ),
         tooltip: '',
-        offset: const Offset(56, -4),
-        position: PopupMenuPosition.over,
+        offset: const Offset(52, -260),
+        position: PopupMenuPosition.under,
         onSelected: (String action) {
           switch (action) {
             case 'theme':
