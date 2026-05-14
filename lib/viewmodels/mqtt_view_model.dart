@@ -5,6 +5,7 @@ import 'package:iot_devkit/models/custom_key_config.dart';
 import 'package:iot_devkit/services/config_service.dart';
 import 'package:iot_devkit/services/data_generator.dart';
 import 'package:iot_devkit/services/profile_service.dart';
+import 'package:iot_devkit/services/simulation_config_validator.dart';
 import 'package:iot_devkit/models/profile_metadata.dart';
 
 class MqttViewModel extends ChangeNotifier {
@@ -62,6 +63,10 @@ class MqttViewModel extends ChangeNotifier {
   String? _currentProfileId;
   String? get currentProfileId => _currentProfileId;
   final ProfileService _profileService = ProfileService();
+  final SimulationConfigValidator _configValidator =
+      const SimulationConfigValidator();
+  String? _lastValidationError;
+  String? get lastValidationError => _lastValidationError;
 
   MqttViewModel() {
     _initListeners();
@@ -357,10 +362,14 @@ class MqttViewModel extends ChangeNotifier {
         formKeyMqtt.currentState!.validate()) {
       final config = getCompleteConfig();
       config['mode'] = 'basic';
+      if (!_validateConfig(context, config, SimulationMode.basic)) {
+        return false;
+      }
       ConfigService.saveToLocalStorage(config);
       showPreviewCallback(config, true);
       return true;
     }
+    _lastValidationError = null;
     return false;
   }
 
@@ -370,10 +379,30 @@ class MqttViewModel extends ChangeNotifier {
         formKeyMqtt.currentState!.validate()) {
       final config = getCompleteConfig();
       config['mode'] = 'advanced';
+      if (!_validateConfig(context, config, SimulationMode.advanced)) {
+        return false;
+      }
       ConfigService.saveToLocalStorage(config);
       showPreviewCallback(config, false);
       return true;
     }
+    _lastValidationError = null;
+    return false;
+  }
+
+  bool _validateConfig(
+    BuildContext context,
+    Map<String, dynamic> config,
+    SimulationMode mode,
+  ) {
+    final result = _configValidator.validate(config, mode: mode);
+    if (result.isValid) {
+      _lastValidationError = null;
+      return true;
+    }
+
+    _lastValidationError =
+        result.firstMessageFor(Localizations.localeOf(context).languageCode);
     return false;
   }
 }

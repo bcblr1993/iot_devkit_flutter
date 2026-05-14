@@ -209,11 +209,10 @@ class _LogConsoleState extends State<LogConsole> {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: widget.isExpanded
+                child: widget.isExpanded || lastLog == null
                     ? const SizedBox.shrink()
                     : _LastLogPreview(
                         log: lastLog,
-                        emptyLabel: l10n?.ready ?? 'Ready',
                       ),
               ),
               const SizedBox(width: 8),
@@ -602,28 +601,15 @@ class _LogConsoleState extends State<LogConsole> {
 
 class _LastLogPreview extends StatelessWidget {
   final LogEntry? log;
-  final String emptyLabel;
 
   const _LastLogPreview({
     required this.log,
-    required this.emptyLabel,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-
-    if (log == null) {
-      return Text(
-        emptyLabel,
-        overflow: TextOverflow.ellipsis,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: colors.onSurfaceVariant,
-          fontWeight: FontWeight.w600,
-        ),
-      );
-    }
 
     return Row(
       children: [

@@ -12,12 +12,66 @@ import 'mqtt/mqtt_client_manager.dart';
 import 'mqtt/scheduler_service.dart';
 import '../utils/isolate_worker.dart';
 
+enum SimulationRunState {
+  idle,
+  starting,
+  connecting,
+  running,
+  reconnecting,
+  partialRunning,
+  stopping,
+  failed,
+}
+
+typedef MqttClientManagerFactory = MqttClientManager Function({
+  required void Function(String clientId, MqttServerClient client) onConnected,
+  required void Function(String clientId) onDisconnected,
+  void Function(String clientId, Object error)? onConnectionFailed,
+  void Function(String clientId, int attempt, Duration delay)?
+      onReconnectScheduled,
+  required void Function(String message, String type, {String? tag}) onLog,
+});
+
+MqttClientManager _createDefaultMqttClientManager({
+  required void Function(String clientId, MqttServerClient client) onConnected,
+  required void Function(String clientId) onDisconnected,
+  void Function(String clientId, Object error)? onConnectionFailed,
+  void Function(String clientId, int attempt, Duration delay)?
+      onReconnectScheduled,
+  required void Function(String message, String type, {String? tag}) onLog,
+}) {
+  return MqttClientManager(
+    onConnected: onConnected,
+    onDisconnected: onDisconnected,
+    onConnectionFailed: onConnectionFailed,
+    onReconnectScheduled: onReconnectScheduled,
+    onLog: onLog,
+  );
+}
+
 class MqttController extends ChangeNotifier {
   final _logger = Logger('MqttController');
   final Duration _stabilizationDelay;
+  final Duration _stopTimeout;
 
-  bool _isRunning = false;
-  bool get isRunning => _isRunning;
+  SimulationRunState _runState = SimulationRunState.idle;
+  SimulationRunState get runState => _runState;
+
+  String? _runStateMessage;
+  String? get runStateMessage => _runStateMessage;
+
+  bool get isRunning {
+    return switch (_runState) {
+      SimulationRunState.starting ||
+      SimulationRunState.connecting ||
+      SimulationRunState.running ||
+      SimulationRunState.reconnecting ||
+      SimulationRunState.partialRunning ||
+      SimulationRunState.stopping =>
+        true,
+      SimulationRunState.idle || SimulationRunState.failed => false,
+    };
+  }
 
   final StatisticsCollector statisticsCollector = StatisticsCollector();
   late final MqttClientManager _clientManager;
@@ -27,10 +81,25 @@ class MqttController extends ChangeNotifier {
   Function(String message, String type, {String? tag})? onLog;
 
   // Performance: Global Log Switch
-  bool _isBusy = false;
-  bool get isBusy => _isBusy;
-  bool get isStarting => _isStarting;
-  bool get isStopping => _isStopping;
+  bool get isBusy {
+    return switch (_runState) {
+      SimulationRunState.starting ||
+      SimulationRunState.connecting ||
+      SimulationRunState.stopping =>
+        true,
+      SimulationRunState.idle ||
+      SimulationRunState.running ||
+      SimulationRunState.reconnecting ||
+      SimulationRunState.partialRunning ||
+      SimulationRunState.failed =>
+        false,
+    };
+  }
+
+  bool get isStarting =>
+      _runState == SimulationRunState.starting ||
+      _runState == SimulationRunState.connecting;
+  bool get isStopping => _runState == SimulationRunState.stopping;
 
   bool _enableDetailedLogs = true;
   bool get enableDetailedLogs => _enableDetailedLogs;
@@ -48,10 +117,17 @@ class MqttController extends ChangeNotifier {
   MqttController({
     bool initializeWorkers = true,
     Duration stabilizationDelay = const Duration(seconds: 3),
-  }) : _stabilizationDelay = stabilizationDelay {
-    _clientManager = MqttClientManager(
+    Duration stopTimeout = const Duration(seconds: 3),
+    MqttClientManagerFactory? clientManagerFactory,
+  })  : _stabilizationDelay = stabilizationDelay,
+        _stopTimeout = stopTimeout {
+    final createClientManager =
+        clientManagerFactory ?? _createDefaultMqttClientManager;
+    _clientManager = createClientManager(
       onConnected: _onClientConnected,
       onDisconnected: _onClientDisconnected,
+      onConnectionFailed: _onClientConnectionFailed,
+      onReconnectScheduled: _onClientReconnectScheduled,
       onLog: log,
     );
     _schedulerService = SchedulerService(
@@ -70,6 +146,13 @@ class MqttController extends ChangeNotifier {
     PersistentIsolateManager.instance.dispose();
     statisticsCollector.dispose();
     super.dispose();
+  }
+
+  void _setRunState(SimulationRunState state, {String? message}) {
+    if (_runState == state && _runStateMessage == message) return;
+    _runState = state;
+    _runStateMessage = message;
+    notifyListeners();
   }
 
   void log(String message, String type, {String? tag}) {
@@ -100,12 +183,10 @@ class MqttController extends ChangeNotifier {
 
   // --- Public API ---
 
-  bool _isStopping = false;
-  bool _isStarting = false;
   Future<void>? _stopFuture;
 
   Future<void> stop() async {
-    if (_isStopping) {
+    if (isStopping) {
       return _stopFuture ?? Future<void>.value();
     }
     if (!isRunning && !isBusy) return;
@@ -115,16 +196,17 @@ class MqttController extends ChangeNotifier {
   }
 
   Future<void> _stopInternal() async {
-    _isBusy = true;
-    _isStopping = true; // Signal loops to break
-    _isStarting = false;
-    notifyListeners();
+    _setRunState(
+      SimulationRunState.stopping,
+      message: 'Stopping simulation...',
+    );
+    _isInitializing = false;
     log('Stopping simulation...', 'info');
 
     try {
       _schedulerService.stopAll();
       await _clientManager.stopAll().timeout(
-        const Duration(seconds: 3),
+        _stopTimeout,
         onTimeout: () {
           log('Stop timed out while disconnecting MQTT clients. Forcing UI state reset.',
               'warning');
@@ -135,13 +217,9 @@ class MqttController extends ChangeNotifier {
       log('Error during stop: $e', 'error');
     } finally {
       // Always ensure state is reset
-      _isRunning = false;
-      _isBusy = false;
-      _isStopping = false;
-      _isStarting = false;
       _stopFuture = null;
       statisticsCollector.setOnlineDevices(0);
-      notifyListeners();
+      _setRunState(SimulationRunState.idle);
     }
   }
 
@@ -154,18 +232,21 @@ class MqttController extends ChangeNotifier {
       return;
     }
 
-    _isBusy = true;
-    _isRunning = true;
-    _isStarting = true;
-    _isStopping = false;
     _isInitializing = true; // Block auto-start in onConnected
-    notifyListeners();
+    _setRunState(
+      SimulationRunState.starting,
+      message: 'Preparing simulation...',
+    );
 
     statisticsCollector.reset();
 
     try {
       // Determine Mode
       String mode = config['mode'] ?? 'basic';
+      _setRunState(
+        SimulationRunState.connecting,
+        message: 'Connecting MQTT clients...',
+      );
 
       // Phase 1: Connect All Devices
       if (mode == 'basic') {
@@ -179,10 +260,10 @@ class MqttController extends ChangeNotifier {
       }
 
       // Phase 2: Stabilization Delay
-      if (isRunning && !_isStopping) {
+      if (isRunning && !isStopping) {
         log('All devices connected. Waiting 3s for stabilization...', 'info');
         await Future.delayed(_stabilizationDelay);
-        if (!isRunning || _isStopping) return;
+        if (!isRunning || isStopping) return;
 
         // Phase 3: Start Data Upload
         log('Stabilization complete. Starting data upload...', 'info');
@@ -197,17 +278,19 @@ class MqttController extends ChangeNotifier {
             _schedulerService.startPublishing(client, clientId, ctx);
           }
         });
+        _syncRunStateWithConnectivity();
       }
     } catch (e) {
       log('Error starting simulation: $e', 'error');
-      _isRunning = false;
+      _setRunState(
+        SimulationRunState.failed,
+        message: 'Error starting simulation: $e',
+      );
     } finally {
-      _isStarting = false;
       _isInitializing = false; // Ensure reset
-      if (!_isStopping) {
-        _isBusy = false;
+      if (!isStopping && _runState != SimulationRunState.failed) {
+        _syncRunStateWithConnectivity();
       }
-      notifyListeners();
     }
   }
 
@@ -258,7 +341,7 @@ class MqttController extends ChangeNotifier {
     // Connect in batches to avoid overwhelming the system while staying fast
     const int batchSize = 10;
     for (int i = startIdx; i <= endIdx; i += batchSize) {
-      if (!isRunning || _isStopping) break;
+      if (!isRunning || isStopping) break;
 
       List<Future<void>> batch = [];
       for (int j = i; j < i + batchSize && j <= endIdx; j++) {
@@ -335,14 +418,14 @@ class MqttController extends ChangeNotifier {
 
     const int batchSize = 5; // Smaller batch for advanced mode groups
     for (var group in groups) {
-      if (!isRunning || _isStopping) break;
+      if (!isRunning || isStopping) break;
 
       log('Starting Group: ${group.name}', 'info');
 
       for (int i = group.startDeviceNumber;
           i <= group.endDeviceNumber;
           i += batchSize) {
-        if (!isRunning || _isStopping) break;
+        if (!isRunning || isStopping) break;
 
         List<Future<void>> batch = [];
         for (int j = i; j < i + batchSize && j <= group.endDeviceNumber; j++) {
@@ -391,11 +474,72 @@ class MqttController extends ChangeNotifier {
     if (config != null) {
       _schedulerService.startPublishing(client, clientId, config);
     }
+    _syncRunStateWithConnectivity();
   }
 
   void _onClientDisconnected(String clientId) {
     statisticsCollector.setOnlineDevices(_clientManager.activeClientCount);
     _schedulerService
         .stopPublishing(clientId); // Stop scheduler for this client
+    _syncRunStateWithConnectivity();
+  }
+
+  void _onClientConnectionFailed(String clientId, Object error) {
+    if (!isRunning || isStopping) return;
+    _syncRunStateWithConnectivity(
+      fallbackMessage: 'Connection failed for $clientId: $error',
+    );
+  }
+
+  void _onClientReconnectScheduled(
+    String clientId,
+    int attempt,
+    Duration delay,
+  ) {
+    if (!isRunning || isStopping) return;
+    _syncRunStateWithConnectivity(
+      fallbackMessage:
+          'Reconnecting $clientId in ${delay.inSeconds}s (attempt $attempt).',
+    );
+  }
+
+  void _syncRunStateWithConnectivity({String? fallbackMessage}) {
+    if (isStopping || _isInitializing) return;
+    if (!isRunning && !isBusy) return;
+
+    final activeClients = _clientManager.activeClientCount;
+    final trackedClients = _clientManager.trackedClientCount;
+    final totalDevices = statisticsCollector.totalDevices;
+    final expectedClients = totalDevices > 0 ? totalDevices : trackedClients;
+
+    if (expectedClients <= 0) {
+      _setRunState(
+        SimulationRunState.running,
+        message: fallbackMessage ?? 'Simulation running.',
+      );
+      return;
+    }
+
+    if (activeClients <= 0 && trackedClients > 0) {
+      _setRunState(
+        SimulationRunState.reconnecting,
+        message: fallbackMessage ?? 'All clients offline. Reconnecting...',
+      );
+      return;
+    }
+
+    if (activeClients < expectedClients) {
+      _setRunState(
+        SimulationRunState.partialRunning,
+        message: fallbackMessage ??
+            '$activeClients/$expectedClients clients online.',
+      );
+      return;
+    }
+
+    _setRunState(
+      SimulationRunState.running,
+      message: fallbackMessage ?? 'Simulation running.',
+    );
   }
 }

@@ -286,6 +286,15 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                         ),
                       ),
               ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  12.0 * effect.layoutDensity,
+                  0,
+                  12.0 * effect.layoutDensity,
+                  8.0 * effect.layoutDensity,
+                ),
+                child: _buildSimulationStatusStrip(context, l10n),
+              ),
               Divider(
                   height: 1,
                   thickness: 1,
@@ -312,7 +321,6 @@ class _SimulatorPanelState extends State<SimulatorPanel>
           onToggle: widget.onToggleLog,
           onClear: widget.onClearLog,
           onMaximize: () => setState(() => _isLogMaximized = !_isLogMaximized),
-          headerContent: _buildLogToolbarStats(context, l10n),
           effect: effect,
         ),
       ],
@@ -548,7 +556,9 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                             });
                           });
                           if (!valid) {
-                            _setStatus(l10n.formValidationFailed,
+                            _setStatus(
+                                vm.lastValidationError ??
+                                    l10n.formValidationFailed,
                                 theme.colorScheme.error);
                           }
                         } else {
@@ -566,7 +576,9 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                             });
                           });
                           if (!valid) {
-                            _setStatus(l10n.formValidationFailed,
+                            _setStatus(
+                                vm.lastValidationError ??
+                                    l10n.formValidationFailed,
                                 theme.colorScheme.error);
                           }
                         }
@@ -703,65 +715,137 @@ class _SimulatorPanelState extends State<SimulatorPanel>
     );
   }
 
-  Widget _buildLogToolbarStats(BuildContext context, AppLocalizations l10n) {
+  Widget _buildSimulationStatusStrip(
+      BuildContext context, AppLocalizations l10n) {
     final mqttController = Provider.of<MqttController>(context, listen: false);
     final theme = Theme.of(context);
     final isSmallScreen = MediaQuery.of(context).size.width < 600;
+    final colors = theme.colorScheme;
 
     return ListenableBuilder(
-      listenable: mqttController.statisticsCollector,
+      listenable: Listenable.merge([
+        mqttController,
+        mqttController.statisticsCollector,
+      ]),
       builder: (context, _) {
         final stats = mqttController.statisticsCollector;
-        return Row(
-          children: [
-            if (!isSmallScreen) ...[
-              MetricChip(
-                  label: l10n.totalDevices,
-                  value: stats.totalDevices.toString(),
-                  color: Colors.blue),
-              const SizedBox(width: 12),
-              MetricChip(
-                  label: l10n.online,
-                  value: stats.onlineDevices.toString(),
-                  color: Colors.green),
-              const SizedBox(width: 12),
-              MetricChip(
-                  label: l10n.statSent,
-                  value: stats.totalMessages.toString(),
-                  color: theme.colorScheme.onSurface),
-              const SizedBox(width: 12),
-              MetricChip(
-                  label: l10n.statSuccess,
-                  value: stats.successCount.toString(),
-                  color: Colors.green),
-              const SizedBox(width: 12),
-              MetricChip(
-                  label: l10n.statFailed,
-                  value: stats.failureCount.toString(),
-                  color: theme.colorScheme.error),
-              const SizedBox(width: 12),
-              // Resources
-              MetricChip(
-                  label: l10n.cpuUsage,
-                  value: '${stats.cpuUsage.toStringAsFixed(1)}%',
-                  color: Colors.purple),
-              const SizedBox(width: 12),
-              MetricChip(
-                  label: l10n.memoryUsage,
-                  value:
-                      '${(stats.memoryUsage / 1024 / 1024).toStringAsFixed(0)} MB',
-                  color: Colors.indigo),
-            ] else
-              Expanded(
-                  child: Text(
-                'D:${stats.onlineDevices}/${stats.totalDevices} S:${stats.successCount} F:${stats.failureCount}',
-                style: const TextStyle(fontSize: 11),
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.right,
-              )),
-          ],
+        final showRunState = mqttController.runState != SimulationRunState.idle;
+        final stateLabel = _runStateLabel(context, mqttController.runState);
+        return Container(
+          height: 42,
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            color: colors.surfaceContainerLowest,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: colors.outlineVariant.withValues(alpha: 0.42),
+            ),
+          ),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: ClipRect(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    if (!isSmallScreen) ...[
+                      if (showRunState) ...[
+                        MetricChip(
+                          label: _localized(context, zh: '状态', en: 'State'),
+                          value: stateLabel,
+                          color: _runStateColor(theme, mqttController.runState),
+                        ),
+                        const SizedBox(width: 10),
+                      ],
+                      MetricChip(
+                          label: l10n.totalDevices,
+                          value: stats.totalDevices.toString(),
+                          color: Colors.blue),
+                      const SizedBox(width: 10),
+                      MetricChip(
+                          label: l10n.online,
+                          value: stats.onlineDevices.toString(),
+                          color: Colors.green),
+                      const SizedBox(width: 10),
+                      MetricChip(
+                          label: l10n.statSent,
+                          value: stats.totalMessages.toString(),
+                          color: theme.colorScheme.onSurface),
+                      const SizedBox(width: 10),
+                      MetricChip(
+                          label: l10n.statSuccess,
+                          value: stats.successCount.toString(),
+                          color: Colors.green),
+                      const SizedBox(width: 10),
+                      MetricChip(
+                          label: l10n.statFailed,
+                          value: stats.failureCount.toString(),
+                          color: theme.colorScheme.error),
+                      const SizedBox(width: 10),
+                      MetricChip(
+                          label: l10n.cpuUsage,
+                          value: '${stats.cpuUsage.toStringAsFixed(1)}%',
+                          color: Colors.purple),
+                      const SizedBox(width: 10),
+                      MetricChip(
+                          label: l10n.memoryUsage,
+                          value:
+                              '${(stats.memoryUsage / 1024 / 1024).toStringAsFixed(0)} MB',
+                          color: Colors.indigo),
+                    ] else
+                      Text(
+                        '${showRunState ? '$stateLabel · ' : ''}D:${stats.onlineDevices}/${stats.totalDevices} S:${stats.successCount} F:${stats.failureCount}',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         );
       },
     );
+  }
+
+  String _runStateLabel(BuildContext context, SimulationRunState state) {
+    final isZh = Localizations.localeOf(context).languageCode == 'zh';
+    return switch (state) {
+      SimulationRunState.idle => isZh ? '就绪' : 'Ready',
+      SimulationRunState.starting => isZh ? '准备中' : 'Starting',
+      SimulationRunState.connecting => isZh ? '连接中' : 'Connecting',
+      SimulationRunState.running => isZh ? '运行中' : 'Running',
+      SimulationRunState.reconnecting => isZh ? '重连中' : 'Reconnecting',
+      SimulationRunState.partialRunning => isZh ? '部分在线' : 'Partial',
+      SimulationRunState.stopping => isZh ? '停止中' : 'Stopping',
+      SimulationRunState.failed => isZh ? '失败' : 'Failed',
+    };
+  }
+
+  Color _runStateColor(ThemeData theme, SimulationRunState state) {
+    return switch (state) {
+      SimulationRunState.idle => theme.colorScheme.onSurfaceVariant,
+      SimulationRunState.starting ||
+      SimulationRunState.connecting =>
+        theme.colorScheme.primary,
+      SimulationRunState.running => Colors.green,
+      SimulationRunState.reconnecting ||
+      SimulationRunState.partialRunning =>
+        Colors.orange,
+      SimulationRunState.stopping => theme.colorScheme.error,
+      SimulationRunState.failed => theme.colorScheme.error,
+    };
+  }
+
+  String _localized(
+    BuildContext context, {
+    required String zh,
+    required String en,
+  }) {
+    return Localizations.localeOf(context).languageCode == 'zh' ? zh : en;
   }
 }

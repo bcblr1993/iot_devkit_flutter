@@ -22,16 +22,22 @@ class MqttClientManager {
   // Callbacks
   final Function(String clientId, MqttServerClient client) onConnected;
   final Function(String clientId) onDisconnected;
+  final Function(String clientId, Object error)? onConnectionFailed;
+  final Function(String clientId, int attempt, Duration delay)?
+      onReconnectScheduled;
   final Function(String message, String type, {String? tag}) onLog;
 
   MqttClientManager({
     required this.onConnected,
     required this.onDisconnected,
+    this.onConnectionFailed,
+    this.onReconnectScheduled,
     required this.onLog,
   });
 
   bool get hasActiveClients => _clients.isNotEmpty;
   int get activeClientCount => _clients.length;
+  int get trackedClientCount => _clientConfigs.length;
 
   SimulationContext? getClientContext(String clientId) {
     return _clientConfigs[clientId]?['context'] as SimulationContext?;
@@ -170,6 +176,7 @@ class MqttClientManager {
   void _handleConnectionFailure(String clientId, dynamic error) {
     onLog('[$clientId] Connection failed: $error', 'error',
         tag: _getTag(clientId));
+    onConnectionFailed?.call(clientId, error);
     _scheduleReconnect(clientId);
   }
 
@@ -202,6 +209,11 @@ class MqttClientManager {
     onLog('Reconnecting in ${delayMs ~/ 1000}s (attempt ${attempts + 1})...',
         'warning',
         tag: _getTag(clientId));
+    onReconnectScheduled?.call(
+      clientId,
+      attempts + 1,
+      Duration(milliseconds: delayMs),
+    );
 
     _reconnectTimers[clientId] = Timer(Duration(milliseconds: delayMs), () {
       if (!_clientConfigs.containsKey(clientId)) return;

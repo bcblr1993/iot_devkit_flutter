@@ -44,4 +44,29 @@ void main() {
     expect(find.byType(LogConsole), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('LogConsole collapsed empty state shows ready only once',
+      (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 420,
+            height: 80,
+            child: LogConsole(
+              logs: const [],
+              isExpanded: false,
+              onToggle: () {},
+              onClear: () {},
+              onMaximize: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Ready'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
