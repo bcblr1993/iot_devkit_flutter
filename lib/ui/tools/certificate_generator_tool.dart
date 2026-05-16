@@ -1,0 +1,664 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:path/path.dart' as p;
+
+import '../../l10n/generated/app_localizations.dart';
+import '../../models/certificate_config.dart';
+import '../../services/certificate_address_parser.dart';
+import '../../services/certificate_generator_service.dart';
+import '../../services/certificate_package_builder.dart';
+import '../../utils/app_toast.dart';
+import '../components/app_input_decoration.dart';
+import '../components/app_section.dart';
+import '../components/form_grid.dart';
+
+class CertificateGeneratorTool extends StatefulWidget {
+  const CertificateGeneratorTool({super.key});
+
+  @override
+  State<CertificateGeneratorTool> createState() =>
+      _CertificateGeneratorToolState();
+}
+
+class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
+  final _passwordController = TextEditingController();
+  final _addressesController = TextEditingController(
+    text: 'localhost\n127.0.0.1\n::1',
+  );
+  final _hostsIpController = TextEditingController(text: '127.0.0.1');
+  final _service = const CertificateGeneratorService();
+
+  CertificateUsage _usage = CertificateUsage.shared;
+  CertificateOutputFormat _format = CertificateOutputFormat.pem;
+  bool _showPassword = false;
+  bool _isGenerating = false;
+  CertificateGenerationResult? _lastResult;
+
+  @override
+  void initState() {
+    super.initState();
+    _passwordController.addListener(_refreshPreview);
+    _addressesController.addListener(_refreshPreview);
+    _hostsIpController.addListener(_refreshPreview);
+  }
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    _addressesController.dispose();
+    _hostsIpController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final parsed = _parsedAddresses;
+    final request = _request;
+    final plan = CertificatePackageBuilder.buildPlan(
+      request: request,
+      addresses: parsed,
+      now: DateTime.now(),
+      redactSecrets: true,
+    );
+    final validationError = _validationError(parsed);
+
+    return Container(
+      color: theme.colorScheme.surface,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1180),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(context, l10n),
+                const SizedBox(height: 18),
+                AppSection(
+                  title: l10n.certUsage,
+                  icon: Icons.verified_user_outlined,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      FormGrid(
+                        minItemWidth: 320,
+                        children: [
+                          _buildUsageSelector(context, l10n),
+                          _buildFormatSelector(context, l10n),
+                          _buildPasswordField(context, l10n),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      _buildHint(context, l10n.certOpenSslHint),
+                    ],
+                  ),
+                ),
+                AppSection(
+                  title: l10n.certSanAddresses,
+                  icon: Icons.dns_outlined,
+                  trailing: Text(
+                    l10n.certLocalDefaults,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      FormGrid(
+                        minItemWidth: 360,
+                        children: [
+                          TextField(
+                            controller: _addressesController,
+                            minLines: 5,
+                            maxLines: 8,
+                            decoration: AppInputDecoration.filled(context,
+                                    label: l10n.certSanAddresses)
+                                .copyWith(
+                              hintText: l10n.certSanHint,
+                              alignLabelWithHint: true,
+                              errorText: parsed.hasInvalid
+                                  ? '${l10n.certInvalidAddresses}: ${parsed.invalidTokens.join(', ')}'
+                                  : null,
+                            ),
+                          ),
+                          TextField(
+                            controller: _hostsIpController,
+                            decoration: AppInputDecoration.filled(context,
+                                    label: l10n.certHostsIp)
+                                .copyWith(
+                              hintText: l10n.certHostsIpHint,
+                              errorText: _hostsIpError(l10n),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      _buildParsedAddressChips(context, l10n, parsed),
+                    ],
+                  ),
+                ),
+                AppSection(
+                  title: l10n.certOutputPreview,
+                  icon: Icons.folder_zip_outlined,
+                  child: _buildOutputPreview(context, l10n, plan),
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: validationError == null && !_isGenerating
+                            ? _generateZip
+                            : null,
+                        icon: _isGenerating
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.archive_outlined),
+                        label: Text(l10n.certGenerateZip),
+                      ),
+                    ),
+                    if (_lastResult != null) ...[
+                      const SizedBox(width: 12),
+                      OutlinedButton.icon(
+                        onPressed: _copyGeneratedConfig,
+                        icon: const Icon(Icons.copy_all_outlined),
+                        label: Text(l10n.certCopyConfig),
+                      ),
+                      const SizedBox(width: 12),
+                      OutlinedButton.icon(
+                        onPressed: _openGeneratedFolder,
+                        icon: const Icon(Icons.folder_open_outlined),
+                        label: Text(l10n.certOpenFolder),
+                      ),
+                    ],
+                  ],
+                ),
+                if (validationError != null) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    validationError,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.error,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+                if (_lastResult != null) ...[
+                  const SizedBox(height: 12),
+                  _buildGeneratedPath(context, l10n, _lastResult!.zipPath),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, AppLocalizations l10n) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primaryContainer.withValues(alpha: 0.55),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(
+            Icons.workspace_premium_outlined,
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.certGenerator,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                l10n.certGeneratorDescription,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUsageSelector(BuildContext context, AppLocalizations l10n) {
+    return SegmentedButton<CertificateUsage>(
+      selected: {_usage},
+      segments: [
+        ButtonSegment(
+          value: CertificateUsage.https,
+          icon: const Icon(Icons.language_outlined),
+          label: Text(l10n.certUsageHttps),
+        ),
+        ButtonSegment(
+          value: CertificateUsage.mqtts,
+          icon: const Icon(Icons.hub_outlined),
+          label: Text(l10n.certUsageMqtts),
+        ),
+        ButtonSegment(
+          value: CertificateUsage.shared,
+          icon: const Icon(Icons.call_split_outlined),
+          label: Text(l10n.certUsageShared),
+        ),
+      ],
+      onSelectionChanged: (selected) {
+        setState(() {
+          _usage = selected.first;
+          _lastResult = null;
+        });
+      },
+    );
+  }
+
+  Widget _buildFormatSelector(BuildContext context, AppLocalizations l10n) {
+    return SegmentedButton<CertificateOutputFormat>(
+      selected: {_format},
+      segments: const [
+        ButtonSegment(
+          value: CertificateOutputFormat.pem,
+          icon: Icon(Icons.description_outlined),
+          label: Text('PEM'),
+        ),
+        ButtonSegment(
+          value: CertificateOutputFormat.pkcs12,
+          icon: Icon(Icons.inventory_2_outlined),
+          label: Text('PKCS12'),
+        ),
+      ],
+      onSelectionChanged: (selected) {
+        setState(() {
+          _format = selected.first;
+          _lastResult = null;
+        });
+      },
+    );
+  }
+
+  Widget _buildPasswordField(BuildContext context, AppLocalizations l10n) {
+    final needsPassword = _format == CertificateOutputFormat.pkcs12;
+    return TextField(
+      controller: _passwordController,
+      enabled: needsPassword,
+      obscureText: !_showPassword,
+      decoration:
+          AppInputDecoration.filled(context, label: l10n.certPassword).copyWith(
+        hintText:
+            needsPassword ? l10n.certPasswordHint : l10n.certPemNoPasswordHint,
+        errorText: needsPassword && _passwordController.text.trim().isEmpty
+            ? l10n.certPasswordRequired
+            : null,
+        suffixIcon: needsPassword
+            ? IconButton(
+                tooltip: _showPassword ? l10n.hidePassword : l10n.showPassword,
+                icon: Icon(
+                  _showPassword
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _showPassword = !_showPassword;
+                  });
+                },
+              )
+            : const Icon(Icons.lock_open_outlined),
+      ),
+    );
+  }
+
+  Widget _buildHint(BuildContext context, String text) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Icon(
+          Icons.info_outline,
+          size: 16,
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            text,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildParsedAddressChips(
+    BuildContext context,
+    AppLocalizations l10n,
+    ParsedCertificateAddresses parsed,
+  ) {
+    final theme = Theme.of(context);
+    if (!parsed.hasValid) {
+      return Text(
+        l10n.certAddressRequired,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.error,
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.certParsedAddresses,
+          style: theme.textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final address in parsed.addresses)
+              Chip(
+                visualDensity: VisualDensity.compact,
+                avatar: Icon(
+                  address.isIp ? Icons.tag_outlined : Icons.public_outlined,
+                  size: 16,
+                ),
+                label: Text(address.label),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOutputPreview(
+    BuildContext context,
+    AppLocalizations l10n,
+    CertificatePackagePlan plan,
+  ) {
+    final theme = Theme.of(context);
+
+    return FormGrid(
+      minItemWidth: 360,
+      children: [
+        _PreviewPanel(
+          title: l10n.certFiles,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final file in plan.fileNames)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.insert_drive_file_outlined,
+                        size: 16,
+                        color: theme.colorScheme.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text(file)),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+        _PreviewPanel(
+          title: l10n.certEnv,
+          child: SelectableText(
+            plan.envText,
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontFamily: 'monospace',
+              height: 1.35,
+            ),
+          ),
+        ),
+        _PreviewPanel(
+          title: l10n.certHostsExample,
+          child: SelectableText(
+            plan.hostsText,
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontFamily: 'monospace',
+              height: 1.35,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGeneratedPath(
+    BuildContext context,
+    AppLocalizations l10n,
+    String path,
+  ) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.18),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.check_circle_outline,
+            color: theme.colorScheme.primary,
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '${l10n.certZipSavedTo}: ',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          Expanded(
+            child: SelectableText(
+              path,
+              style: theme.textTheme.bodyMedium,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  ParsedCertificateAddresses get _parsedAddresses {
+    return CertificateAddressParser.parse(
+      _addressesController.text,
+      includeLocalDefaults: true,
+    );
+  }
+
+  CertificateGenerationRequest get _request {
+    return CertificateGenerationRequest(
+      usage: _usage,
+      format: _format,
+      password: _passwordController.text,
+      addressText: _addressesController.text,
+      hostsBindingIp: _hostsIpController.text,
+    );
+  }
+
+  String? _validationError(ParsedCertificateAddresses parsed) {
+    final l10n = AppLocalizations.of(context)!;
+    if (_format == CertificateOutputFormat.pkcs12 &&
+        _passwordController.text.trim().isEmpty) {
+      return l10n.certPasswordRequired;
+    }
+    if (!parsed.hasValid) {
+      return l10n.certAddressRequired;
+    }
+    if (parsed.hasInvalid) {
+      return '${l10n.certInvalidAddresses}: ${parsed.invalidTokens.join(', ')}';
+    }
+    final hostsError = _hostsIpError(l10n);
+    if (hostsError != null) return hostsError;
+    return null;
+  }
+
+  String? _hostsIpError(AppLocalizations l10n) {
+    final value = _hostsIpController.text.trim();
+    if (value.isEmpty) return null;
+    if (!CertificateAddressParser.isValidIp(value)) {
+      return l10n.certHostsIpInvalid;
+    }
+    return null;
+  }
+
+  Future<void> _generateZip() async {
+    final l10n = AppLocalizations.of(context)!;
+    final parsed = _parsedAddresses;
+    final validationError = _validationError(parsed);
+    if (validationError != null) {
+      AppToast.error(context, validationError);
+      return;
+    }
+
+    final request = _request;
+    final previewPlan = CertificatePackageBuilder.buildPlan(
+      request: request,
+      addresses: parsed,
+      now: DateTime.now(),
+      redactSecrets: true,
+    );
+    final outputPath = await FilePicker.platform.saveFile(
+      dialogTitle: l10n.certGenerateZip,
+      fileName: previewPlan.zipFileName,
+      type: FileType.custom,
+      allowedExtensions: ['zip'],
+    );
+
+    if (outputPath == null) {
+      if (mounted) AppToast.info(context, l10n.certGenerationCancelled);
+      return;
+    }
+
+    setState(() {
+      _isGenerating = true;
+      _lastResult = null;
+    });
+
+    try {
+      final result = await _service.generateZip(
+        request: request,
+        outputPath: outputPath,
+      );
+      if (!mounted) return;
+      setState(() {
+        _lastResult = result;
+      });
+      AppToast.success(context, l10n.certGenerated);
+    } catch (e) {
+      if (!mounted) return;
+      AppToast.error(context, '${l10n.certGenerationFailed}: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isGenerating = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _copyGeneratedConfig() async {
+    final result = _lastResult;
+    if (result == null) return;
+    await Clipboard.setData(ClipboardData(text: result.plan.envText));
+    if (mounted) {
+      AppToast.success(context, AppLocalizations.of(context)!.copySuccess);
+    }
+  }
+
+  Future<void> _openGeneratedFolder() async {
+    final result = _lastResult;
+    if (result == null) return;
+    final folder = p.dirname(result.zipPath);
+    if (Platform.isMacOS) {
+      await Process.run('open', [folder]);
+    } else if (Platform.isWindows) {
+      await Process.run('explorer', [folder], runInShell: true);
+    } else if (Platform.isLinux) {
+      await Process.run('xdg-open', [folder]);
+    }
+  }
+
+  void _refreshPreview() {
+    if (mounted) {
+      setState(() {
+        _lastResult = null;
+      });
+    }
+  }
+}
+
+class _PreviewPanel extends StatelessWidget {
+  final String title;
+  final Widget child;
+
+  const _PreviewPanel({
+    required this.title,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      constraints: const BoxConstraints(minHeight: 180),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.65),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.42),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 10),
+          child,
+        ],
+      ),
+    );
+  }
+}

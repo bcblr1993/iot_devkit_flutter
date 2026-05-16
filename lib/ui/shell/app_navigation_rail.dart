@@ -66,6 +66,11 @@ class AppNavigationRail extends StatelessWidget {
           selectedIcon: const Icon(Icons.data_object),
           label: Text(l10n.navJson),
         ),
+        NavigationRailDestination(
+          icon: const Icon(Icons.workspace_premium_outlined),
+          selectedIcon: const Icon(Icons.verified_user),
+          label: Text(l10n.navCertificates),
+        ),
         if (isTimesheetVisible)
           NavigationRailDestination(
             icon: const Icon(Icons.calendar_month),

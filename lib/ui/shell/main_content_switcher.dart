@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../viewmodels/timesheet_provider.dart';
 import '../screens/timesheet_screen.dart';
+import '../tools/certificate_generator_tool.dart';
 import '../tools/json_formatter_tool.dart';
 import '../tools/timestamp_tool.dart';
 import '../widgets/log_console.dart';
@@ -44,6 +45,7 @@ class MainContentSwitcher extends StatelessWidget {
       ),
       const TimestampTool(),
       const JsonFormatterTool(),
+      const CertificateGeneratorTool(),
       if (isTimesheetVisible) const TimesheetScreen(),
     ];
 

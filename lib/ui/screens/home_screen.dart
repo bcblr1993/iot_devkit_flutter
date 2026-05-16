@@ -80,7 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final tsProvider = context.watch<TimesheetProvider>();
     final isTimesheetVisible = tsProvider.isEnabled;
     final selectedIndex =
-        isTimesheetVisible || _selectedIndex < 3 ? _selectedIndex : 0;
+        isTimesheetVisible || _selectedIndex < 4 ? _selectedIndex : 0;
 
     return Scaffold(
       body: Row(
@@ -94,7 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 });
               },
               onTimesheetDisabled: () {
-                if (_selectedIndex == 3) {
+                if (_selectedIndex == 4) {
                   setState(() {
                     _selectedIndex = 0;
                   });

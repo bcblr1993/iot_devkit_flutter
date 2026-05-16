@@ -1369,6 +1369,216 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No Profiles'**
   String get noProfiles;
+
+  /// No description provided for @navCertificates.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificates'**
+  String get navCertificates;
+
+  /// No description provided for @certGenerator.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate Generator'**
+  String get certGenerator;
+
+  /// No description provided for @certGeneratorDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate ThingsBoard HTTPS and MQTTS self-signed certificate packages.'**
+  String get certGeneratorDescription;
+
+  /// No description provided for @certUsage.
+  ///
+  /// In en, this message translates to:
+  /// **'Usage'**
+  String get certUsage;
+
+  /// No description provided for @certUsageHttps.
+  ///
+  /// In en, this message translates to:
+  /// **'HTTPS'**
+  String get certUsageHttps;
+
+  /// No description provided for @certUsageMqtts.
+  ///
+  /// In en, this message translates to:
+  /// **'MQTTS'**
+  String get certUsageMqtts;
+
+  /// No description provided for @certUsageShared.
+  ///
+  /// In en, this message translates to:
+  /// **'HTTPS + MQTTS'**
+  String get certUsageShared;
+
+  /// No description provided for @certFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate Format'**
+  String get certFormat;
+
+  /// No description provided for @certPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate Password'**
+  String get certPassword;
+
+  /// No description provided for @certPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Used for private key and keystore passwords'**
+  String get certPasswordHint;
+
+  /// No description provided for @certSanAddresses.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate SAN Addresses'**
+  String get certSanAddresses;
+
+  /// No description provided for @certSanHint.
+  ///
+  /// In en, this message translates to:
+  /// **'One IP/domain per line, or comma separated'**
+  String get certSanHint;
+
+  /// No description provided for @certHostsIp.
+  ///
+  /// In en, this message translates to:
+  /// **'Hosts Binding IP'**
+  String get certHostsIp;
+
+  /// No description provided for @certHostsIpHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional. Used to generate hosts.example.txt'**
+  String get certHostsIpHint;
+
+  /// No description provided for @certHostsIpInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Hosts binding IP is invalid'**
+  String get certHostsIpInvalid;
+
+  /// No description provided for @certParsedAddresses.
+  ///
+  /// In en, this message translates to:
+  /// **'Parsed Addresses'**
+  String get certParsedAddresses;
+
+  /// No description provided for @certOutputPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Output Preview'**
+  String get certOutputPreview;
+
+  /// No description provided for @certFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Files'**
+  String get certFiles;
+
+  /// No description provided for @certEnv.
+  ///
+  /// In en, this message translates to:
+  /// **'ThingsBoard Env'**
+  String get certEnv;
+
+  /// No description provided for @certGenerateZip.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate ZIP'**
+  String get certGenerateZip;
+
+  /// No description provided for @certOpenFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Folder'**
+  String get certOpenFolder;
+
+  /// No description provided for @certCopyConfig.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Config'**
+  String get certCopyConfig;
+
+  /// No description provided for @certGenerated.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate package generated'**
+  String get certGenerated;
+
+  /// No description provided for @certGenerationCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Generation cancelled'**
+  String get certGenerationCancelled;
+
+  /// No description provided for @certGenerationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate generation failed'**
+  String get certGenerationFailed;
+
+  /// No description provided for @certAddressRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'At least one IP or domain is required'**
+  String get certAddressRequired;
+
+  /// No description provided for @certPasswordRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Password is required'**
+  String get certPasswordRequired;
+
+  /// No description provided for @certPemNoPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'PEM private keys are not encrypted. Use PKCS12 for password protection.'**
+  String get certPemNoPasswordHint;
+
+  /// No description provided for @certInvalidAddresses.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid addresses'**
+  String get certInvalidAddresses;
+
+  /// No description provided for @certLocalDefaults.
+  ///
+  /// In en, this message translates to:
+  /// **'localhost, 127.0.0.1 and ::1 are always included.'**
+  String get certLocalDefaults;
+
+  /// No description provided for @certOpenSslHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Built-in generator. No OpenSSL installation is required.'**
+  String get certOpenSslHint;
+
+  /// No description provided for @certZipSavedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'ZIP saved to'**
+  String get certZipSavedTo;
+
+  /// No description provided for @certHostsExample.
+  ///
+  /// In en, this message translates to:
+  /// **'Hosts Example'**
+  String get certHostsExample;
+
+  /// No description provided for @showPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Show password'**
+  String get showPassword;
+
+  /// No description provided for @hidePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide password'**
+  String get hidePassword;
 }
 
 class _AppLocalizationsDelegate

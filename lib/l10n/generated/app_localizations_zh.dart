@@ -516,7 +516,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get previewPayload => '数据预览';
 
   @override
-  String get payloadPreview => 'Payload Preview';
+  String get payloadPreview => '数据预览';
 
   @override
   String get selectFile => '选择文件';
@@ -643,4 +643,109 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get noProfiles => '暂无配置';
+
+  @override
+  String get navCertificates => '证书生成';
+
+  @override
+  String get certGenerator => '证书生成';
+
+  @override
+  String get certGeneratorDescription => '生成 ThingsBoard HTTPS 与 MQTTS 自签名证书包。';
+
+  @override
+  String get certUsage => '用途';
+
+  @override
+  String get certUsageHttps => 'HTTPS';
+
+  @override
+  String get certUsageMqtts => 'MQTTS';
+
+  @override
+  String get certUsageShared => 'HTTPS + MQTTS';
+
+  @override
+  String get certFormat => '证书格式';
+
+  @override
+  String get certPassword => '证书密码';
+
+  @override
+  String get certPasswordHint => '用于私钥密码和 keystore 密码';
+
+  @override
+  String get certSanAddresses => '证书绑定地址 SAN';
+
+  @override
+  String get certSanHint => '一行一个 IP/域名，也可以用逗号分隔';
+
+  @override
+  String get certHostsIp => 'hosts 绑定 IP';
+
+  @override
+  String get certHostsIpHint => '可选，用于生成 hosts.example.txt';
+
+  @override
+  String get certHostsIpInvalid => 'hosts 绑定 IP 无效';
+
+  @override
+  String get certParsedAddresses => '解析结果';
+
+  @override
+  String get certOutputPreview => '输出预览';
+
+  @override
+  String get certFiles => '文件';
+
+  @override
+  String get certEnv => 'ThingsBoard 环境变量';
+
+  @override
+  String get certGenerateZip => '生成 ZIP 包';
+
+  @override
+  String get certOpenFolder => '打开文件夹';
+
+  @override
+  String get certCopyConfig => '复制配置';
+
+  @override
+  String get certGenerated => '证书包已生成';
+
+  @override
+  String get certGenerationCancelled => '已取消生成';
+
+  @override
+  String get certGenerationFailed => '证书生成失败';
+
+  @override
+  String get certAddressRequired => '至少需要一个 IP 或域名';
+
+  @override
+  String get certPasswordRequired => '请输入证书密码';
+
+  @override
+  String get certPemNoPasswordHint => 'PEM 私钥不加密；如需密码保护请选择 PKCS12';
+
+  @override
+  String get certInvalidAddresses => '无效地址';
+
+  @override
+  String get certLocalDefaults => '会默认包含 localhost、127.0.0.1 和 ::1。';
+
+  @override
+  String get certOpenSslHint => '内置生成引擎，无需安装 OpenSSL。';
+
+  @override
+  String get certZipSavedTo => 'ZIP 已保存到';
+
+  @override
+  String get certHostsExample => 'hosts 示例';
+
+  @override
+  String get showPassword => '显示密码';
+
+  @override
+  String get hidePassword => '隐藏密码';
 }

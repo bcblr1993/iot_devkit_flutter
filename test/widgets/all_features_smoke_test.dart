@@ -109,6 +109,36 @@ void main() {
     );
   });
 
+  testWidgets('certificate smoke: previews ThingsBoard SSL package',
+      (tester) async {
+    await _pumpSmokeApp(tester);
+    await _selectRailDestination(tester, 3);
+
+    expect(find.text('Certificate Generator'), findsOneWidget);
+    expect(find.text('HTTPS + MQTTS'), findsOneWidget);
+    expect(find.text('PEM'), findsOneWidget);
+    expect(find.text('Certificate SAN Addresses'), findsWidgets);
+    expect(find.text('ThingsBoard Env'), findsOneWidget);
+    expect(find.text('server.pem'), findsWidgets);
+    expect(find.text('server_key.pem'), findsWidgets);
+    expect(find.text('cafile.pem'), findsWidgets);
+
+    await tester.enterText(
+      _textFieldWithLabel('Certificate Password'),
+      'thingsboard',
+    );
+    await tester.enterText(
+      _textFieldWithLabel('Certificate SAN Addresses'),
+      'tb.local, mqtt.local, 192.168.1.10',
+    );
+    await tester.pump(const Duration(milliseconds: 260));
+
+    expect(find.text('DNS: tb.local'), findsOneWidget);
+    expect(find.text('DNS: mqtt.local'), findsOneWidget);
+    expect(find.text('IP: 192.168.1.10'), findsOneWidget);
+    expect(find.text('Generate ZIP'), findsOneWidget);
+  });
+
   testWidgets('settings smoke: opens theme and language pickers',
       (tester) async {
     await _pumpSmokeApp(tester, enableTimesheet: true);
@@ -145,7 +175,7 @@ void main() {
   testWidgets('timesheet smoke: adds, edits, copies report, and deletes entry',
       (tester) async {
     await _pumpSmokeApp(tester, enableTimesheet: true);
-    await _selectRailDestination(tester, 3);
+    await _selectRailDestination(tester, 4);
     await tester.pump(const Duration(milliseconds: 260));
 
     expect(find.text('Timesheet'), findsWidgets);

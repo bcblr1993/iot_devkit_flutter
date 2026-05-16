@@ -647,4 +647,113 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noProfiles => 'No Profiles';
+
+  @override
+  String get navCertificates => 'Certificates';
+
+  @override
+  String get certGenerator => 'Certificate Generator';
+
+  @override
+  String get certGeneratorDescription =>
+      'Generate ThingsBoard HTTPS and MQTTS self-signed certificate packages.';
+
+  @override
+  String get certUsage => 'Usage';
+
+  @override
+  String get certUsageHttps => 'HTTPS';
+
+  @override
+  String get certUsageMqtts => 'MQTTS';
+
+  @override
+  String get certUsageShared => 'HTTPS + MQTTS';
+
+  @override
+  String get certFormat => 'Certificate Format';
+
+  @override
+  String get certPassword => 'Certificate Password';
+
+  @override
+  String get certPasswordHint => 'Used for private key and keystore passwords';
+
+  @override
+  String get certSanAddresses => 'Certificate SAN Addresses';
+
+  @override
+  String get certSanHint => 'One IP/domain per line, or comma separated';
+
+  @override
+  String get certHostsIp => 'Hosts Binding IP';
+
+  @override
+  String get certHostsIpHint => 'Optional. Used to generate hosts.example.txt';
+
+  @override
+  String get certHostsIpInvalid => 'Hosts binding IP is invalid';
+
+  @override
+  String get certParsedAddresses => 'Parsed Addresses';
+
+  @override
+  String get certOutputPreview => 'Output Preview';
+
+  @override
+  String get certFiles => 'Files';
+
+  @override
+  String get certEnv => 'ThingsBoard Env';
+
+  @override
+  String get certGenerateZip => 'Generate ZIP';
+
+  @override
+  String get certOpenFolder => 'Open Folder';
+
+  @override
+  String get certCopyConfig => 'Copy Config';
+
+  @override
+  String get certGenerated => 'Certificate package generated';
+
+  @override
+  String get certGenerationCancelled => 'Generation cancelled';
+
+  @override
+  String get certGenerationFailed => 'Certificate generation failed';
+
+  @override
+  String get certAddressRequired => 'At least one IP or domain is required';
+
+  @override
+  String get certPasswordRequired => 'Password is required';
+
+  @override
+  String get certPemNoPasswordHint =>
+      'PEM private keys are not encrypted. Use PKCS12 for password protection.';
+
+  @override
+  String get certInvalidAddresses => 'Invalid addresses';
+
+  @override
+  String get certLocalDefaults =>
+      'localhost, 127.0.0.1 and ::1 are always included.';
+
+  @override
+  String get certOpenSslHint =>
+      'Built-in generator. No OpenSSL installation is required.';
+
+  @override
+  String get certZipSavedTo => 'ZIP saved to';
+
+  @override
+  String get certHostsExample => 'Hosts Example';
+
+  @override
+  String get showPassword => 'Show password';
+
+  @override
+  String get hidePassword => 'Hide password';
 }
