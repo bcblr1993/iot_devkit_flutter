@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+@Deprecated(
+    'Use LabSection from ui/lab. Kept during the migration compat window.')
 class AppSection extends StatelessWidget {
   final String title;
   final Widget child;

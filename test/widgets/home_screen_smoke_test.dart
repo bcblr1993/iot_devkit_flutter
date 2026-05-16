@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:iot_devkit/l10n/generated/app_localizations.dart';
 import 'package:iot_devkit/services/mqtt_controller.dart';
 import 'package:iot_devkit/services/status_registry.dart';
+import 'package:iot_devkit/ui/lab/lab.dart';
 import 'package:iot_devkit/ui/screens/home_screen.dart';
 import 'package:iot_devkit/ui/screens/timesheet_screen.dart';
 import 'package:iot_devkit/viewmodels/timesheet_provider.dart';
@@ -63,6 +64,7 @@ Future<void> _setSurfaceSize(WidgetTester tester, Size size) async {
 
 Widget _buildTestApp() {
   return MaterialApp(
+    theme: labThemeSignal.themeData,
     localizationsDelegates: const [
       AppLocalizations.delegate,
       GlobalMaterialLocalizations.delegate,

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../styles/app_constants.dart';
-import '../components/app_section.dart';
+import '../lab/lab.dart';
 import '../components/form_grid.dart';
 import '../components/app_input_decoration.dart';
 
@@ -42,11 +42,8 @@ class MqttConfigSection extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return AppSection(
+    return LabSection(
       title: l10n.mqttBroker,
-      icon: Icons.hub_outlined,
-      padding: const EdgeInsets.all(14),
-      margin: EdgeInsets.zero,
       trailing: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(

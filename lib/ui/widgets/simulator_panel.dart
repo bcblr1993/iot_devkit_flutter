@@ -15,7 +15,6 @@ import 'performance_monitor.dart';
 import 'profile_sidebar.dart';
 import '../styles/app_theme_effect.dart';
 import '../components/app_input_decoration.dart';
-import '../components/app_section.dart';
 import '../components/form_grid.dart';
 import '../components/metric_chip.dart';
 import '../simulator/keep_alive_wrapper.dart';
@@ -343,88 +342,90 @@ class _SimulatorPanelState extends State<SimulatorPanel>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AppSection(
-              title: l10n.deviceConfig,
-              icon: Icons.devices_other,
-              trailing: MetricChip(
-                label: l10n.unitDevices,
-                value: count.toString(),
-              ),
-              child: Column(
-                children: [
-                  FormGrid(
-                    children: [
-                      _buildTextField(
-                        l10n.startIndex,
-                        vm.startIdxController,
-                        isRunning,
-                        isNumber: true,
-                        onChanged: (_) => setState(() {}),
-                      ),
-                      _buildTextField(
-                        l10n.endIndex,
-                        vm.endIdxController,
-                        isRunning,
-                        isNumber: true,
-                        onChanged: (_) => setState(() {}),
-                      ),
-                      _buildTextField(
-                        l10n.deviceName,
-                        vm.devicePrefixController,
-                        isRunning,
-                      ),
-                      _buildTextField(
-                        l10n.clientId,
-                        vm.clientIdPrefixController,
-                        isRunning,
-                      ),
-                      _buildTextField(
-                        l10n.username,
-                        vm.usernamePrefixController,
-                        isRunning,
-                      ),
-                      _buildTextField(
-                        l10n.password,
-                        vm.passwordPrefixController,
-                        isRunning,
-                      ),
-                      _buildTextField(
-                        l10n.interval,
-                        vm.intervalController,
-                        isRunning,
-                        isNumber: true,
-                      ),
-                      _buildTextField(
-                        l10n.dataPointCount,
-                        vm.dataPointController,
-                        isRunning,
-                        isNumber: true,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  DropdownButtonFormField<String>(
-                    borderRadius: BorderRadius.circular(8),
-                    dropdownColor: theme.colorScheme.surface,
-                    decoration: AppInputDecoration.filled(context,
-                        label: l10n.dataFormat),
-                    initialValue: vm.format,
-                    items: [
-                      DropdownMenuItem(
-                          value: 'default', child: Text(l10n.formatDefault)),
-                      DropdownMenuItem(
-                          value: 'tn', child: Text(l10n.formatTieNiu)),
-                      DropdownMenuItem(
-                          value: 'tn-empty',
-                          child: Text(l10n.formatTieNiuEmpty)),
-                    ],
-                    onChanged: isRunning
-                        ? null
-                        : (v) {
-                            if (v != null) vm.setFormat(v);
-                          },
-                  ),
-                ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: LabSection(
+                title: l10n.deviceConfig,
+                trailing: MetricChip(
+                  label: l10n.unitDevices,
+                  value: count.toString(),
+                ),
+                child: Column(
+                  children: [
+                    FormGrid(
+                      children: [
+                        _buildTextField(
+                          l10n.startIndex,
+                          vm.startIdxController,
+                          isRunning,
+                          isNumber: true,
+                          onChanged: (_) => setState(() {}),
+                        ),
+                        _buildTextField(
+                          l10n.endIndex,
+                          vm.endIdxController,
+                          isRunning,
+                          isNumber: true,
+                          onChanged: (_) => setState(() {}),
+                        ),
+                        _buildTextField(
+                          l10n.deviceName,
+                          vm.devicePrefixController,
+                          isRunning,
+                        ),
+                        _buildTextField(
+                          l10n.clientId,
+                          vm.clientIdPrefixController,
+                          isRunning,
+                        ),
+                        _buildTextField(
+                          l10n.username,
+                          vm.usernamePrefixController,
+                          isRunning,
+                        ),
+                        _buildTextField(
+                          l10n.password,
+                          vm.passwordPrefixController,
+                          isRunning,
+                        ),
+                        _buildTextField(
+                          l10n.interval,
+                          vm.intervalController,
+                          isRunning,
+                          isNumber: true,
+                        ),
+                        _buildTextField(
+                          l10n.dataPointCount,
+                          vm.dataPointController,
+                          isRunning,
+                          isNumber: true,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    DropdownButtonFormField<String>(
+                      borderRadius: BorderRadius.circular(8),
+                      dropdownColor: theme.colorScheme.surface,
+                      decoration: AppInputDecoration.filled(context,
+                          label: l10n.dataFormat),
+                      initialValue: vm.format,
+                      items: [
+                        DropdownMenuItem(
+                            value: 'default', child: Text(l10n.formatDefault)),
+                        DropdownMenuItem(
+                            value: 'tn', child: Text(l10n.formatTieNiu)),
+                        DropdownMenuItem(
+                            value: 'tn-empty',
+                            child: Text(l10n.formatTieNiuEmpty)),
+                      ],
+                      onChanged: isRunning
+                          ? null
+                          : (v) {
+                              if (v != null) vm.setFormat(v);
+                            },
+                    ),
+                  ],
+                ),
               ),
             ),
             CustomKeysManager(

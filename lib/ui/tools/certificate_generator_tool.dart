@@ -12,7 +12,6 @@ import '../../services/certificate_generator_service.dart';
 import '../../services/certificate_package_builder.dart';
 import '../lab/lab.dart';
 import '../components/app_input_decoration.dart';
-import '../components/app_section.dart';
 import '../components/form_grid.dart';
 
 class CertificateGeneratorTool extends StatefulWidget {
@@ -79,74 +78,80 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
               children: [
                 _buildHeader(context, l10n),
                 const SizedBox(height: 18),
-                AppSection(
-                  title: l10n.certUsage,
-                  icon: Icons.verified_user_outlined,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      FormGrid(
-                        minItemWidth: 320,
-                        children: [
-                          _buildUsageSelector(context, l10n),
-                          _buildFormatSelector(context, l10n),
-                          _buildPasswordField(context, l10n),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      _buildHint(context, l10n.certOpenSslHint),
-                    ],
-                  ),
-                ),
-                AppSection(
-                  title: l10n.certSanAddresses,
-                  icon: Icons.dns_outlined,
-                  trailing: Text(
-                    l10n.certLocalDefaults,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: LabSection(
+                    title: l10n.certUsage,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        FormGrid(
+                          minItemWidth: 320,
+                          children: [
+                            _buildUsageSelector(context, l10n),
+                            _buildFormatSelector(context, l10n),
+                            _buildPasswordField(context, l10n),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        _buildHint(context, l10n.certOpenSslHint),
+                      ],
                     ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      FormGrid(
-                        minItemWidth: 360,
-                        children: [
-                          TextField(
-                            controller: _addressesController,
-                            minLines: 5,
-                            maxLines: 8,
-                            decoration: AppInputDecoration.filled(context,
-                                    label: l10n.certSanAddresses)
-                                .copyWith(
-                              hintText: l10n.certSanHint,
-                              alignLabelWithHint: true,
-                              errorText: parsed.hasInvalid
-                                  ? '${l10n.certInvalidAddresses}: ${parsed.invalidTokens.join(', ')}'
-                                  : null,
-                            ),
-                          ),
-                          TextField(
-                            controller: _hostsIpController,
-                            decoration: AppInputDecoration.filled(context,
-                                    label: l10n.certHostsIp)
-                                .copyWith(
-                              hintText: l10n.certHostsIpHint,
-                              errorText: _hostsIpError(l10n),
-                            ),
-                          ),
-                        ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: LabSection(
+                    title: l10n.certSanAddresses,
+                    trailing: Text(
+                      l10n.certLocalDefaults,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
-                      const SizedBox(height: 14),
-                      _buildParsedAddressChips(context, l10n, parsed),
-                    ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        FormGrid(
+                          minItemWidth: 360,
+                          children: [
+                            TextField(
+                              controller: _addressesController,
+                              minLines: 5,
+                              maxLines: 8,
+                              decoration: AppInputDecoration.filled(context,
+                                      label: l10n.certSanAddresses)
+                                  .copyWith(
+                                hintText: l10n.certSanHint,
+                                alignLabelWithHint: true,
+                                errorText: parsed.hasInvalid
+                                    ? '${l10n.certInvalidAddresses}: ${parsed.invalidTokens.join(', ')}'
+                                    : null,
+                              ),
+                            ),
+                            TextField(
+                              controller: _hostsIpController,
+                              decoration: AppInputDecoration.filled(context,
+                                      label: l10n.certHostsIp)
+                                  .copyWith(
+                                hintText: l10n.certHostsIpHint,
+                                errorText: _hostsIpError(l10n),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        _buildParsedAddressChips(context, l10n, parsed),
+                      ],
+                    ),
                   ),
                 ),
-                AppSection(
-                  title: l10n.certOutputPreview,
-                  icon: Icons.folder_zip_outlined,
-                  child: _buildOutputPreview(context, l10n, plan),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: LabSection(
+                    title: l10n.certOutputPreview,
+                    child: _buildOutputPreview(context, l10n, plan),
+                  ),
                 ),
                 Row(
                   children: [
@@ -602,8 +607,7 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
     await Clipboard.setData(ClipboardData(text: result.plan.envText));
     if (mounted) {
       showLabToast(context,
-          title: AppLocalizations.of(context)!.copySuccess,
-          kind: LabStatus.ok);
+          title: AppLocalizations.of(context)!.copySuccess, kind: LabStatus.ok);
     }
   }
 

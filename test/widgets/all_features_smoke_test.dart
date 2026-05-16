@@ -23,10 +23,11 @@ void main() {
     expect(find.byType(HomeScreen), findsOneWidget);
     expect(find.byType(SimulatorPanel), findsOneWidget);
     expect(find.byType(LogConsole), findsOneWidget);
-    expect(find.text('MQTT Broker'), findsOneWidget);
+    // LabSection uppercases its header title (Lab Console design).
+    expect(find.text('MQTT BROKER'), findsOneWidget);
     expect(find.text('Basic Mode'), findsOneWidget);
     expect(find.text('Advanced Mode'), findsOneWidget);
-    expect(find.text('Device Configuration'), findsOneWidget);
+    expect(find.text('DEVICE CONFIGURATION'), findsOneWidget);
     expect(find.text('START SIMULATION'), findsOneWidget);
     expect(find.text('Preview Payload'), findsOneWidget);
 
