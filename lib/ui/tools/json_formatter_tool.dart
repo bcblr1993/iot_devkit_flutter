@@ -263,16 +263,6 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    // Common Button Style
-    final ButtonStyle textButtonStyle = TextButton.styleFrom(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      visualDensity: VisualDensity.compact,
-      foregroundColor:
-          colorScheme.primary, // Use primary color for better theme adaptation
-      textStyle: const TextStyle(
-          fontWeight: FontWeight.w600), // Make text slightly bolder
-    );
-
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -322,43 +312,42 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        TextButton.icon(
-                                            onPressed: _copyInput,
-                                            icon: const Icon(Icons.copy,
-                                                size: 16),
-                                            label: Text(l10n.copyAction),
-                                            style: textButtonStyle),
-                                        TextButton.icon(
-                                            onPressed: _paste,
-                                            icon: const Icon(Icons.paste,
-                                                size: 16),
-                                            label: Text(l10n.pasteAction),
-                                            style: textButtonStyle),
-                                        TextButton.icon(
-                                            onPressed: _clear,
-                                            icon: const Icon(Icons.clear,
-                                                size: 16),
-                                            label: Text(l10n.clearAction),
-                                            style: textButtonStyle),
+                                        LabButton(
+                                            label: l10n.copyAction,
+                                            icon: Icons.copy,
+                                            variant: LabButtonVariant.ghost,
+                                            size: LabButtonSize.sm,
+                                            onPressed: _copyInput),
+                                        LabButton(
+                                            label: l10n.pasteAction,
+                                            icon: Icons.paste,
+                                            variant: LabButtonVariant.ghost,
+                                            size: LabButtonSize.sm,
+                                            onPressed: _paste),
+                                        LabButton(
+                                            label: l10n.clearAction,
+                                            icon: Icons.clear,
+                                            variant: LabButtonVariant.ghost,
+                                            size: LabButtonSize.sm,
+                                            onPressed: _clear),
                                         const SizedBox(width: 4),
                                         Container(
                                             width: 1,
                                             height: 20,
                                             color: theme.dividerColor),
                                         const SizedBox(width: 4),
-                                        TextButton.icon(
-                                            onPressed: _formatJson,
-                                            icon: const Icon(
-                                                Icons.format_align_left,
-                                                size: 16),
-                                            label: Text(l10n.formatAction),
-                                            style: textButtonStyle),
-                                        TextButton.icon(
-                                            onPressed: _minifyJson,
-                                            icon: const Icon(Icons.compress,
-                                                size: 16),
-                                            label: Text(l10n.minifyAction),
-                                            style: textButtonStyle),
+                                        LabButton(
+                                            label: l10n.formatAction,
+                                            icon: Icons.format_align_left,
+                                            variant: LabButtonVariant.ghost,
+                                            size: LabButtonSize.sm,
+                                            onPressed: _formatJson),
+                                        LabButton(
+                                            label: l10n.minifyAction,
+                                            icon: Icons.compress,
+                                            variant: LabButtonVariant.ghost,
+                                            size: LabButtonSize.sm,
+                                            onPressed: _minifyJson),
                                       ],
                                     ),
                                   ),
@@ -441,17 +430,16 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        TextButton.icon(
-                                          onPressed: _toggleExpansion,
-                                          icon: Icon(
-                                              _isTreeExpanded
-                                                  ? Icons.unfold_less
-                                                  : Icons.unfold_more,
-                                              size: 16),
-                                          label: Text(_isTreeExpanded
+                                        LabButton(
+                                          label: _isTreeExpanded
                                               ? l10n.collapseAll
-                                              : l10n.expandAll),
-                                          style: textButtonStyle,
+                                              : l10n.expandAll,
+                                          icon: _isTreeExpanded
+                                              ? Icons.unfold_less
+                                              : Icons.unfold_more,
+                                          variant: LabButtonVariant.ghost,
+                                          size: LabButtonSize.sm,
+                                          onPressed: _toggleExpansion,
                                         ),
                                         const SizedBox(width: 8),
                                         Container(

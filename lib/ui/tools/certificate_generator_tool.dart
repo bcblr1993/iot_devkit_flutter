@@ -148,34 +148,32 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
                 Row(
                   children: [
                     Expanded(
-                      child: FilledButton.icon(
+                      child: LabButton(
+                        label: l10n.certGenerateZip,
+                        icon: Icons.archive_outlined,
+                        variant: LabButtonVariant.primary,
+                        size: LabButtonSize.lg,
+                        fullWidth: true,
+                        loading: _isGenerating,
                         onPressed: validationError == null && !_isGenerating
                             ? _generateZip
                             : null,
-                        icon: _isGenerating
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.archive_outlined),
-                        label: Text(l10n.certGenerateZip),
                       ),
                     ),
                     if (_lastResult != null) ...[
                       const SizedBox(width: 12),
-                      OutlinedButton.icon(
+                      LabButton(
+                        label: l10n.certCopyConfig,
+                        icon: Icons.copy_all_outlined,
+                        size: LabButtonSize.lg,
                         onPressed: _copyGeneratedConfig,
-                        icon: const Icon(Icons.copy_all_outlined),
-                        label: Text(l10n.certCopyConfig),
                       ),
                       const SizedBox(width: 12),
-                      OutlinedButton.icon(
+                      LabButton(
+                        label: l10n.certOpenFolder,
+                        icon: Icons.folder_open_outlined,
+                        size: LabButtonSize.lg,
                         onPressed: _openGeneratedFolder,
-                        icon: const Icon(Icons.folder_open_outlined),
-                        label: Text(l10n.certOpenFolder),
                       ),
                     ],
                   ],
