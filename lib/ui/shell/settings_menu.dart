@@ -3,9 +3,10 @@ import 'package:provider/provider.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../../services/language_provider.dart';
+import '../../services/lab_theme_manager.dart';
 import '../../services/log_storage_service.dart';
-import '../../services/theme_manager.dart';
 import '../../utils/about_dialog_helper.dart';
+import '../lab/lab.dart';
 import '../../utils/app_dialog_helper.dart';
 import '../../viewmodels/timesheet_provider.dart';
 
@@ -134,13 +135,11 @@ class SettingsMenu extends StatelessWidget {
       context: context,
       title: l10n.selectTheme,
       icon: Icons.palette_outlined,
-      content: Consumer<ThemeManager>(
+      content: Consumer<LabThemeManager>(
         builder: (context, themeManager, child) {
           return _ThemePickerGrid(
-            themes: themeManager.availableThemes,
-            selectedTheme: themeManager.currentThemeName,
-            labelForTheme: (theme) => _themeLabel(l10n, theme),
-            colorsForTheme: themeManager.previewColors,
+            themes: themeManager.all,
+            selectedId: themeManager.theme.id,
             onSelected: themeManager.setTheme,
           );
         },
@@ -172,48 +171,16 @@ class SettingsMenu extends StatelessWidget {
     );
   }
 
-  String _themeLabel(AppLocalizations l10n, String theme) {
-    switch (theme) {
-      case 'forest-mint':
-        return l10n.themeForestMint;
-      case 'cosmic-void':
-        return l10n.themeCosmicVoid;
-      case 'polar-blue':
-        return l10n.themePolarBlue;
-      case 'porcelain-red':
-        return l10n.themePorcelainRed;
-      case 'wisteria-white':
-        return l10n.themeWisteriaWhite;
-      case 'amber-glow':
-        return l10n.themeAmberGlow;
-      case 'graphite-mono':
-        return l10n.themeGraphiteMono;
-      case 'azure-coast':
-        return l10n.themeAzureCoast;
-      case 'matcha-mochi':
-        return l10n.themeMatchaMochi;
-      case 'neon-cyberpunk':
-        return l10n.themeNeonCyberpunk;
-      case 'nordic-frost':
-        return l10n.themeNordicFrost;
-      default:
-        return theme;
-    }
-  }
 }
 
 class _ThemePickerGrid extends StatelessWidget {
-  final List<String> themes;
-  final String selectedTheme;
-  final String Function(String theme) labelForTheme;
-  final List<Color> Function(String theme) colorsForTheme;
+  final List<LabTheme> themes;
+  final String selectedId;
   final ValueChanged<String> onSelected;
 
   const _ThemePickerGrid({
     required this.themes,
-    required this.selectedTheme,
-    required this.labelForTheme,
-    required this.colorsForTheme,
+    required this.selectedId,
     required this.onSelected,
   });
 
@@ -235,12 +202,17 @@ class _ThemePickerGrid extends StatelessWidget {
               childAspectRatio: columns == 1 ? 5.8 : 3.15,
             ),
             itemBuilder: (context, index) {
-              final themeName = themes[index];
+              final t = themes[index];
               return _ThemeOptionCard(
-                label: labelForTheme(themeName),
-                colors: colorsForTheme(themeName),
-                isSelected: selectedTheme == themeName,
-                onTap: () => onSelected(themeName),
+                label: '${t.name} · ${t.tag}',
+                colors: [
+                  t.colorScheme.primary,
+                  t.colorScheme.secondary,
+                  t.colorScheme.tertiary,
+                  t.colorScheme.surfaceContainerHighest,
+                ],
+                isSelected: selectedId == t.id,
+                onTap: () => onSelected(t.id),
               );
             },
           );

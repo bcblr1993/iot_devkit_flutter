@@ -60,3 +60,12 @@ flutter:
   # basic assets config if needed later
   assets:
     - assets/icon/
+
+  # Lab Console design system fonts (variable TTFs — weight axis honored automatically)
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter.ttf
+    - family: JetBrainsMono
+      fonts:
+        - asset: assets/fonts/JetBrainsMono.ttf

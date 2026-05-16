@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:iot_devkit/services/theme_manager.dart';
 import '../../models/group_config.dart';
 import 'custom_keys_manager.dart';
 import '../../l10n/generated/app_localizations.dart';
-import '../../utils/platform_ui_helper.dart';
 import '../components/app_input_decoration.dart';
 import '../components/form_grid.dart';
 
@@ -177,9 +174,6 @@ class _GroupsManagerState extends State<GroupsManager> {
   Widget _buildGroupCard(int index, GroupConfig group, AppLocalizations l10n) {
     final theme = Theme.of(context);
 
-    final themeManager = Provider.of<ThemeManager>(context);
-    final isGlass = themeManager.currentThemeName.contains('glass');
-
     final cardContent = ExpansionTile(
       key: ValueKey("${group.id}_${group.isExpanded}"),
       initiallyExpanded: group.isExpanded,
@@ -335,21 +329,6 @@ class _GroupsManagerState extends State<GroupsManager> {
         ),
       ],
     );
-
-    if (isGlass) {
-      return Card(
-        elevation: 0,
-        color: theme.cardColor.withValues(
-            alpha: PlatformUIHelper.isHighPerformancePlatform
-                ? 0.3
-                : 1.0), // More opaque on Windows
-        margin: const EdgeInsets.only(bottom: 8),
-        child: PlatformUIHelper.buildGlassEffect(
-          borderRadius: BorderRadius.circular(16),
-          child: cardContent,
-        ),
-      );
-    }
 
     return Card(
       elevation: 0,

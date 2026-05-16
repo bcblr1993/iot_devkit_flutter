@@ -9,7 +9,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'l10n/generated/app_localizations.dart';
 import 'services/mqtt_controller.dart';
-import 'services/theme_manager.dart';
+import 'services/lab_theme_manager.dart';
+import 'ui/styles/app_theme_effect.dart';
 import 'services/language_provider.dart';
 import 'services/status_registry.dart';
 import 'utils/statistics_collector.dart';
@@ -19,8 +20,6 @@ import 'services/log_storage_service.dart';
 import 'viewmodels/timesheet_provider.dart';
 
 import 'package:window_manager/window_manager.dart';
-
-import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> _writePanicLog(Object error, StackTrace stack) async {
   try {
@@ -73,10 +72,9 @@ void main() async {
     try {
       await windowManager.ensureInitialized();
 
-      // 3. Preload Theme Preference (Sync) to avoid FOUC
-      final prefs = await SharedPreferences.getInstance();
-      final String? savedTheme =
-          prefs.getString(ThemeManager.kThemePreferenceKey);
+      // 3. Restore theme choice before first frame to avoid FOUC.
+      final themeManager = LabThemeManager();
+      await themeManager.load();
 
       WindowOptions windowOptions = const WindowOptions(
         size: Size(1100, 750),
@@ -95,7 +93,7 @@ void main() async {
         await windowManager.setMaximizable(true);
       });
 
-      runApp(IoTDevKitApp(initialTheme: savedTheme));
+      runApp(IoTDevKitApp(themeManager: themeManager));
     } catch (e, stack) {
       await _writePanicLog('Initialization failed: $e', stack);
       rethrow;
@@ -110,15 +108,14 @@ void main() async {
 }
 
 class IoTDevKitApp extends StatelessWidget {
-  final String? initialTheme;
-  const IoTDevKitApp({super.key, this.initialTheme});
+  final LabThemeManager themeManager;
+  const IoTDevKitApp({super.key, required this.themeManager});
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<ThemeManager>(
-            create: (_) => ThemeManager(initialTheme: initialTheme)),
+        ChangeNotifierProvider<LabThemeManager>.value(value: themeManager),
         ChangeNotifierProvider<LanguageProvider>(
             create: (_) => LanguageProvider()),
         ChangeNotifierProvider<StatusRegistry>(create: (_) => StatusRegistry()),
@@ -130,11 +127,31 @@ class IoTDevKitApp extends StatelessWidget {
           update: (_, controller, __) => controller.statisticsCollector,
         ),
       ],
-      child: Consumer2<ThemeManager, LanguageProvider>(
+      child: Consumer2<LabThemeManager, LanguageProvider>(
         builder: (context, themeManager, languageProvider, child) {
+          final base = themeManager.theme.themeData;
+          // P0→P1 compat bridge: legacy screens (simulator_panel,
+          // simulator_log_dock, timestamp_tool) still read AppThemeEffect.
+          // Keep LabTokens and append a neutral AppThemeEffect so they
+          // don't null-crash until P1 migrates them off it.
+          final themed = base.copyWith(
+            extensions: [
+              ...base.extensions.values,
+              const AppThemeEffect(
+                animationCurve: Curves.easeOutCubic,
+                layoutDensity: 1.0,
+                borderRadius: 8.0,
+                icons: AppIcons.standard,
+              ),
+            ],
+          );
           return MaterialApp(
             title: 'IoT DevKit',
-            theme: themeManager.currentTheme,
+            theme: themed,
+            darkTheme: themed,
+            themeMode: themeManager.theme.brightness == Brightness.dark
+                ? ThemeMode.dark
+                : ThemeMode.light,
             themeAnimationDuration: const Duration(milliseconds: 240),
             themeAnimationCurve: Curves.easeOutCubic,
             locale: languageProvider.currentLocale,
