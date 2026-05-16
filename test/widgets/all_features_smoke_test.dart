@@ -249,9 +249,9 @@ Future<void> _selectRailDestination(
 }
 
 void _selectSimulatorMode(WidgetTester tester, int index) {
-  final modeSelector = tester
-      .widget<SegmentedButton<int>>(find.byType(SegmentedButton<int>).first);
-  modeSelector.onSelectionChanged?.call({index});
+  final modeSelector =
+      tester.widget<LabSegmented<int>>(find.byType(LabSegmented<int>).first);
+  modeSelector.onChanged(index);
 }
 
 Future<void> _pressButton(

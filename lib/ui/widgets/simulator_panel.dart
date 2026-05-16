@@ -470,41 +470,18 @@ class _SimulatorPanelState extends State<SimulatorPanel>
       ),
       child: SizedBox(
         width: double.infinity,
-        child: SegmentedButton<int>(
+        child: LabSegmented<int>(
+          fullWidth: true,
+          value: _tabController.index,
           segments: [
-            ButtonSegment(
-              value: 0,
-              icon: const Icon(Icons.dashboard_customize_outlined),
-              label: Text(l10n.basicMode),
-            ),
-            ButtonSegment(
-              value: 1,
-              icon: const Icon(Icons.account_tree_outlined),
-              label: Text(l10n.advancedMode),
-            ),
+            LabSegment(0, l10n.basicMode),
+            LabSegment(1, l10n.advancedMode),
           ],
-          selected: {_tabController.index},
-          showSelectedIcon: true,
-          onSelectionChanged: (selection) {
-            final next = selection.first;
+          onChanged: (next) {
             if (next != _tabController.index) {
               _tabController.animateTo(next);
             }
           },
-          style: SegmentedButton.styleFrom(
-            minimumSize: const Size.fromHeight(46),
-            selectedBackgroundColor: theme.colorScheme.primary,
-            selectedForegroundColor: theme.colorScheme.onPrimary,
-            foregroundColor: theme.colorScheme.onSurfaceVariant,
-            backgroundColor: theme.colorScheme.surfaceContainerLowest,
-            side: BorderSide(
-              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.55),
-            ),
-            textStyle: const TextStyle(fontWeight: FontWeight.w800),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
         ),
       ),
     );

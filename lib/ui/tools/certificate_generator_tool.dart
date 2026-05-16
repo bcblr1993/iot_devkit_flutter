@@ -244,28 +244,17 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
   }
 
   Widget _buildUsageSelector(BuildContext context, AppLocalizations l10n) {
-    return SegmentedButton<CertificateUsage>(
-      selected: {_usage},
+    return LabSegmented<CertificateUsage>(
+      fullWidth: true,
+      value: _usage,
       segments: [
-        ButtonSegment(
-          value: CertificateUsage.https,
-          icon: const Icon(Icons.language_outlined),
-          label: Text(l10n.certUsageHttps),
-        ),
-        ButtonSegment(
-          value: CertificateUsage.mqtts,
-          icon: const Icon(Icons.hub_outlined),
-          label: Text(l10n.certUsageMqtts),
-        ),
-        ButtonSegment(
-          value: CertificateUsage.shared,
-          icon: const Icon(Icons.call_split_outlined),
-          label: Text(l10n.certUsageShared),
-        ),
+        LabSegment(CertificateUsage.https, l10n.certUsageHttps),
+        LabSegment(CertificateUsage.mqtts, l10n.certUsageMqtts),
+        LabSegment(CertificateUsage.shared, l10n.certUsageShared),
       ],
-      onSelectionChanged: (selected) {
+      onChanged: (v) {
         setState(() {
-          _usage = selected.first;
+          _usage = v;
           _lastResult = null;
         });
       },
@@ -273,23 +262,16 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
   }
 
   Widget _buildFormatSelector(BuildContext context, AppLocalizations l10n) {
-    return SegmentedButton<CertificateOutputFormat>(
-      selected: {_format},
+    return LabSegmented<CertificateOutputFormat>(
+      fullWidth: true,
+      value: _format,
       segments: const [
-        ButtonSegment(
-          value: CertificateOutputFormat.pem,
-          icon: Icon(Icons.description_outlined),
-          label: Text('PEM'),
-        ),
-        ButtonSegment(
-          value: CertificateOutputFormat.pkcs12,
-          icon: Icon(Icons.inventory_2_outlined),
-          label: Text('PKCS12'),
-        ),
+        LabSegment(CertificateOutputFormat.pem, 'PEM'),
+        LabSegment(CertificateOutputFormat.pkcs12, 'PKCS12'),
       ],
-      onSelectionChanged: (selected) {
+      onChanged: (v) {
         setState(() {
-          _format = selected.first;
+          _format = v;
           _lastResult = null;
         });
       },
