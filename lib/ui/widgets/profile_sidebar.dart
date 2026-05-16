@@ -5,6 +5,7 @@ import '../../services/profile_service.dart';
 import '../../models/profile_metadata.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../utils/app_dialog_helper.dart';
+import '../lab/lab.dart';
 
 class ProfileSidebar extends StatefulWidget {
   final bool isVisible;
@@ -65,13 +66,15 @@ class _ProfileSidebarState extends State<ProfileSidebar> {
   void _handleDelete(String id) {
     final l10n = AppLocalizations.of(context)!;
     final vm = Provider.of<MqttViewModel>(context, listen: false);
-    AppDialogHelper.showConfirm(
-      context: context,
+    showLabConfirm(
+      context,
       title: l10n.deleteProfile,
-      message: l10n.deleteConfirm,
-      isDangerous: true,
+      body: l10n.deleteConfirm,
+      destructive: true,
+      primaryLabel: l10n.confirm,
+      secondaryLabel: l10n.cancel,
     ).then((confirm) async {
-      if (confirm == true) {
+      if (confirm) {
         // If deleting current, clear it
         if (vm.currentProfileId == id) {
           vm.clearCurrentProfile();

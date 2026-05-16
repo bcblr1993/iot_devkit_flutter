@@ -259,15 +259,25 @@ Future<void> _pressButton(
   String label, {
   bool last = false,
 }) async {
-  final buttonFinder = find.ancestor(
+  // Legacy Material buttons expose ButtonStyleButton ancestry.
+  final styled = find.ancestor(
     of: find.text(label),
     matching: find.byWidgetPredicate((widget) => widget is ButtonStyleButton),
   );
-  expect(buttonFinder, findsWidgets);
-  final button = tester.widget<ButtonStyleButton>(
-    last ? buttonFinder.last : buttonFinder.first,
-  );
-  button.onPressed?.call();
+  if (styled.evaluate().isNotEmpty) {
+    final button =
+        tester.widget<ButtonStyleButton>(last ? styled.last : styled.first);
+    button.onPressed?.call();
+  } else {
+    // LabButton is a Material+InkWell, not a ButtonStyleButton — match by label.
+    final lab = find.byWidgetPredicate(
+      (widget) => widget is LabButton && widget.label == label,
+      description: 'LabButton "$label"',
+    );
+    expect(lab, findsWidgets);
+    final button = tester.widget<LabButton>(last ? lab.last : lab.first);
+    button.onPressed?.call();
+  }
   await tester.pump(const Duration(milliseconds: 260));
 }
 

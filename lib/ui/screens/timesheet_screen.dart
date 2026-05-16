@@ -534,19 +534,18 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   }
 
   Future<void> _confirmDelete(BuildContext context, WorkLogEntry log) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.36),
-      builder: (dialogContext) {
-        return _DeleteLogDialog(
-          log: log,
-          onCancel: () => Navigator.pop(dialogContext, false),
-          onConfirm: () => Navigator.pop(dialogContext, true),
-        );
-      },
+    final isZh = Localizations.localeOf(context).languageCode == 'zh';
+    final confirmed = await showLabConfirm(
+      context,
+      destructive: true,
+      title: isZh ? '删除这条记录？' : 'Delete this entry?',
+      summary: log.content,
+      body: isZh ? '删除后无法恢复。' : 'This cannot be undone.',
+      primaryLabel: isZh ? '删除' : 'Delete',
+      secondaryLabel: isZh ? '取消' : 'Cancel',
     );
 
-    if (!context.mounted || confirmed != true) return;
+    if (!context.mounted || !confirmed) return;
     await context.read<TimesheetProvider>().deleteLog(log);
     if (_editingLog?.id == log.id) {
       _resetEditor();
@@ -628,181 +627,6 @@ class _TotalHoursPill extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-class _DeleteLogDialog extends StatelessWidget {
-  final WorkLogEntry log;
-  final VoidCallback onCancel;
-  final VoidCallback onConfirm;
-
-  const _DeleteLogDialog({
-    required this.log,
-    required this.onCancel,
-    required this.onConfirm,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final isZh = Localizations.localeOf(context).languageCode == 'zh';
-    final error = colors.error;
-
-    return Dialog(
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 420),
-        child: Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: colors.surfaceContainerLowest,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: colors.outlineVariant.withValues(alpha: 0.5),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.18),
-                blurRadius: 28,
-                offset: const Offset(0, 16),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: error.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(Icons.delete_outline, color: error, size: 22),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          isZh ? '删除这条记录？' : 'Delete this entry?',
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w900,
-                            color: colors.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          isZh ? '删除后无法恢复。' : 'This cannot be undone.',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: colors.onSurfaceVariant,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: colors.surfaceContainerLow.withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: colors.outlineVariant.withValues(alpha: 0.42),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 58,
-                      padding: const EdgeInsets.symmetric(vertical: 7),
-                      decoration: BoxDecoration(
-                        color: colors.primaryContainer.withValues(alpha: 0.42),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            _formatDialogHours(log.durationHours),
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: colors.primary,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          Text(
-                            isZh ? '小时' : 'hours',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: colors.primary,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        log.content,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          height: 1.35,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 18),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: onCancel,
-                    child: Text(isZh ? '取消' : 'Cancel'),
-                  ),
-                  const SizedBox(width: 8),
-                  FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: error,
-                      foregroundColor: colors.onError,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                    ),
-                    icon: const Icon(Icons.delete_outline, size: 18),
-                    label: Text(isZh ? '删除' : 'Delete'),
-                    onPressed: onConfirm,
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  static String _formatDialogHours(double hours) {
-    final text = hours.toStringAsFixed(2);
-    return text.replaceFirst(RegExp(r'\.?0+$'), '');
   }
 }
 
