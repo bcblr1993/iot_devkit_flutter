@@ -9,7 +9,7 @@ import '../../l10n/generated/app_localizations.dart';
 import '../../models/work_log_entry.dart';
 import '../../viewmodels/timesheet_provider.dart';
 import '../components/app_empty_state.dart';
-import '../components/app_input_decoration.dart';
+import '../lab/lab.dart';
 
 class TimesheetScreen extends StatefulWidget {
   const TimesheetScreen({super.key});
@@ -235,38 +235,29 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
                   ),
           ),
           const SizedBox(height: 12),
-          TextField(
+          LabField(
             controller: _contentController,
+            label: l10n.tsTaskContent,
             minLines: 4,
             maxLines: 8,
-            textInputAction: TextInputAction.newline,
-            decoration: AppInputDecoration.filled(
+            hintText: _t(
               context,
-              label: l10n.tsTaskContent,
-            ).copyWith(
-              hintText: _t(
-                context,
-                zh: '例如：修复设备数据上送停止卡住问题；优化日志控制台布局',
-                en: 'Example: fixed upload stop issue; refined log console',
-              ),
-              alignLabelWithHint: true,
+              zh: '例如：修复设备数据上送停止卡住问题；优化日志控制台布局',
+              en: 'Example: fixed upload stop issue; refined log console',
             ),
           ),
           const SizedBox(height: 12),
           LayoutBuilder(
             builder: (context, constraints) {
               final compact = constraints.maxWidth < 560;
-              final hoursField = TextField(
+              final hoursField = LabField(
                 controller: _hoursController,
+                label: _t(context, zh: '几个小时', en: 'Hours'),
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                 ],
-                decoration: AppInputDecoration.filled(
-                  context,
-                  label: _t(context, zh: '几个小时', en: 'Hours'),
-                ),
               );
               final saveButton = FilledButton.icon(
                 icon: Icon(isEditing ? Icons.check : Icons.add),

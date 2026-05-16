@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/custom_key_config.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../lab/lab.dart';
 import '../components/app_input_decoration.dart';
 
 class CustomKeysManager extends StatefulWidget {
@@ -297,17 +298,11 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
             // Name Input
             Expanded(
               flex: 3,
-              child: TextFormField(
+              child: LabField(
+                label: l10n.keyName,
                 initialValue: key.name,
-                decoration: AppInputDecoration.filled(
-                  context,
-                  label: l10n.keyName,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                ),
-                onChanged: (v) => _updateKey(key.copyWith(name: v)),
                 enabled: !widget.isLocked,
-                style: const TextStyle(fontSize: 13),
+                onChanged: (v) => _updateKey(key.copyWith(name: v)),
               ),
             ),
             const SizedBox(width: 8),
@@ -385,52 +380,34 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
       return Row(
         children: [
           Expanded(
-            child: TextFormField(
+            child: LabField(
+              label: l10n.min,
               initialValue: key.min?.toString(),
-              decoration: AppInputDecoration.filled(
-                context,
-                label: l10n.min,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              ),
               keyboardType: TextInputType.number,
+              enabled: !widget.isLocked,
               onChanged: (v) =>
                   _updateKey(key.copyWith(min: double.tryParse(v) ?? 0)),
-              enabled: !widget.isLocked,
-              style: const TextStyle(fontSize: 13),
             ),
           ),
           const SizedBox(width: 4),
           Expanded(
-            child: TextFormField(
+            child: LabField(
+              label: l10n.max,
               initialValue: key.max?.toString(),
-              decoration: AppInputDecoration.filled(
-                context,
-                label: l10n.max,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              ),
               keyboardType: TextInputType.number,
+              enabled: !widget.isLocked,
               onChanged: (v) =>
                   _updateKey(key.copyWith(max: double.tryParse(v) ?? 100)),
-              enabled: !widget.isLocked,
-              style: const TextStyle(fontSize: 13),
             ),
           ),
         ],
       );
     } else if (key.mode == CustomKeyMode.static) {
-      return TextFormField(
+      return LabField(
+        label: l10n.staticValue,
         initialValue: key.staticValue,
-        decoration: AppInputDecoration.filled(
-          context,
-          label: l10n.staticValue,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        ),
-        onChanged: (v) => _updateKey(key.copyWith(staticValue: v)),
         enabled: !widget.isLocked,
-        style: const TextStyle(fontSize: 13),
+        onChanged: (v) => _updateKey(key.copyWith(staticValue: v)),
       );
     }
     return const SizedBox.shrink();

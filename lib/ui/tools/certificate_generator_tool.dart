@@ -11,7 +11,6 @@ import '../../services/certificate_address_parser.dart';
 import '../../services/certificate_generator_service.dart';
 import '../../services/certificate_package_builder.dart';
 import '../lab/lab.dart';
-import '../components/app_input_decoration.dart';
 import '../components/form_grid.dart';
 
 class CertificateGeneratorTool extends StatefulWidget {
@@ -115,28 +114,21 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
                         FormGrid(
                           minItemWidth: 360,
                           children: [
-                            TextField(
+                            LabField(
+                              label: l10n.certSanAddresses,
                               controller: _addressesController,
                               minLines: 5,
                               maxLines: 8,
-                              decoration: AppInputDecoration.filled(context,
-                                      label: l10n.certSanAddresses)
-                                  .copyWith(
-                                hintText: l10n.certSanHint,
-                                alignLabelWithHint: true,
-                                errorText: parsed.hasInvalid
-                                    ? '${l10n.certInvalidAddresses}: ${parsed.invalidTokens.join(', ')}'
-                                    : null,
-                              ),
+                              hintText: l10n.certSanHint,
+                              errorText: parsed.hasInvalid
+                                  ? '${l10n.certInvalidAddresses}: ${parsed.invalidTokens.join(', ')}'
+                                  : null,
                             ),
-                            TextField(
+                            LabField(
+                              label: l10n.certHostsIp,
                               controller: _hostsIpController,
-                              decoration: AppInputDecoration.filled(context,
-                                      label: l10n.certHostsIp)
-                                  .copyWith(
-                                hintText: l10n.certHostsIpHint,
-                                errorText: _hostsIpError(l10n),
-                              ),
+                              hintText: l10n.certHostsIpHint,
+                              errorText: _hostsIpError(l10n),
                             ),
                           ],
                         ),
@@ -306,33 +298,31 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
 
   Widget _buildPasswordField(BuildContext context, AppLocalizations l10n) {
     final needsPassword = _format == CertificateOutputFormat.pkcs12;
-    return TextField(
+    return LabField(
+      label: l10n.certPassword,
       controller: _passwordController,
       enabled: needsPassword,
-      obscureText: !_showPassword,
-      decoration:
-          AppInputDecoration.filled(context, label: l10n.certPassword).copyWith(
-        hintText:
-            needsPassword ? l10n.certPasswordHint : l10n.certPemNoPasswordHint,
-        errorText: needsPassword && _passwordController.text.trim().isEmpty
-            ? l10n.certPasswordRequired
-            : null,
-        suffixIcon: needsPassword
-            ? IconButton(
-                tooltip: _showPassword ? l10n.hidePassword : l10n.showPassword,
-                icon: Icon(
-                  _showPassword
-                      ? Icons.visibility_off_outlined
-                      : Icons.visibility_outlined,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _showPassword = !_showPassword;
-                  });
-                },
-              )
-            : const Icon(Icons.lock_open_outlined),
-      ),
+      obscure: !_showPassword,
+      hintText:
+          needsPassword ? l10n.certPasswordHint : l10n.certPemNoPasswordHint,
+      errorText: needsPassword && _passwordController.text.trim().isEmpty
+          ? l10n.certPasswordRequired
+          : null,
+      suffixWidget: needsPassword
+          ? IconButton(
+              tooltip: _showPassword ? l10n.hidePassword : l10n.showPassword,
+              icon: Icon(
+                _showPassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+              ),
+              onPressed: () {
+                setState(() {
+                  _showPassword = !_showPassword;
+                });
+              },
+            )
+          : const Icon(Icons.lock_open_outlined),
     );
   }
 

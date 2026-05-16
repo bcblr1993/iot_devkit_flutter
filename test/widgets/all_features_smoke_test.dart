@@ -119,7 +119,7 @@ void main() {
     expect(find.text('Certificate Generator'), findsOneWidget);
     expect(find.text('HTTPS + MQTTS'), findsOneWidget);
     expect(find.text('PEM'), findsOneWidget);
-    expect(find.text('Certificate SAN Addresses'), findsWidgets);
+    expect(find.text('CERTIFICATE SAN ADDRESSES'), findsWidgets);
     expect(find.text('ThingsBoard Env'), findsOneWidget);
     expect(find.text('server.pem'), findsWidgets);
     expect(find.text('server_key.pem'), findsWidgets);
@@ -285,9 +285,20 @@ Future<void> _setDesktopSurface(WidgetTester tester) async {
 }
 
 Finder _textFieldWithLabel(String label) {
-  return find.byWidgetPredicate(
+  // Legacy AppInputDecoration fields expose decoration.labelText directly.
+  final legacy = find.byWidgetPredicate(
     (widget) => widget is TextField && widget.decoration?.labelText == label,
     description: 'TextField with label "$label"',
+  );
+  if (legacy.evaluate().isNotEmpty) return legacy;
+  // LabField renders the (uppercased) label above its inner field; target
+  // the editable field within the matching LabField instead.
+  return find.descendant(
+    of: find.byWidgetPredicate(
+      (widget) => widget is LabField && widget.label == label,
+      description: 'LabField with label "$label"',
+    ),
+    matching: find.byType(TextField),
   );
 }
 
