@@ -4,7 +4,6 @@ import '../../l10n/generated/app_localizations.dart';
 import '../styles/app_constants.dart';
 import '../lab/lab.dart';
 import '../components/form_grid.dart';
-import '../components/app_input_decoration.dart';
 
 class MqttConfigSection extends StatelessWidget {
   final bool isRunning;
@@ -115,28 +114,13 @@ class MqttConfigSection extends StatelessWidget {
 
   Widget _buildQosField(
       BuildContext context, AppLocalizations l10n, ThemeData theme) {
-    return DropdownButtonFormField<int>(
-      decoration: AppInputDecoration.filled(context, label: l10n.qosLabel),
-      dropdownColor: theme.colorScheme.surface,
-      style: TextStyle(
-        color: theme.colorScheme.onSurface,
-        fontSize: 14,
-        fontWeight: FontWeight.w500,
-      ),
-      initialValue: qos,
+    return LabSelect<int>(
+      label: l10n.qosLabel,
+      value: qos,
       items: [
-        DropdownMenuItem(
-          value: 0,
-          child: Tooltip(message: l10n.qosTooltip0, child: Text(l10n.qos0)),
-        ),
-        DropdownMenuItem(
-          value: 1,
-          child: Tooltip(message: l10n.qosTooltip1, child: Text(l10n.qos1)),
-        ),
-        DropdownMenuItem(
-          value: 2,
-          child: Tooltip(message: l10n.qosTooltip2, child: Text(l10n.qos2)),
-        ),
+        LabSelectItem(0, l10n.qos0),
+        LabSelectItem(1, l10n.qos1),
+        LabSelectItem(2, l10n.qos2),
       ],
       onChanged: isRunning ? null : (v) => onQosChanged(v ?? 0),
     );

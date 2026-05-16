@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+@Deprecated(
+    'Use LabField / LabSelect from ui/lab. Kept during the migration compat window.')
 class AppInputDecoration {
   AppInputDecoration._();
 

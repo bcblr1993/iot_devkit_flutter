@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../models/custom_key_config.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../lab/lab.dart';
-import '../components/app_input_decoration.dart';
 
 class CustomKeysManager extends StatefulWidget {
   final List<CustomKeyConfig> keys;
@@ -309,20 +308,12 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
             // Mode Dropdown
             Expanded(
               flex: 2,
-              child: DropdownButtonFormField<CustomKeyMode>(
-                initialValue: key.mode,
-                decoration: AppInputDecoration.filled(
-                  context,
-                  label: l10n.mode,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                ),
+              child: LabSelect<CustomKeyMode>(
+                label: l10n.mode,
+                value: key.mode,
                 items: CustomKeyMode.values
-                    .map((mode) => DropdownMenuItem(
-                          value: mode,
-                          child: Text(_getModeLabel(mode, l10n),
-                              style: const TextStyle(fontSize: 12)),
-                        ))
+                    .map((mode) =>
+                        LabSelectItem(mode, _getModeLabel(mode, l10n)))
                     .toList(),
                 onChanged: widget.isLocked
                     ? null
@@ -333,20 +324,12 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
             // Type Dropdown
             Expanded(
               flex: 2,
-              child: DropdownButtonFormField<CustomKeyType>(
-                initialValue: key.type,
-                decoration: AppInputDecoration.filled(
-                  context,
-                  label: l10n.type,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                ),
+              child: LabSelect<CustomKeyType>(
+                label: l10n.type,
+                value: key.type,
                 items: CustomKeyType.values
-                    .map((type) => DropdownMenuItem(
-                          value: type,
-                          child: Text(_getTypeLabel(type, l10n),
-                              style: const TextStyle(fontSize: 12)),
-                        ))
+                    .map((type) =>
+                        LabSelectItem(type, _getTypeLabel(type, l10n)))
                     .toList(),
                 onChanged: widget.isLocked
                     ? null

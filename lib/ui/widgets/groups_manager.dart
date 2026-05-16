@@ -3,7 +3,6 @@ import '../../models/group_config.dart';
 import 'custom_keys_manager.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../lab/lab.dart';
-import '../components/app_input_decoration.dart';
 import '../components/form_grid.dart';
 
 class GroupsManager extends StatefulWidget {
@@ -246,27 +245,13 @@ class _GroupsManagerState extends State<GroupsManager> {
                       (v) => _updateGroup(
                           index, group.copyWith(passwordPrefix: v)),
                       enabled: !widget.isLocked),
-                  DropdownButtonFormField<String>(
-                    isExpanded: true,
-                    initialValue: group.format,
-                    decoration:
-                        AppInputDecoration.filled(context, label: l10n.format),
+                  LabSelect<String>(
+                    label: l10n.format,
+                    value: group.format,
                     items: [
-                      DropdownMenuItem(
-                          value: 'default',
-                          child: Text(l10n.formatDefault,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 12))),
-                      DropdownMenuItem(
-                          value: 'tn',
-                          child: Text(l10n.formatTieNiu,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 12))),
-                      DropdownMenuItem(
-                          value: 'tn-empty',
-                          child: Text(l10n.formatTieNiuEmpty,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 12))),
+                      LabSelectItem('default', l10n.formatDefault),
+                      LabSelectItem('tn', l10n.formatTieNiu),
+                      LabSelectItem('tn-empty', l10n.formatTieNiuEmpty),
                     ],
                     onChanged: widget.isLocked
                         ? null

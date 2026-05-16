@@ -494,20 +494,12 @@ class _TimestampToolState extends State<TimestampTool> {
             SizedBox(height: 24 * effect.layoutDensity),
             inputWidget,
             SizedBox(height: 16 * effect.layoutDensity),
-            DropdownButtonFormField<String>(
-              borderRadius: BorderRadius.circular(12),
-              dropdownColor: theme.colorScheme.surface,
-              style:
-                  TextStyle(color: theme.colorScheme.onSurface, fontSize: 14),
-              iconEnabledColor:
-                  theme.colorScheme.onSurface.withValues(alpha: 0.7),
-              initialValue: timezoneValue,
-              decoration: InputDecoration(
-                  labelText: l10n.timezone, border: const OutlineInputBorder()),
+            LabSelect<String>(
+              label: l10n.timezone,
+              value: timezoneValue,
               items: _timezones
-                  .map((e) => DropdownMenuItem(
-                      value: e['value'] as String,
-                      child: Text(e['label'] as String)))
+                  .map((e) =>
+                      LabSelectItem(e['value'] as String, e['label'] as String))
                   .toList(),
               onChanged: onTimezoneChanged,
             ),

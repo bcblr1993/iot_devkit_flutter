@@ -14,7 +14,6 @@ import 'log_console.dart';
 import 'performance_monitor.dart';
 import 'profile_sidebar.dart';
 import '../styles/app_theme_effect.dart';
-import '../components/app_input_decoration.dart';
 import '../components/form_grid.dart';
 import '../simulator/keep_alive_wrapper.dart';
 import '../simulator/simulator_header.dart';
@@ -402,20 +401,13 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                       ],
                     ),
                     const SizedBox(height: 10),
-                    DropdownButtonFormField<String>(
-                      borderRadius: BorderRadius.circular(8),
-                      dropdownColor: theme.colorScheme.surface,
-                      decoration: AppInputDecoration.filled(context,
-                          label: l10n.dataFormat),
-                      initialValue: vm.format,
+                    LabSelect<String>(
+                      label: l10n.dataFormat,
+                      value: vm.format,
                       items: [
-                        DropdownMenuItem(
-                            value: 'default', child: Text(l10n.formatDefault)),
-                        DropdownMenuItem(
-                            value: 'tn', child: Text(l10n.formatTieNiu)),
-                        DropdownMenuItem(
-                            value: 'tn-empty',
-                            child: Text(l10n.formatTieNiuEmpty)),
+                        LabSelectItem('default', l10n.formatDefault),
+                        LabSelectItem('tn', l10n.formatTieNiu),
+                        LabSelectItem('tn-empty', l10n.formatTieNiuEmpty),
                       ],
                       onChanged: isRunning
                           ? null
