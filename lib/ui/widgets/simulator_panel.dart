@@ -247,11 +247,11 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                           Positioned(
                             top: 8,
                             right: 8,
-                            child: IconButton.filledTonal(
-                              icon: const Icon(Icons.close, size: 18),
+                            child: LabIconButton(
+                              icon: Icons.close,
+                              tooltip: l10n.close,
                               onPressed: () =>
                                   setState(() => _showMonitor = false),
-                              tooltip: l10n.close,
                             ),
                           ),
                         ],
@@ -490,8 +490,6 @@ class _SimulatorPanelState extends State<SimulatorPanel>
   Widget _buildActionButtons(BuildContext context, MqttViewModel vm,
       MqttController controller, AppLocalizations l10n, AppThemeEffect effect) {
     final theme = Theme.of(context);
-    final errorColor = theme.colorScheme.error;
-    final primaryColor = theme.colorScheme.primary;
     final isBusy = controller.isBusy;
     final isStarting = controller.isStarting;
     final isStopping = controller.isStopping;
@@ -504,7 +502,16 @@ class _SimulatorPanelState extends State<SimulatorPanel>
         final compact = constraints.maxWidth < 760;
         final startButton = SizedBox(
           height: 44,
-          child: FilledButton.icon(
+          child: LabButton(
+            label: showProgress
+                ? (isStopping ? l10n.stopping : l10n.starting)
+                : (isRunning ? l10n.stopSimulation : l10n.startSimulation),
+            icon: isRunning ? Icons.stop : Icons.play_arrow,
+            variant:
+                isRunning ? LabButtonVariant.danger : LabButtonVariant.primary,
+            size: LabButtonSize.lg,
+            fullWidth: true,
+            loading: showProgress,
             onPressed: isStopping
                 ? null
                 : (isRunning
@@ -552,30 +559,20 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                           }
                         }
                       }),
-            icon: showProgress
-                ? SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2.5, color: theme.colorScheme.onPrimary))
-                : Icon(isRunning ? Icons.stop : Icons.play_arrow),
-            label: Text(
-              showProgress
-                  ? (isStopping ? l10n.stopping : l10n.starting)
-                  : (isRunning ? l10n.stopSimulation : l10n.startSimulation),
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            style: FilledButton.styleFrom(
-              backgroundColor: isRunning ? errorColor : primaryColor,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
-            ),
           ),
         );
 
         final previewButton = SizedBox(
           height: 40,
-          child: OutlinedButton.icon(
+          child: LabButton(
+            label: isRunning
+                ? (_showMonitor ? l10n.close : l10n.statistics)
+                : l10n.previewPayload,
+            icon: isRunning
+                ? (_showMonitor ? Icons.visibility_off : Icons.dashboard)
+                : Icons.remove_red_eye_outlined,
+            size: LabButtonSize.lg,
+            fullWidth: true,
             onPressed: isBusy
                 ? null
                 : isRunning
@@ -589,17 +586,15 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                           _setStatus('Cannot generate preview', Colors.orange);
                         }
                       },
-            icon: Icon(isRunning
-                ? (_showMonitor ? Icons.visibility_off : Icons.dashboard)
-                : Icons.remove_red_eye_outlined),
-            label: Text(isRunning
-                ? (_showMonitor ? l10n.close : l10n.statistics)
-                : l10n.previewPayload),
           ),
         );
         final importButton = SizedBox(
           height: 40,
-          child: OutlinedButton.icon(
+          child: LabButton(
+            label: l10n.importConfig,
+            icon: Icons.upload,
+            size: LabButtonSize.lg,
+            fullWidth: true,
             onPressed: (isRunning || isBusy)
                 ? null
                 : () async {
@@ -612,13 +607,15 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                       _setStatus(res.error!, theme.colorScheme.error);
                     }
                   },
-            icon: const Icon(Icons.upload),
-            label: Text(l10n.importConfig),
           ),
         );
         final exportButton = SizedBox(
           height: 40,
-          child: OutlinedButton.icon(
+          child: LabButton(
+            label: l10n.exportConfig,
+            icon: Icons.download,
+            size: LabButtonSize.lg,
+            fullWidth: true,
             onPressed: (isRunning || isBusy)
                 ? null
                 : () async {
@@ -630,8 +627,6 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                       _setStatus(res.error!, theme.colorScheme.error);
                     }
                   },
-            icon: const Icon(Icons.download),
-            label: Text(l10n.exportConfig),
           ),
         );
 

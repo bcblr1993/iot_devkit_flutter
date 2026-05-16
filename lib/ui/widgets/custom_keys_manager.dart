@@ -155,22 +155,20 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton(
-                  icon: Icon(_isSearchVisible ? Icons.search_off : Icons.search,
-                      size: 20),
-                  onPressed: _createSearch,
+                LabIconButton(
+                  icon: _isSearchVisible ? Icons.search_off : Icons.search,
                   tooltip: l10n.searchLabel,
-                  visualDensity: VisualDensity.compact,
+                  onPressed: _createSearch,
                 ),
                 if (!widget.isLocked) ...[
                   const SizedBox(width: 4),
-                  FilledButton.icon(
+                  LabButton(
+                    label: l10n.add,
+                    icon: Icons.add,
+                    variant: LabButtonVariant.primary,
+                    size: LabButtonSize.sm,
                     onPressed:
                         _localKeys.length >= widget.maxKeys ? null : _addKey,
-                    icon: const Icon(Icons.add, size: 16),
-                    label: Text(l10n.add),
-                    style: FilledButton.styleFrom(
-                        visualDensity: VisualDensity.compact),
                   ),
                 ],
               ],
@@ -345,11 +343,9 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
 
             if (!widget.isLocked) ...[
               const SizedBox(width: 4),
-              IconButton(
-                icon: Icon(Icons.delete_outline,
-                    size: 18, color: theme.colorScheme.error),
+              LabIconButton(
+                icon: Icons.delete_outline,
                 onPressed: () => _removeKey(key),
-                visualDensity: VisualDensity.compact,
               ),
             ]
           ],

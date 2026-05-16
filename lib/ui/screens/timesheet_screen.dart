@@ -134,32 +134,32 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
             alignment: compact ? WrapAlignment.start : WrapAlignment.end,
             children: [
               _TotalHoursPill(hours: provider.totalHours),
-              IconButton.outlined(
+              LabIconButton(
+                icon: Icons.chevron_left,
                 tooltip: _t(context, zh: '前一天', en: 'Previous day'),
-                icon: const Icon(Icons.chevron_left),
                 onPressed: () => _selectDate(
                   context,
                   provider.selectedDate.subtract(const Duration(days: 1)),
                 ),
               ),
-              OutlinedButton.icon(
-                icon: const Icon(Icons.calendar_month, size: 18),
-                label: Text(isToday
+              LabButton(
+                icon: Icons.calendar_month,
+                label: isToday
                     ? _t(context, zh: '今天', en: 'Today')
-                    : DateFormat('MM-dd').format(selectedDate)),
+                    : DateFormat('MM-dd').format(selectedDate),
                 onPressed: () => _pickDate(context, provider),
               ),
-              IconButton.outlined(
+              LabIconButton(
+                icon: Icons.chevron_right,
                 tooltip: _t(context, zh: '后一天', en: 'Next day'),
-                icon: const Icon(Icons.chevron_right),
                 onPressed: () => _selectDate(
                   context,
                   provider.selectedDate.add(const Duration(days: 1)),
                 ),
               ),
-              OutlinedButton.icon(
-                icon: const Icon(Icons.copy_all, size: 18),
-                label: Text(l10n.tsCopyReport),
+              LabButton(
+                icon: Icons.copy_all,
+                label: l10n.tsCopyReport,
                 onPressed: () => _copyWeeklyReport(context, provider),
               ),
             ],
@@ -214,9 +214,11 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
                 ),
               ),
               if (isEditing)
-                TextButton.icon(
-                  icon: const Icon(Icons.close, size: 16),
-                  label: Text(l10n.cancel),
+                LabButton(
+                  icon: Icons.close,
+                  label: l10n.cancel,
+                  variant: LabButtonVariant.ghost,
+                  size: LabButtonSize.sm,
                   onPressed: _resetEditor,
                 ),
             ],
@@ -259,10 +261,11 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
                   FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                 ],
               );
-              final saveButton = FilledButton.icon(
-                icon: Icon(isEditing ? Icons.check : Icons.add),
-                label: Text(
-                    isEditing ? l10n.save : _t(context, zh: '记一笔', en: 'Add')),
+              final saveButton = LabButton(
+                icon: isEditing ? Icons.check : Icons.add,
+                label:
+                    isEditing ? l10n.save : _t(context, zh: '记一笔', en: 'Add'),
+                variant: LabButtonVariant.primary,
                 onPressed: () => _saveEntry(context, provider),
               );
 
@@ -409,14 +412,14 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              IconButton(
+              LabIconButton(
+                icon: Icons.edit_outlined,
                 tooltip: _t(context, zh: '编辑', en: 'Edit'),
-                icon: const Icon(Icons.edit_outlined, size: 18),
                 onPressed: () => _startEdit(log),
               ),
-              IconButton(
+              LabIconButton(
+                icon: Icons.delete_outline,
                 tooltip: _t(context, zh: '删除', en: 'Delete'),
-                icon: Icon(Icons.delete_outline, size: 18, color: colors.error),
                 onPressed: () => _confirmDelete(context, log),
               ),
             ],

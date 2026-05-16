@@ -8,12 +8,13 @@ import 'package:flutter/material.dart';
 import '../tokens/lab_tokens.dart';
 
 enum LabButtonVariant { primary, secondary, ghost, danger, success }
-enum LabButtonSize    { sm, md, lg }
+
+enum LabButtonSize { sm, md, lg }
 
 class LabButton extends StatelessWidget {
   final String label;
   final IconData? icon;
-  final String? suffix;          // e.g. "⌘S"
+  final String? suffix; // e.g. "⌘S"
   final LabButtonVariant variant;
   final LabButtonSize size;
   final bool loading;
@@ -57,15 +58,25 @@ class LabButton extends StatelessWidget {
     Color bg, fg, border;
     switch (variant) {
       case LabButtonVariant.primary:
-        bg = scheme.primary; fg = scheme.onPrimary; border = scheme.primary;
+        bg = scheme.primary;
+        fg = scheme.onPrimary;
+        border = scheme.primary;
       case LabButtonVariant.danger:
-        bg = scheme.error.withOpacity(.18); fg = scheme.error; border = scheme.error.withOpacity(.40);
+        bg = scheme.error.withOpacity(.18);
+        fg = scheme.error;
+        border = scheme.error.withOpacity(.40);
       case LabButtonVariant.success:
-        bg = tokens.ok.withOpacity(.18); fg = tokens.ok; border = tokens.ok.withOpacity(.40);
+        bg = tokens.ok.withOpacity(.18);
+        fg = tokens.ok;
+        border = tokens.ok.withOpacity(.40);
       case LabButtonVariant.ghost:
-        bg = Colors.transparent; fg = tokens.body; border = Colors.transparent;
+        bg = Colors.transparent;
+        fg = tokens.body;
+        border = Colors.transparent;
       case LabButtonVariant.secondary:
-        bg = Colors.transparent; fg = scheme.onSurface; border = scheme.outline;
+        bg = Colors.transparent;
+        fg = scheme.onSurface;
+        border = scheme.outline;
     }
 
     Widget content = Row(
@@ -74,16 +85,25 @@ class LabButton extends StatelessWidget {
       children: [
         if (loading)
           SizedBox(
-            width: fs - 1, height: fs - 1,
+            width: fs - 1,
+            height: fs - 1,
             child: CircularProgressIndicator(strokeWidth: 1.5, color: fg),
           )
         else if (icon != null)
           Icon(icon, size: fs + 1, color: fg),
         if (loading || icon != null) SizedBox(width: tokens.sSm),
-        Text(
-          label,
-          style: text.bodySmall?.copyWith(
-            fontSize: fs, color: fg, fontWeight: FontWeight.w700, letterSpacing: 0.2,
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            softWrap: false,
+            overflow: TextOverflow.ellipsis,
+            style: text.bodySmall?.copyWith(
+              fontSize: fs,
+              color: fg,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.2,
+            ),
           ),
         ),
         if (suffix != null) ...[
@@ -91,7 +111,8 @@ class LabButton extends StatelessWidget {
           Text(
             suffix!,
             style: text.labelLarge?.copyWith(
-              fontSize: fs - 1, color: fg.withOpacity(.60),
+              fontSize: fs - 1,
+              color: fg.withOpacity(.60),
             ),
           ),
         ],
@@ -102,7 +123,8 @@ class LabButton extends StatelessWidget {
       opacity: onPressed == null && !loading ? .45 : 1,
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          minHeight: height, minWidth: fullWidth ? double.infinity : 0,
+          minHeight: height,
+          minWidth: fullWidth ? double.infinity : 0,
         ),
         child: Material(
           color: bg,
@@ -153,15 +175,18 @@ class LabIconButton extends StatelessWidget {
       LabButtonSize.md => 30,
       LabButtonSize.lg => 36,
     };
-    final Color bg = active ? scheme.primary.withOpacity(.14) : Colors.transparent;
+    final Color bg =
+        active ? scheme.primary.withOpacity(.14) : Colors.transparent;
     final Color fg = active ? scheme.primary : scheme.onSurfaceVariant;
-    final Color border = active ? scheme.primary.withOpacity(.30) : scheme.outline;
+    final Color border =
+        active ? scheme.primary.withOpacity(.30) : scheme.outline;
 
     final btn = Stack(
       clipBehavior: Clip.none,
       children: [
         SizedBox(
-          width: s, height: s,
+          width: s,
+          height: s,
           child: Material(
             color: bg,
             shape: RoundedRectangleBorder(
@@ -177,11 +202,14 @@ class LabIconButton extends StatelessWidget {
         ),
         if (badge)
           Positioned(
-            right: 3, top: 3,
+            right: 3,
+            top: 3,
             child: Container(
-              width: 6, height: 6,
+              width: 6,
+              height: 6,
               decoration: BoxDecoration(
-                color: scheme.primary, shape: BoxShape.circle,
+                color: scheme.primary,
+                shape: BoxShape.circle,
               ),
             ),
           ),

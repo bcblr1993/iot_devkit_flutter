@@ -130,27 +130,21 @@ class _GroupsManagerState extends State<GroupsManager> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  TextButton.icon(
+                  LabButton(
+                    label: allExpanded ? l10n.collapseAll : l10n.expandAll,
+                    icon: allExpanded ? Icons.unfold_less : Icons.unfold_more,
+                    variant: LabButtonVariant.ghost,
+                    size: LabButtonSize.sm,
                     onPressed: () => _toggleAll(!allExpanded),
-                    icon: Icon(
-                        allExpanded ? Icons.unfold_less : Icons.unfold_more,
-                        size: 18),
-                    label: Text(allExpanded ? l10n.collapseAll : l10n.expandAll,
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
-                    style: TextButton.styleFrom(
-                      foregroundColor: widget.headerColor ??
-                          Theme.of(context).colorScheme.primary,
-                      visualDensity: VisualDensity.compact,
-                    ),
                   ),
                   if (!widget.isLocked) ...[
                     const SizedBox(width: 8),
-                    FilledButton.icon(
+                    LabButton(
+                      label: l10n.addGroup,
+                      icon: Icons.add,
+                      variant: LabButtonVariant.primary,
+                      size: LabButtonSize.sm,
                       onPressed: _localGroups.length >= 12 ? null : _addGroup,
-                      icon: const Icon(Icons.add, size: 18),
-                      label: Text(l10n.addGroup),
-                      style: FilledButton.styleFrom(
-                          visualDensity: VisualDensity.compact),
                     ),
                   ],
                 ],
@@ -187,8 +181,8 @@ class _GroupsManagerState extends State<GroupsManager> {
           style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
       trailing: widget.isLocked
           ? null
-          : IconButton(
-              icon: Icon(Icons.delete, color: theme.colorScheme.error),
+          : LabIconButton(
+              icon: Icons.delete,
               onPressed: () => _removeGroup(index),
             ),
       children: [

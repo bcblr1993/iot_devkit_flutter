@@ -446,12 +446,10 @@ class _TimestampToolState extends State<TimestampTool> {
                     color: colorScheme.onPrimaryContainer,
                     fontFamily: 'Monospace')),
             const SizedBox(width: 8),
-            IconButton(
-              onPressed: onCopy,
-              icon: Icon(effect.icons.copy,
-                  color: colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
-                  size: 18),
+            LabIconButton(
+              icon: effect.icons.copy,
               tooltip: copyTooltip,
+              onPressed: onCopy,
             ),
           ],
         ),
@@ -504,13 +502,13 @@ class _TimestampToolState extends State<TimestampTool> {
               onChanged: onTimezoneChanged,
             ),
             const SizedBox(height: 24),
-            SizedBox(
-              height: 48,
-              child: FilledButton.icon(
-                onPressed: onConvert,
-                icon: const Icon(Icons.sync_alt),
-                label: Text(l10n.convert),
-              ),
+            LabButton(
+              label: l10n.convert,
+              icon: Icons.sync_alt,
+              variant: LabButtonVariant.primary,
+              size: LabButtonSize.lg,
+              fullWidth: true,
+              onPressed: onConvert,
             ),
             const SizedBox(height: 32),
             Container(
@@ -544,10 +542,12 @@ class _TimestampToolState extends State<TimestampTool> {
                   ),
                   if (!isPlaceholder && resultValue != 'Error') ...[
                     const SizedBox(height: 16),
-                    TextButton.icon(
+                    LabButton(
+                      label: l10n.copyAction,
+                      icon: Icons.copy,
+                      variant: LabButtonVariant.ghost,
+                      size: LabButtonSize.sm,
                       onPressed: () => _copy(resultValue),
-                      icon: const Icon(Icons.copy, size: 18),
-                      label: Text(l10n.copyAction),
                     )
                   ]
                 ],
