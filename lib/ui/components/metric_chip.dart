@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+@Deprecated(
+    'Use LabPill / LabStatTile from ui/lab. Kept during the migration compat window.')
 class MetricChip extends StatelessWidget {
   final String label;
   final String value;

@@ -16,7 +16,6 @@ import 'profile_sidebar.dart';
 import '../styles/app_theme_effect.dart';
 import '../components/app_input_decoration.dart';
 import '../components/form_grid.dart';
-import '../components/metric_chip.dart';
 import '../simulator/keep_alive_wrapper.dart';
 import '../simulator/simulator_header.dart';
 import '../simulator/simulator_log_dock.dart';
@@ -346,9 +345,9 @@ class _SimulatorPanelState extends State<SimulatorPanel>
               padding: const EdgeInsets.only(bottom: 16),
               child: LabSection(
                 title: l10n.deviceConfig,
-                trailing: MetricChip(
-                  label: l10n.unitDevices,
-                  value: count.toString(),
+                trailing: LabPill(
+                  label: '${l10n.unitDevices} $count',
+                  color: theme.colorScheme.primary,
                 ),
                 child: Column(
                   children: [
@@ -752,47 +751,41 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                   children: [
                     if (!isSmallScreen) ...[
                       if (showRunState) ...[
-                        MetricChip(
-                          label: _localized(context, zh: '状态', en: 'State'),
-                          value: stateLabel,
+                        LabPill(
+                          label:
+                              '${_localized(context, zh: '状态', en: 'State')} $stateLabel',
                           color: _runStateColor(theme, mqttController.runState),
                         ),
                         const SizedBox(width: 10),
                       ],
-                      MetricChip(
-                          label: l10n.totalDevices,
-                          value: stats.totalDevices.toString(),
+                      LabPill(
+                          label: '${l10n.totalDevices} ${stats.totalDevices}',
                           color: Colors.blue),
                       const SizedBox(width: 10),
-                      MetricChip(
-                          label: l10n.online,
-                          value: stats.onlineDevices.toString(),
+                      LabPill(
+                          label: '${l10n.online} ${stats.onlineDevices}',
                           color: Colors.green),
                       const SizedBox(width: 10),
-                      MetricChip(
-                          label: l10n.statSent,
-                          value: stats.totalMessages.toString(),
+                      LabPill(
+                          label: '${l10n.statSent} ${stats.totalMessages}',
                           color: theme.colorScheme.onSurface),
                       const SizedBox(width: 10),
-                      MetricChip(
-                          label: l10n.statSuccess,
-                          value: stats.successCount.toString(),
+                      LabPill(
+                          label: '${l10n.statSuccess} ${stats.successCount}',
                           color: Colors.green),
                       const SizedBox(width: 10),
-                      MetricChip(
-                          label: l10n.statFailed,
-                          value: stats.failureCount.toString(),
+                      LabPill(
+                          label: '${l10n.statFailed} ${stats.failureCount}',
                           color: theme.colorScheme.error),
                       const SizedBox(width: 10),
-                      MetricChip(
-                          label: l10n.cpuUsage,
-                          value: '${stats.cpuUsage.toStringAsFixed(1)}%',
+                      LabPill(
+                          label:
+                              '${l10n.cpuUsage} ${stats.cpuUsage.toStringAsFixed(1)}%',
                           color: Colors.purple),
                       const SizedBox(width: 10),
-                      MetricChip(
-                          label: l10n.memoryUsage,
-                          value:
-                              '${(stats.memoryUsage / 1024 / 1024).toStringAsFixed(0)} MB',
+                      LabPill(
+                          label:
+                              '${l10n.memoryUsage} ${(stats.memoryUsage / 1024 / 1024).toStringAsFixed(0)} MB',
                           color: Colors.indigo),
                     ] else
                       Text(
