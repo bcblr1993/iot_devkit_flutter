@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/group_config.dart';
 import 'custom_keys_manager.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../lab/lab.dart';
 import '../components/app_input_decoration.dart';
 import '../components/form_grid.dart';
 
@@ -347,11 +348,11 @@ class _GroupsManagerState extends State<GroupsManager> {
 
   Widget _buildTextField(String label, String value, Function(String) onChanged,
       {bool isNumber = false, bool enabled = true}) {
-    return TextFormField(
+    return LabField(
+      label: label,
       initialValue: value,
       enabled: enabled,
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-      decoration: AppInputDecoration.filled(context, label: label),
       onChanged: enabled ? onChanged : null,
       validator: (value) {
         if (!enabled) return null;

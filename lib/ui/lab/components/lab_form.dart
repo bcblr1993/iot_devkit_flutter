@@ -17,8 +17,8 @@ class LabField extends StatelessWidget {
   final String? hintText;
   final String? helperText;
   final String? errorText;
-  final String? suffix;        // unit label e.g. "ms", "Hz"
-  final Widget? suffixWidget;  // icon button etc.
+  final String? suffix; // unit label e.g. "ms", "Hz"
+  final Widget? suffixWidget; // icon button etc.
   final bool obscure;
   final bool mono;
   final bool readOnly;
@@ -28,6 +28,14 @@ class LabField extends StatelessWidget {
   final VoidCallback? onSubmitted;
   final FocusNode? focusNode;
   final int minLines, maxLines;
+  // Optional form integration — when supplied the field participates in the
+  // enclosing Form (validation, error display) just like TextFormField.
+  final FormFieldValidator<String>? validator;
+  final AutovalidateMode? autovalidateMode;
+  // Uncontrolled seed value (use instead of [controller]) and enable flag,
+  // so LabField can stand in for any TextFormField call site.
+  final String? initialValue;
+  final bool enabled;
 
   const LabField({
     super.key,
@@ -48,6 +56,10 @@ class LabField extends StatelessWidget {
     this.focusNode,
     this.minLines = 1,
     this.maxLines = 1,
+    this.validator,
+    this.autovalidateMode,
+    this.initialValue,
+    this.enabled = true,
   });
 
   @override
@@ -67,7 +79,8 @@ class LabField extends StatelessWidget {
     } else if (suffix != null) {
       trailing = Padding(
         padding: EdgeInsets.only(right: tokens.sMd),
-        child: Text(suffix!, style: text.labelLarge?.copyWith(color: tokens.faint)),
+        child: Text(suffix!,
+            style: text.labelLarge?.copyWith(color: tokens.faint)),
       );
     }
 
@@ -82,15 +95,19 @@ class LabField extends StatelessWidget {
           ),
           SizedBox(height: tokens.sXs),
         ],
-        TextField(
+        TextFormField(
           controller: controller,
+          initialValue: controller == null ? initialValue : null,
+          enabled: enabled,
           focusNode: focusNode,
           obscureText: obscure,
           readOnly: readOnly,
           keyboardType: keyboardType,
           inputFormatters: inputFormatters,
           onChanged: onChanged,
-          onSubmitted: onSubmitted == null ? null : (_) => onSubmitted!(),
+          onFieldSubmitted: onSubmitted == null ? null : (_) => onSubmitted!(),
+          validator: validator,
+          autovalidateMode: autovalidateMode,
           minLines: minLines,
           maxLines: maxLines,
           style: inputStyle,
@@ -99,7 +116,8 @@ class LabField extends StatelessWidget {
             errorText: errorText,
             helperText: helperText,
             suffixIcon: trailing,
-            suffixIconConstraints: const BoxConstraints(minHeight: 24, minWidth: 0),
+            suffixIconConstraints:
+                const BoxConstraints(minHeight: 24, minWidth: 0),
           ),
         ),
       ],
@@ -147,7 +165,8 @@ class LabSelect<T> extends StatelessWidget {
           style: text.bodySmall?.copyWith(color: scheme.onSurface),
           onChanged: onChanged,
           items: items
-              .map((i) => DropdownMenuItem<T>(value: i.value, child: Text(i.label)))
+              .map((i) =>
+                  DropdownMenuItem<T>(value: i.value, child: Text(i.label)))
               .toList(),
         ),
       ],
@@ -230,12 +249,18 @@ class LabSegment<T> {
   final String label;
   const LabSegment(this.value, this.label);
 }
+
 class LabCheckbox extends StatelessWidget {
   final bool value;
   final bool indeterminate;
   final String? label;
   final ValueChanged<bool?>? onChanged;
-  const LabCheckbox({super.key, required this.value, this.indeterminate = false, this.label, this.onChanged});
+  const LabCheckbox(
+      {super.key,
+      required this.value,
+      this.indeterminate = false,
+      this.label,
+      this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -249,10 +274,12 @@ class LabCheckbox extends StatelessWidget {
         padding: EdgeInsets.symmetric(vertical: 2, horizontal: 2),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Container(
-            width: 14, height: 14,
+            width: 14,
+            height: 14,
             decoration: BoxDecoration(
               color: value ? scheme.primary : scheme.surface,
-              border: Border.all(color: value ? scheme.primary : scheme.outline),
+              border:
+                  Border.all(color: value ? scheme.primary : scheme.outline),
               borderRadius: BorderRadius.circular(3),
             ),
             alignment: Alignment.center,
@@ -260,7 +287,9 @@ class LabCheckbox extends StatelessWidget {
                 ? Text(indeterminate ? '–' : '✓',
                     style: TextStyle(
                       color: scheme.onPrimary,
-                      fontSize: 10, height: 1, fontWeight: FontWeight.w900,
+                      fontSize: 10,
+                      height: 1,
+                      fontWeight: FontWeight.w900,
                       fontFamily: tokens.monoFamily,
                     ))
                 : null,
@@ -280,7 +309,12 @@ class LabRadio<T> extends StatelessWidget {
   final T value;
   final String? label;
   final ValueChanged<T?>? onChanged;
-  const LabRadio({super.key, required this.groupValue, required this.value, this.label, this.onChanged});
+  const LabRadio(
+      {super.key,
+      required this.groupValue,
+      required this.value,
+      this.label,
+      this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -295,15 +329,21 @@ class LabRadio<T> extends StatelessWidget {
         padding: EdgeInsets.symmetric(vertical: 2, horizontal: 2),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Container(
-            width: 14, height: 14,
+            width: 14,
+            height: 14,
             decoration: BoxDecoration(
               color: scheme.surface,
-              border: Border.all(color: selected ? scheme.primary : scheme.outline),
+              border:
+                  Border.all(color: selected ? scheme.primary : scheme.outline),
               shape: BoxShape.circle,
             ),
             alignment: Alignment.center,
             child: selected
-                ? Container(width: 7, height: 7, decoration: BoxDecoration(color: scheme.primary, shape: BoxShape.circle))
+                ? Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                        color: scheme.primary, shape: BoxShape.circle))
                 : null,
           ),
           if (label != null) ...[
@@ -330,9 +370,11 @@ class LabToggle extends StatelessWidget {
       onTap: onChanged == null ? null : () => onChanged!(!value),
       child: AnimatedContainer(
         duration: tokens.dFast,
-        width: 30, height: 16,
+        width: 30,
+        height: 16,
         decoration: BoxDecoration(
-          color: value ? scheme.primary : scheme.onSurfaceVariant.withOpacity(.30),
+          color:
+              value ? scheme.primary : scheme.onSurfaceVariant.withOpacity(.30),
           border: Border.all(color: value ? scheme.primary : scheme.outline),
           borderRadius: BorderRadius.circular(999),
         ),
@@ -340,10 +382,12 @@ class LabToggle extends StatelessWidget {
           AnimatedPositioned(
             duration: tokens.dFast,
             left: value ? 13 : 1,
-            top: 0, bottom: 0,
+            top: 0,
+            bottom: 0,
             child: Center(
               child: Container(
-                width: 12, height: 12,
+                width: 12,
+                height: 12,
                 decoration: BoxDecoration(
                   color: value ? scheme.onPrimary : scheme.onSurface,
                   shape: BoxShape.circle,

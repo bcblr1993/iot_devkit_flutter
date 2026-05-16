@@ -702,13 +702,14 @@ class _SimulatorPanelState extends State<SimulatorPanel>
   Widget _buildTextField(
       String label, TextEditingController controller, bool isLocked,
       {bool isNumber = false, Function(String)? onChanged}) {
-    return TextFormField(
+    return LabField(
+      label: label,
       controller: controller,
       enabled: !isLocked,
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-      inputFormatters: isNumber ? [FilteringTextInputFormatter.digitsOnly] : [],
+      inputFormatters:
+          isNumber ? [FilteringTextInputFormatter.digitsOnly] : null,
       onChanged: onChanged,
-      decoration: AppInputDecoration.filled(context, label: label),
       validator: (v) => (v == null || v.isEmpty)
           ? AppLocalizations.of(context)!.fieldRequired
           : null,

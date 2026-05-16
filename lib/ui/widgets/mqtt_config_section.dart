@@ -187,18 +187,10 @@ class MqttConfigSection extends StatelessWidget {
     // For now, simple text field. The original had a validator.
     // We should keep it as TextFormField for Form integration.
 
-    return TextFormField(
+    return LabField(
+      label: label,
       controller: controller,
       enabled: !isLocked,
-      style: customColor != null ? TextStyle(color: customColor) : null,
-      decoration: AppInputDecoration.filled(context, label: label).copyWith(
-        labelStyle: customColor != null
-            ? TextStyle(color: customColor.withValues(alpha: 0.7))
-            : null,
-        floatingLabelStyle: customColor != null
-            ? TextStyle(color: customColor, fontWeight: FontWeight.bold)
-            : null,
-      ),
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
       validator: (value) {
         if (value == null || value.isEmpty) {
