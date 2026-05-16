@@ -12,6 +12,9 @@ enum ToastType {
 /// 统一的Toast通知组件
 /// 在屏幕右上角显示浮动通知,采用与对话框一致的现代设计风格
 /// 单实例模式:同一时间只显示一个通知,新通知会替换旧通知
+@Deprecated(
+    'Use showLabToast from ui/lab. Kept during the migration compat window '
+    '(tests still rely on AppToast.clear()).')
 class AppToast {
   static OverlayEntry? _currentToast;
   static Timer? _dismissTimer;

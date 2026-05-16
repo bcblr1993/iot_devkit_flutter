@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../services/mqtt_controller.dart';
 import '../../utils/app_dialog_helper.dart';
-import '../../utils/app_toast.dart';
+import '../lab/lab.dart';
 import 'groups_manager.dart';
 import 'custom_keys_manager.dart';
 import 'mqtt_config_section.dart';
@@ -71,14 +71,14 @@ class _SimulatorPanelState extends State<SimulatorPanel>
   void _setStatus(String msg, Color color) {
     if (!mounted) return;
     if (color == Colors.green) {
-      AppToast.success(context, msg);
+      showLabToast(context, title: msg, kind: LabStatus.ok);
     } else if (color == Colors.orange) {
-      AppToast.warning(context, msg);
+      showLabToast(context, title: msg, kind: LabStatus.warn);
     } else if (color == Theme.of(context).colorScheme.error ||
         color == Colors.red) {
-      AppToast.error(context, msg);
+      showLabToast(context, title: msg, kind: LabStatus.error);
     } else {
-      AppToast.info(context, msg);
+      showLabToast(context, title: msg, kind: LabStatus.info);
     }
   }
 

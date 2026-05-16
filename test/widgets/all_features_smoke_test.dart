@@ -5,11 +5,12 @@ import 'package:iot_devkit/l10n/generated/app_localizations.dart';
 import 'package:iot_devkit/services/language_provider.dart';
 import 'package:iot_devkit/services/mqtt_controller.dart';
 import 'package:iot_devkit/services/status_registry.dart';
-import 'package:iot_devkit/services/theme_manager.dart';
+import 'package:iot_devkit/services/lab_theme_manager.dart';
 import 'package:iot_devkit/ui/screens/home_screen.dart';
+import 'package:iot_devkit/ui/styles/app_theme_effect.dart';
 import 'package:iot_devkit/ui/widgets/log_console.dart';
 import 'package:iot_devkit/ui/widgets/simulator_panel.dart';
-import 'package:iot_devkit/utils/app_toast.dart';
+import 'package:iot_devkit/ui/lab/lab.dart';
 import 'package:iot_devkit/viewmodels/timesheet_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -52,7 +53,7 @@ void main() {
 
     await tester.enterText(_textFieldWithLabel('Timestamp (ms or s)'), '0');
     await _pressButton(tester, 'Convert');
-    AppToast.clear();
+    clearLabToasts();
     await tester.pump();
 
     expect(find.text('1970-01-01 08:00:00'), findsOneWidget);
@@ -62,7 +63,7 @@ void main() {
       '1970-01-01 08:00:00',
     );
     await _pressButton(tester, 'Convert', last: true);
-    AppToast.clear();
+    clearLabToasts();
     await tester.pump();
 
     expect(find.text('0'), findsWidgets);
@@ -85,7 +86,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 180));
 
     await _pressButton(tester, 'Format');
-    AppToast.clear();
+    clearLabToasts();
     await tester.pump();
 
     final formattedInput = tester
@@ -98,7 +99,7 @@ void main() {
     expect(find.text('1/1'), findsOneWidget);
 
     await _pressButton(tester, 'Minify');
-    AppToast.clear();
+    clearLabToasts();
     await tester.pump();
 
     final minifiedInput = tester
@@ -153,10 +154,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 260));
     _selectSettingsAction(tester, 'theme');
     await tester.pump(const Duration(milliseconds: 260));
-    expect(find.text('Polar Blue'), findsOneWidget);
-    expect(find.text('Graphite Mono'), findsOneWidget);
+    expect(find.text('Signal · default · lime'), findsOneWidget);
+    expect(find.text('Cobalt · tech blue'), findsOneWidget);
 
-    await tester.tap(find.text('Graphite Mono'));
+    await tester.tap(find.text('Cobalt · tech blue'));
     await tester.pump(const Duration(milliseconds: 260));
     await _pressButton(tester, 'Close', last: true);
 
@@ -223,12 +224,13 @@ Future<void> _pumpSmokeApp(
   bool enableTimesheet = false,
 }) async {
   SharedPreferences.setMockInitialValues({
-    ThemeManager.kThemePreferenceKey: ThemeManager.kDefaultTheme,
+    'lab_theme_id': 'signal',
+    'lab_theme_mode': 'dark',
     'app-locale': 'en',
     'ts_enabled': enableTimesheet,
   });
-  AppToast.clear();
-  addTearDown(AppToast.clear);
+  clearLabToasts();
+  addTearDown(clearLabToasts);
 
   await _setDesktopSurface(tester);
   await tester.pumpWidget(const _SmokeApp());
@@ -302,8 +304,8 @@ class _SmokeApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<ThemeManager>(
-          create: (_) => ThemeManager(initialTheme: ThemeManager.kDefaultTheme),
+        ChangeNotifierProvider<LabThemeManager>(
+          create: (_) => LabThemeManager()..load(),
         ),
         ChangeNotifierProvider<LanguageProvider>(
           create: (_) => LanguageProvider(),
@@ -318,10 +320,26 @@ class _SmokeApp extends StatelessWidget {
           create: (_) => MqttController(initializeWorkers: false),
         ),
       ],
-      child: Consumer2<ThemeManager, LanguageProvider>(
+      child: Consumer2<LabThemeManager, LanguageProvider>(
         builder: (context, themeManager, languageProvider, child) {
+          final base = themeManager.theme.themeData;
+          final themed = base.copyWith(
+            extensions: [
+              ...base.extensions.values,
+              const AppThemeEffect(
+                animationCurve: Curves.easeOutCubic,
+                layoutDensity: 1.0,
+                borderRadius: 8.0,
+                icons: AppIcons.standard,
+              ),
+            ],
+          );
           return MaterialApp(
-            theme: themeManager.currentTheme,
+            theme: themed,
+            darkTheme: themed,
+            themeMode: themeManager.theme.brightness == Brightness.dark
+                ? ThemeMode.dark
+                : ThemeMode.light,
             locale: languageProvider.currentLocale,
             localizationsDelegates: const [
               AppLocalizations.delegate,

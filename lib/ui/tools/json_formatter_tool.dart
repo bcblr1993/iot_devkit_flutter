@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Import
 import '../widgets/json_tree_view.dart';
 import '../../l10n/generated/app_localizations.dart';
-import '../../utils/app_toast.dart';
+import '../lab/lab.dart';
 
 class JsonFormatterTool extends StatefulWidget {
   const JsonFormatterTool({super.key});
@@ -235,17 +235,16 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
     });
   }
 
-  // 使用AppToast显示消息通知
   void _setStatus(String msg, Color color) {
     if (color == Colors.green) {
-      AppToast.success(context, msg);
+      showLabToast(context, title: msg, kind: LabStatus.ok);
     } else if (color == Colors.orange) {
-      AppToast.warning(context, msg);
+      showLabToast(context, title: msg, kind: LabStatus.warn);
     } else if (color == Theme.of(context).colorScheme.error ||
         color == Colors.red) {
-      AppToast.error(context, msg);
+      showLabToast(context, title: msg, kind: LabStatus.error);
     } else if (color != Colors.grey) {
-      AppToast.info(context, msg);
+      showLabToast(context, title: msg, kind: LabStatus.info);
     }
   }
 

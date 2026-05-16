@@ -10,7 +10,7 @@ import '../../models/certificate_config.dart';
 import '../../services/certificate_address_parser.dart';
 import '../../services/certificate_generator_service.dart';
 import '../../services/certificate_package_builder.dart';
-import '../../utils/app_toast.dart';
+import '../lab/lab.dart';
 import '../components/app_input_decoration.dart';
 import '../components/app_section.dart';
 import '../components/form_grid.dart';
@@ -542,7 +542,7 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
     final parsed = _parsedAddresses;
     final validationError = _validationError(parsed);
     if (validationError != null) {
-      AppToast.error(context, validationError);
+      showLabToast(context, title: validationError, kind: LabStatus.error);
       return;
     }
 
@@ -561,7 +561,10 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
     );
 
     if (outputPath == null) {
-      if (mounted) AppToast.info(context, l10n.certGenerationCancelled);
+      if (mounted) {
+        showLabToast(context,
+            title: l10n.certGenerationCancelled, kind: LabStatus.info);
+      }
       return;
     }
 
@@ -579,10 +582,11 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
       setState(() {
         _lastResult = result;
       });
-      AppToast.success(context, l10n.certGenerated);
+      showLabToast(context, title: l10n.certGenerated, kind: LabStatus.ok);
     } catch (e) {
       if (!mounted) return;
-      AppToast.error(context, '${l10n.certGenerationFailed}: $e');
+      showLabToast(context,
+          title: '${l10n.certGenerationFailed}: $e', kind: LabStatus.error);
     } finally {
       if (mounted) {
         setState(() {
@@ -597,7 +601,9 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
     if (result == null) return;
     await Clipboard.setData(ClipboardData(text: result.plan.envText));
     if (mounted) {
-      AppToast.success(context, AppLocalizations.of(context)!.copySuccess);
+      showLabToast(context,
+          title: AppLocalizations.of(context)!.copySuccess,
+          kind: LabStatus.ok);
     }
   }
 
