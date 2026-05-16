@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../../services/profile_service.dart';
+import '../lab/lab.dart';
 
 class SimulatorHeader extends StatelessWidget {
   final bool isProfileSidebarVisible;
@@ -24,9 +25,10 @@ class SimulatorHeader extends StatelessWidget {
 
     return Row(
       children: [
-        IconButton.filledTonal(
-          icon: Icon(isProfileSidebarVisible ? Icons.menu_open : Icons.menu),
+        LabIconButton(
+          icon: isProfileSidebarVisible ? Icons.menu_open : Icons.menu,
           tooltip: l10n.profiles,
+          active: isProfileSidebarVisible,
           onPressed: onToggleProfileSidebar,
         ),
         const SizedBox(width: 12),

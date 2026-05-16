@@ -146,8 +146,8 @@ class _ProfileSidebarState extends State<ProfileSidebar> {
                         Text(l10n.profiles,
                             style: const TextStyle(
                                 fontWeight: FontWeight.bold, fontSize: 16)),
-                        IconButton(
-                          icon: const Icon(Icons.add),
+                        LabIconButton(
+                          icon: Icons.add,
                           tooltip: l10n.newProfile,
                           onPressed: _handleCreate,
                         ),

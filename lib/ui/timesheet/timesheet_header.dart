@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../lab/lab.dart';
 
 class TimesheetHeader extends StatelessWidget {
   final DateTime selectedDate;
@@ -33,8 +34,8 @@ class TimesheetHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(Icons.calendar_month),
+          LabIconButton(
+            icon: Icons.calendar_month,
             onPressed: () async {
               final picked = await showDatePicker(
                 context: context,
@@ -66,9 +67,10 @@ class TimesheetHeader extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    FilledButton.icon(
-                      icon: const Icon(Icons.copy),
-                      label: Text(l10n.tsWeeklyReport),
+                    LabButton(
+                      icon: Icons.copy,
+                      label: l10n.tsWeeklyReport,
+                      variant: LabButtonVariant.primary,
                       onPressed: onCopyWeeklyReport,
                     ),
                     const SizedBox(width: 8),

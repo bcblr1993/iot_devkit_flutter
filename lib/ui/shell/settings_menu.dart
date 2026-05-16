@@ -170,7 +170,6 @@ class SettingsMenu extends StatelessWidget {
       ),
     );
   }
-
 }
 
 class _ThemePickerGrid extends StatelessWidget {
@@ -521,9 +520,9 @@ class _LanguagePickerDialog extends StatelessWidget {
                       ),
                     ),
                   ),
-                  IconButton(
+                  LabIconButton(
+                    icon: Icons.close,
                     tooltip: MaterialLocalizations.of(context).closeButtonLabel,
-                    icon: const Icon(Icons.close),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],

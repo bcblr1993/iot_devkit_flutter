@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../l10n/generated/app_localizations.dart';
-import '../styles/app_constants.dart';
 import '../lab/lab.dart';
 import '../components/form_grid.dart';
 
@@ -143,14 +142,10 @@ class MqttConfigSection extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        IconButton(
-          onPressed: isLocked ? null : () => _pickFile(controller),
-          icon: Icon(Icons.folder_open,
-              size: AppIconSize.md,
-              color: customColor ?? Theme.of(context).colorScheme.primary),
+        LabIconButton(
+          icon: Icons.folder_open,
           tooltip: l10n.selectFile,
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
+          onPressed: isLocked ? null : () => _pickFile(controller),
         ),
       ],
     );
