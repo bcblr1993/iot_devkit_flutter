@@ -7,6 +7,7 @@ import 'package:iot_devkit/services/status_registry.dart';
 import 'package:iot_devkit/ui/lab/lab.dart';
 import 'package:iot_devkit/ui/screens/home_screen.dart';
 import 'package:iot_devkit/ui/screens/timesheet_screen.dart';
+import 'package:iot_devkit/ui/shell/app_navigation_rail.dart';
 import 'package:iot_devkit/viewmodels/timesheet_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,7 +20,7 @@ void main() {
 
     await tester.pump();
 
-    expect(find.byType(NavigationRail), findsOneWidget);
+    expect(find.byType(AppNavigationRail), findsOneWidget);
     expect(find.byType(HomeScreen), findsOneWidget);
   });
 
@@ -31,7 +32,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.byType(NavigationRail), findsOneWidget);
+    expect(find.byType(AppNavigationRail), findsOneWidget);
     expect(find.byIcon(Icons.calendar_month), findsWidgets);
 
     await tester.tap(find.byIcon(Icons.calendar_month).first);

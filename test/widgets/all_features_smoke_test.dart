@@ -243,8 +243,8 @@ Future<void> _selectRailDestination(
   WidgetTester tester,
   int index,
 ) async {
-  final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
-  rail.onDestinationSelected?.call(index);
+  // Lab Console rail items carry ValueKey('rail_item_<index>').
+  await tester.tap(find.byKey(ValueKey('rail_item_$index')));
   await tester.pump(const Duration(milliseconds: 260));
 }
 

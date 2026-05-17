@@ -3,8 +3,14 @@ import 'package:provider/provider.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../../viewmodels/timesheet_provider.dart';
+import '../lab/lab.dart';
 import 'settings_menu.dart';
 
+/// Lab Console left rail (design system · simulator.jsx).
+///
+/// Fixed 80px column: stacked icon-box + label + mono F-key hint, with an
+/// accent left-border + tint on the active item. Settings sits pinned at the
+/// bottom. Public API is unchanged so HomeScreen wiring stays the same.
 class AppNavigationRail extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
@@ -21,70 +27,128 @@ class AppNavigationRail extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isTimesheetVisible = context.watch<TimesheetProvider>().isEnabled;
-    final theme = Theme.of(context);
+    final scheme = Theme.of(context).colorScheme;
 
-    return NavigationRail(
-      selectedIndex: selectedIndex,
-      onDestinationSelected: onDestinationSelected,
-      backgroundColor: theme.colorScheme.surfaceContainerLowest,
-      minWidth: 88.0,
-      groupAlignment: -0.78,
-      labelType: NavigationRailLabelType.all,
-      useIndicator: true,
-      indicatorColor: theme.colorScheme.primary.withValues(alpha: 0.10),
-      indicatorShape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      selectedIconTheme: IconThemeData(
-        color: theme.colorScheme.primary,
-        size: 24,
+    final items = <_RailEntry>[
+      _RailEntry(Icons.settings_input_component, l10n.navSimulator, 'F1'),
+      _RailEntry(Icons.access_time, l10n.navTimestamp, 'F2'),
+      _RailEntry(Icons.code, l10n.navJson, 'F3'),
+      _RailEntry(Icons.workspace_premium_outlined, l10n.navCertificates, 'F4'),
+      if (isTimesheetVisible)
+        _RailEntry(Icons.calendar_month, l10n.toolTimesheet, 'F5'),
+    ];
+
+    return Container(
+      width: 80,
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLowest,
+        border: Border(right: BorderSide(color: scheme.outlineVariant)),
       ),
-      unselectedIconTheme: IconThemeData(
-        color: theme.colorScheme.onSurfaceVariant,
-        size: 24,
-      ),
-      selectedLabelTextStyle: theme.textTheme.labelMedium?.copyWith(
-        color: theme.colorScheme.primary,
-        fontWeight: FontWeight.w800,
-      ),
-      unselectedLabelTextStyle: theme.textTheme.labelMedium?.copyWith(
-        color: theme.colorScheme.onSurfaceVariant,
-        fontWeight: FontWeight.w600,
-      ),
-      destinations: <NavigationRailDestination>[
-        NavigationRailDestination(
-          icon: const Icon(Icons.settings_input_component),
-          selectedIcon: const Icon(Icons.tune),
-          label: Text(l10n.navSimulator),
-        ),
-        NavigationRailDestination(
-          icon: const Icon(Icons.access_time),
-          selectedIcon: const Icon(Icons.access_time_filled),
-          label: Text(l10n.navTimestamp),
-        ),
-        NavigationRailDestination(
-          icon: const Icon(Icons.code),
-          selectedIcon: const Icon(Icons.data_object),
-          label: Text(l10n.navJson),
-        ),
-        NavigationRailDestination(
-          icon: const Icon(Icons.workspace_premium_outlined),
-          selectedIcon: const Icon(Icons.verified_user),
-          label: Text(l10n.navCertificates),
-        ),
-        if (isTimesheetVisible)
-          NavigationRailDestination(
-            icon: const Icon(Icons.calendar_month),
-            selectedIcon: const Icon(Icons.calendar_month),
-            label: Text(l10n.toolTimesheet),
-          ),
-      ],
-      trailing: Expanded(
-        child: Align(
-          alignment: Alignment.bottomCenter,
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 16.0),
+      child: Column(
+        children: [
+          const SizedBox(height: 10),
+          for (var i = 0; i < items.length; i++)
+            _RailItem(
+              key: ValueKey('rail_item_$i'),
+              entry: items[i],
+              active: i == selectedIndex,
+              onTap: () => onDestinationSelected(i),
+            ),
+          const Spacer(),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
             child: SettingsMenu(onTimesheetDisabled: onTimesheetDisabled),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RailEntry {
+  final IconData icon;
+  final String label;
+  final String hint;
+  const _RailEntry(this.icon, this.label, this.hint);
+}
+
+class _RailItem extends StatelessWidget {
+  final _RailEntry entry;
+  final bool active;
+  final VoidCallback onTap;
+
+  const _RailItem({
+    super.key,
+    required this.entry,
+    required this.active,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final tokens = LabTokens.of(context);
+    final text = Theme.of(context).textTheme;
+
+    final accent = scheme.primary;
+    final boxBorder = active ? accent : scheme.outlineVariant;
+    final boxBg = active
+        ? Color.alphaBlend(accent.withValues(alpha: 0.12), scheme.surface)
+        : scheme.surface;
+    final iconColor = active ? accent : scheme.onSurfaceVariant;
+    final labelColor = active ? scheme.onSurface : tokens.faint;
+
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        width: 80,
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
+        decoration: BoxDecoration(
+          color: active
+              ? Color.alphaBlend(accent.withValues(alpha: 0.08), scheme.surface)
+              : Colors.transparent,
+          border: Border(
+            left: BorderSide(
+              color: active ? accent : Colors.transparent,
+              width: 2,
+            ),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: boxBg,
+                border: Border.all(color: boxBorder),
+                borderRadius: BorderRadius.circular(tokens.rMd),
+              ),
+              alignment: Alignment.center,
+              child: Icon(entry.icon, size: 17, color: iconColor),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              entry.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: text.labelMedium?.copyWith(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.2,
+                color: labelColor,
+              ),
+            ),
+            Text(
+              entry.hint,
+              style: TextStyle(
+                fontFamily: tokens.monoFamily,
+                fontSize: 9,
+                color: tokens.faint,
+              ),
+            ),
+          ],
         ),
       ),
     );
