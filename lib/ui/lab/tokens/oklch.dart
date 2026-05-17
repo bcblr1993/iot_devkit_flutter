@@ -55,9 +55,9 @@ extension LabColorMix on Color {
   /// Return this color rendered over [base] at the given [pct] (0..100).
   Color tinted(int pct, {Color base = Colors.transparent}) {
     final a = (pct.clamp(0, 100)) / 100.0;
-    return Color.alphaBlend(withOpacity(a), base);
+    return Color.alphaBlend(withValues(alpha: a), base);
   }
 
   /// Alpha-only version (no base) — common token usage for borders/fills.
-  Color alpha(int pct) => withOpacity((pct.clamp(0, 100)) / 100.0);
+  Color alpha(int pct) => withValues(alpha: (pct.clamp(0, 100)) / 100.0);
 }

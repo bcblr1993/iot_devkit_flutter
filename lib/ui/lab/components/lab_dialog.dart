@@ -18,9 +18,9 @@ enum LabDialogKind { confirm, destructive, form }
 class LabDialog extends StatelessWidget {
   final LabDialogKind kind;
   final String title;
-  final String? summary;     // mono · the target id / count
-  final Widget? body;        // descriptive text
-  final Widget? form;        // for kind == form
+  final String? summary; // mono · the target id / count
+  final Widget? body; // descriptive text
+  final Widget? form; // for kind == form
   final String? footnote;
   final String primaryLabel;
   final String secondaryLabel;
@@ -47,11 +47,12 @@ class LabDialog extends StatelessWidget {
     final tokens = LabTokens.of(context);
     final text = Theme.of(context).textTheme;
 
-    final accent = kind == LabDialogKind.destructive ? scheme.error : scheme.primary;
+    final accent =
+        kind == LabDialogKind.destructive ? scheme.error : scheme.primary;
     final glyph = switch (kind) {
       LabDialogKind.destructive => '!',
-      LabDialogKind.form        => '✎',
-      LabDialogKind.confirm     => '?',
+      LabDialogKind.form => '✎',
+      LabDialogKind.confirm => '?',
     };
 
     return Dialog(
@@ -65,13 +66,15 @@ class LabDialog extends StatelessWidget {
               color: scheme.surfaceContainerLow,
               border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
             ),
-            padding: EdgeInsets.symmetric(horizontal: tokens.sXl, vertical: tokens.sLg),
+            padding: EdgeInsets.symmetric(
+                horizontal: tokens.sXl, vertical: tokens.sLg),
             child: Row(children: [
               Container(
-                width: 28, height: 28,
+                width: 28,
+                height: 28,
                 decoration: BoxDecoration(
-                  color: accent.withOpacity(.18),
-                  border: Border.all(color: accent.withOpacity(.40)),
+                  color: accent.withValues(alpha: .18),
+                  border: Border.all(color: accent.withValues(alpha: .40)),
                   borderRadius: BorderRadius.circular(tokens.rMd),
                 ),
                 alignment: Alignment.center,
@@ -79,21 +82,27 @@ class LabDialog extends StatelessWidget {
                   glyph,
                   style: TextStyle(
                     fontFamily: tokens.monoFamily,
-                    fontSize: 14, fontWeight: FontWeight.w800, color: accent,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: accent,
                   ),
                 ),
               ),
               SizedBox(width: tokens.sLg),
-              Expanded(child: Column(
+              Expanded(
+                  child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(title, style: text.bodyMedium?.copyWith(fontWeight: FontWeight.w700, fontSize: 14)),
+                  Text(title,
+                      style: text.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w700, fontSize: 14)),
                   if (summary != null) ...[
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
                       summary!,
-                      style: text.labelLarge?.copyWith(fontSize: 11.5, color: scheme.onSurfaceVariant),
+                      style: text.labelLarge?.copyWith(
+                          fontSize: 11.5, color: scheme.onSurfaceVariant),
                     ),
                   ],
                 ],
@@ -114,7 +123,8 @@ class LabDialog extends StatelessWidget {
               children: [
                 if (body != null)
                   DefaultTextStyle.merge(
-                    style: text.bodySmall!.copyWith(color: tokens.body, fontSize: 13, height: 1.55),
+                    style: text.bodySmall!.copyWith(
+                        color: tokens.body, fontSize: 13, height: 1.55),
                     child: body!,
                   ),
                 if (form != null) ...[
@@ -125,7 +135,8 @@ class LabDialog extends StatelessWidget {
                   SizedBox(height: tokens.sLg),
                   Text(
                     footnote!,
-                    style: text.labelLarge?.copyWith(color: tokens.faint, fontSize: 11),
+                    style: text.labelLarge
+                        ?.copyWith(color: tokens.faint, fontSize: 11),
                   ),
                 ],
               ],
@@ -137,11 +148,13 @@ class LabDialog extends StatelessWidget {
               color: scheme.surfaceContainerLow,
               border: Border(top: BorderSide(color: scheme.outlineVariant)),
             ),
-            padding: EdgeInsets.symmetric(horizontal: tokens.sXl, vertical: tokens.sLg),
+            padding: EdgeInsets.symmetric(
+                horizontal: tokens.sXl, vertical: tokens.sLg),
             child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
               LabButton(
                 label: secondaryLabel,
-                onPressed: onSecondary ?? () => Navigator.of(context).pop(false),
+                onPressed:
+                    onSecondary ?? () => Navigator.of(context).pop(false),
               ),
               SizedBox(width: tokens.sMd),
               LabButton(

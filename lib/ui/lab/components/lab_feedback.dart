@@ -35,8 +35,8 @@ class LabPill extends StatelessWidget {
         vertical: small ? 1 : 2,
       ),
       decoration: BoxDecoration(
-        color: color.withOpacity(.14),
-        border: Border.all(color: color.withOpacity(.30)),
+        color: color.withValues(alpha: .14),
+        border: Border.all(color: color.withValues(alpha: .30)),
         borderRadius: BorderRadius.circular(tokens.rSm),
       ),
       child: Text(
@@ -117,8 +117,8 @@ class LabInlineAlert extends StatelessWidget {
       padding:
           EdgeInsets.symmetric(horizontal: tokens.sLg, vertical: tokens.sMd),
       decoration: BoxDecoration(
-        color: c.withOpacity(.12),
-        border: Border.all(color: c.withOpacity(.35)),
+        color: c.withValues(alpha: .12),
+        border: Border.all(color: c.withValues(alpha: .35)),
         borderRadius: BorderRadius.circular(tokens.rSm + 1),
       ),
       child: Row(
@@ -206,7 +206,7 @@ class LabToast extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             color: scheme.surfaceContainerLowest,
-            border: Border.all(color: c.withOpacity(.50)),
+            border: Border.all(color: c.withValues(alpha: .50)),
           ),
           child: IntrinsicHeight(
             child:
@@ -222,7 +222,7 @@ class LabToast extends StatelessWidget {
                           width: 22,
                           height: 22,
                           decoration: BoxDecoration(
-                            color: c.withOpacity(.18),
+                            color: c.withValues(alpha: .18),
                             borderRadius: BorderRadius.circular(tokens.rSm + 1),
                           ),
                           alignment: Alignment.center,

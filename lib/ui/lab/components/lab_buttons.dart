@@ -62,13 +62,13 @@ class LabButton extends StatelessWidget {
         fg = scheme.onPrimary;
         border = scheme.primary;
       case LabButtonVariant.danger:
-        bg = scheme.error.withOpacity(.18);
+        bg = scheme.error.withValues(alpha: .18);
         fg = scheme.error;
-        border = scheme.error.withOpacity(.40);
+        border = scheme.error.withValues(alpha: .40);
       case LabButtonVariant.success:
-        bg = tokens.ok.withOpacity(.18);
+        bg = tokens.ok.withValues(alpha: .18);
         fg = tokens.ok;
-        border = tokens.ok.withOpacity(.40);
+        border = tokens.ok.withValues(alpha: .40);
       case LabButtonVariant.ghost:
         bg = Colors.transparent;
         fg = tokens.body;
@@ -112,7 +112,7 @@ class LabButton extends StatelessWidget {
             suffix!,
             style: text.labelLarge?.copyWith(
               fontSize: fs - 1,
-              color: fg.withOpacity(.60),
+              color: fg.withValues(alpha: .60),
             ),
           ),
         ],
@@ -176,10 +176,10 @@ class LabIconButton extends StatelessWidget {
       LabButtonSize.lg => 36,
     };
     final Color bg =
-        active ? scheme.primary.withOpacity(.14) : Colors.transparent;
+        active ? scheme.primary.withValues(alpha: .14) : Colors.transparent;
     final Color fg = active ? scheme.primary : scheme.onSurfaceVariant;
     final Color border =
-        active ? scheme.primary.withOpacity(.30) : scheme.outline;
+        active ? scheme.primary.withValues(alpha: .30) : scheme.outline;
 
     final btn = Stack(
       clipBehavior: Clip.none,

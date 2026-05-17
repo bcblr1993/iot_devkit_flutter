@@ -206,7 +206,8 @@ class LabSegmented<T> extends StatelessWidget {
       final seg = segments[i];
       final selected = seg.value == value;
       final child = Material(
-        color: selected ? scheme.primary.withOpacity(.18) : scheme.surface,
+        color:
+            selected ? scheme.primary.withValues(alpha: .18) : scheme.surface,
         child: InkWell(
           onTap: () => onChanged(seg.value),
           child: Padding(
@@ -271,7 +272,7 @@ class LabCheckbox extends StatelessWidget {
     return InkWell(
       onTap: onChanged == null ? null : () => onChanged!(!value),
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+        padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Container(
             width: 14,
@@ -326,7 +327,7 @@ class LabRadio<T> extends StatelessWidget {
     return InkWell(
       onTap: onChanged == null ? null : () => onChanged!(value),
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+        padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Container(
             width: 14,
@@ -373,8 +374,9 @@ class LabToggle extends StatelessWidget {
         width: 30,
         height: 16,
         decoration: BoxDecoration(
-          color:
-              value ? scheme.primary : scheme.onSurfaceVariant.withOpacity(.30),
+          color: value
+              ? scheme.primary
+              : scheme.onSurfaceVariant.withValues(alpha: .30),
           border: Border.all(color: value ? scheme.primary : scheme.outline),
           borderRadius: BorderRadius.circular(999),
         ),
