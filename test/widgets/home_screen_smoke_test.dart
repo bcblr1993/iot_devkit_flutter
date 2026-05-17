@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:iot_devkit/l10n/generated/app_localizations.dart';
@@ -39,6 +40,28 @@ void main() {
     await tester.pump();
 
     expect(find.byType(TimesheetScreen), findsOneWidget);
+  });
+
+  testWidgets('HomeScreen F-key shortcuts switch the rail destination',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({'ts_enabled': true});
+
+    await tester.pumpWidget(_buildTestApp());
+    await tester.pump();
+    await tester.pump();
+
+    // Default = Simulator (index 0), Timesheet not shown.
+    expect(find.byType(TimesheetScreen), findsNothing);
+
+    // F5 → Timesheet.
+    await tester.sendKeyEvent(LogicalKeyboardKey.f5);
+    await tester.pump();
+    expect(find.byType(TimesheetScreen), findsOneWidget);
+
+    // F1 → back to Simulator (Timesheet gone).
+    await tester.sendKeyEvent(LogicalKeyboardKey.f1);
+    await tester.pump();
+    expect(find.byType(TimesheetScreen), findsNothing);
   });
 
   testWidgets('HomeScreen shell stays stable at the minimum window size',

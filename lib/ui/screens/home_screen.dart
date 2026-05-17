@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:provider/provider.dart';
 import '../../services/mqtt_controller.dart';
@@ -75,6 +76,15 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  /// Rail navigation via keyboard (design system · rail F-key hints).
+  /// F1 Simulator · F2 Timestamp · F3 JSON · F4 Certs · F5 Timesheet.
+  void _select(int index) {
+    if (index == 4 && !context.read<TimesheetProvider>().isEnabled) {
+      return; // Timesheet rail item is hidden — ignore the shortcut.
+    }
+    setState(() => _selectedIndex = index);
+  }
+
   @override
   Widget build(BuildContext context) {
     final tsProvider = context.watch<TimesheetProvider>();
@@ -82,47 +92,59 @@ class _HomeScreenState extends State<HomeScreen> {
     final selectedIndex =
         isTimesheetVisible || _selectedIndex < 4 ? _selectedIndex : 0;
 
-    return Scaffold(
-      body: Row(
-        children: [
-          RepaintBoundary(
-            child: AppNavigationRail(
-              selectedIndex: selectedIndex,
-              onDestinationSelected: (int index) {
-                setState(() {
-                  _selectedIndex = index;
-                });
-              },
-              onTimesheetDisabled: () {
-                if (_selectedIndex == 4) {
-                  setState(() {
-                    _selectedIndex = 0;
-                  });
-                }
-              },
-            ),
-          ),
-          const VerticalDivider(thickness: 1, width: 1),
-          Expanded(
-            child: RepaintBoundary(
-              child: MainContentSwitcher(
-                selectedIndex: selectedIndex,
-                logs: _logs,
-                isLogExpanded: _isLogExpanded,
-                onToggleLog: () {
-                  setState(() {
-                    _isLogExpanded = !_isLogExpanded;
-                  });
-                },
-                onClearLog: () {
-                  setState(() {
-                    _logs.clear();
-                  });
-                },
+    return CallbackShortcuts(
+      bindings: <ShortcutActivator, VoidCallback>{
+        const SingleActivator(LogicalKeyboardKey.f1): () => _select(0),
+        const SingleActivator(LogicalKeyboardKey.f2): () => _select(1),
+        const SingleActivator(LogicalKeyboardKey.f3): () => _select(2),
+        const SingleActivator(LogicalKeyboardKey.f4): () => _select(3),
+        const SingleActivator(LogicalKeyboardKey.f5): () => _select(4),
+      },
+      child: Focus(
+        autofocus: true,
+        child: Scaffold(
+          body: Row(
+            children: [
+              RepaintBoundary(
+                child: AppNavigationRail(
+                  selectedIndex: selectedIndex,
+                  onDestinationSelected: (int index) {
+                    setState(() {
+                      _selectedIndex = index;
+                    });
+                  },
+                  onTimesheetDisabled: () {
+                    if (_selectedIndex == 4) {
+                      setState(() {
+                        _selectedIndex = 0;
+                      });
+                    }
+                  },
+                ),
               ),
-            ),
+              const VerticalDivider(thickness: 1, width: 1),
+              Expanded(
+                child: RepaintBoundary(
+                  child: MainContentSwitcher(
+                    selectedIndex: selectedIndex,
+                    logs: _logs,
+                    isLogExpanded: _isLogExpanded,
+                    onToggleLog: () {
+                      setState(() {
+                        _isLogExpanded = !_isLogExpanded;
+                      });
+                    },
+                    onClearLog: () {
+                      setState(() {
+                        _logs.clear();
+                      });
+                    },
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
