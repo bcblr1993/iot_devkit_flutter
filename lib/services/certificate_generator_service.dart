@@ -334,6 +334,14 @@ class CertificateGeneratorService {
   }
 
   String _commonName(ParsedCertificateAddresses addresses) {
+    // Prefer a user-entered (non-default) host so the certificate CN
+    // reflects the real server identity. Local defaults (localhost /
+    // 127.0.0.1 / ::1) are prepended by the parser, so without this the
+    // CN would always be "localhost" regardless of the host entered.
+    final userDns = addresses.dnsNames.where((a) => !a.isDefault).toList();
+    if (userDns.isNotEmpty) return userDns.first.value;
+    final userIp = addresses.ips.where((a) => !a.isDefault).toList();
+    if (userIp.isNotEmpty) return userIp.first.value;
     if (addresses.dnsNames.isNotEmpty) {
       return addresses.dnsNames.first.value;
     }
