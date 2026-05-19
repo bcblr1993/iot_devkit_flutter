@@ -24,6 +24,11 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: "stable"
+          # Pin to the toolchain the Lab Console migration was verified on.
+          # `channel: stable` alone is a moving target — a newer stable can
+          # break compilation of dropped-in design-system code that passed
+          # locally. Bump deliberately, not implicitly.
+          flutter-version: "3.41.8"
 
       - name: Install dependencies
         run: flutter pub get
