@@ -1,0 +1,58 @@
+name: UI Consistency Check
+
+# UI 一致性治理 commit 4/4 — CI 兜底
+#
+# 在每次 push 与 PR 触发，跑：
+#   flutter analyze → custom_lint (Lab tokens 规则) → widget smoke → golden diff
+# 失败时把 test/golden/failures/*.png 上传成 artifact，等价 BackstopJS report。
+#
+# 固定 ubuntu-latest 单平台：golden PNG 跨 OS 的亚像素抗锯齿差异会让多平台
+# 维护一套基线变得不可持续；release.yml 仍跑三平台构建，与此无冲突。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  ui-check:
+    name: UI consistency (lint + golden)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          # 与 release.yml 保持一致，避免 stable channel 漂移
+          flutter-version: "3.41.8"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: flutter analyze
+        run: flutter analyze --no-pub
+
+      - name: dart run custom_lint (Lab token rules)
+        run: dart run custom_lint
+
+      - name: flutter test — widget smoke
+        run: flutter test --no-pub test/widgets/
+
+      - name: flutter test — golden visual regression
+        run: flutter test --no-pub test/golden/
+
+      - name: Upload golden diff (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-failures
+          path: test/golden/failures/
+          if-no-files-found: ignore
+          retention-days: 14
