@@ -197,8 +197,26 @@ class CertificatePackageBuilder {
 # ThingsBoard $usage Certificate Package
 
 Generated: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(now)}
-Format: $format
-Valid Days: ${request.validDays}
+Format: $format · Valid Days: ${request.validDays}
+
+> ⚠️ **This is a PRIVATE self-signed root CA.** Browsers / MQTT clients /
+> curl will refuse HTTPS until BOTH of the following are true on the
+> client side:
+> 1. `cafile.pem` is installed as a **trusted root** in the client
+>    truststore (OS keychain, browser, Java cacerts, Node, etc.).
+> 2. The host you connect to is listed in the SAN below.
+>
+> 90% of "HTTPS won't open" reports against ThingsBoard with a self-signed
+> cert come down to one of these two — see Diagnose section below.
+
+## SAN — the cert is only valid for these hosts
+
+${san.join('\n')}
+
+If your real ThingsBoard host (LAN IP / domain) is **not** in this list,
+regenerate the certificate with the correct hosts entered in the
+"Certificate SAN Addresses" field. The defaults `localhost / 127.0.0.1 /
+::1` only cover local-only access.
 
 ## Files
 
@@ -206,9 +224,61 @@ ${files.values.map((file) => '- `$file`').join('\n')}
 - `thingsboard.env`
 - `hosts.example.txt`
 
-## SAN
+## Trust the CA on the client
 
-${san.join('\n')}
+```bash
+# macOS  — add cafile.pem as a trusted system root
+sudo security add-trusted-cert -d -r trustRoot \\
+  -k /Library/Keychains/System.keychain cafile.pem
+
+# Linux  — Debian/Ubuntu
+sudo cp cafile.pem /usr/local/share/ca-certificates/iot-devkit-ca.crt
+sudo update-ca-certificates
+
+# Linux  — RHEL/CentOS/Fedora
+sudo cp cafile.pem /etc/pki/ca-trust/source/anchors/iot-devkit-ca.crt
+sudo update-ca-trust
+
+# Java   — append to JDK cacerts (default truststore pass: changeit)
+sudo keytool -import -trustcacerts -noprompt -alias iot-devkit-ca \\
+  -file cafile.pem -keystore \$JAVA_HOME/lib/security/cacerts
+
+# Windows — PowerShell (Administrator)
+Import-Certificate -FilePath cafile.pem `
+  -CertStoreLocation Cert:\\LocalMachine\\Root
+```
+
+## Deploy to ThingsBoard (Docker example)
+
+Mount the cert dir into the container and point env vars at the
+**container path**, not the host path:
+
+```yaml
+services:
+  tb:
+    image: thingsboard/tb-postgres
+    volumes:
+      - ./certs:/config/certs:ro
+    environment:
+      SSL_ENABLED: "true"
+      SSL_CREDENTIALS_TYPE: PEM
+      SSL_PEM_CERT: /config/certs/${files['certificate']}
+      SSL_PEM_KEY:  /config/certs/${files['privateKey']}
+```
+
+## Diagnose TLS in 5 seconds
+
+```bash
+# Replace <host>:<port> with what you actually access (e.g. tb.local:443)
+openssl s_client -connect <host>:<port> -CAfile cafile.pem \\
+  -servername <host> </dev/null 2>&1 | tail -25
+```
+
+Read the last lines:
+- `Verify return code: 0 (ok)`             → cert + chain OK on this client
+- `unable to get local issuer certificate` → CA not trusted (do step above)
+- `Hostname mismatch` / `not match`        → host not in SAN (regenerate)
+- `Connection refused / timeout`           → wrong port / TB SSL disabled
 
 ## ThingsBoard Environment Variables
 
@@ -222,11 +292,15 @@ $hosts```
 
 ## Notes
 
-- Copy the certificate files to a path that the ThingsBoard process can read.
-- Apply `thingsboard.env` values through your deployment method, such as Docker environment variables, systemd environment files, or Kubernetes secrets.
-- For domain access, the domain must be present in SAN and must resolve to the ThingsBoard server IP.
-- `cafile.pem` is the root CA certificate. Import or reference it on clients that need to trust this self-signed CA.
-- PEM private keys are generated without passphrase encryption so the package can be built inside IoT DevKit without external tools. Use PKCS12 when password-protected key storage is required.
+- PEM private keys are generated **unencrypted** so the package can be
+  built inside IoT DevKit without external tools. ThingsBoard's
+  `SslUtil.readPrivateKey` accepts unencrypted PEM and ignores
+  `SSL_PEM_KEY_PASSWORD` in that case (verified against TB 4.1 source).
+  Use PKCS12 format if you need a password-protected keystore.
+- Apply `thingsboard.env` values through your deployment method (Docker
+  env, systemd EnvironmentFile, Kubernetes secret, ...).
+- For domain access, the domain must be present in SAN **and** must
+  resolve to the ThingsBoard server IP on the client (DNS / hosts file).
 ''';
   }
 
