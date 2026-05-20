@@ -1,3 +1,4 @@
+// ignore_for_file: avoid_raw_edge_insets, prefer_lab_tokens
 import 'package:flutter/material.dart';
 import '../../models/group_config.dart';
 import 'custom_keys_manager.dart';

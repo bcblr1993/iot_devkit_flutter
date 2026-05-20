@@ -1,3 +1,4 @@
+// ignore_for_file: avoid_hardcoded_color
 import 'dart:async';
 import 'package:flutter/material.dart';
 

@@ -1,3 +1,4 @@
+// ignore_for_file: avoid_hardcoded_color
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';

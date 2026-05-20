@@ -1,3 +1,4 @@
+// ignore_for_file: avoid_hardcoded_color, avoid_raw_edge_insets, prefer_lab_tokens
 import 'package:flutter/material.dart';
 
 import '../l10n/generated/app_localizations.dart';

@@ -1,3 +1,4 @@
+// ignore_for_file: avoid_hardcoded_color, avoid_raw_edge_insets, prefer_lab_tokens
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../../utils/statistics_collector.dart';

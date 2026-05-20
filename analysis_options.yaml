@@ -1,5 +1,16 @@
 include: package:flutter_lints/flutter.yaml
 
+# UI 一致性治理 commit 3/4：接入 custom_lint 与 lab_lints 规则包
+# 跑这些规则的命令：dart run custom_lint
+analyzer:
+  plugins:
+    - custom_lint
+  exclude:
+    - tooling/**          # 工具内部代码不分析
+    - build/**
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+
 linter:
   rules:
     prefer_const_constructors: true

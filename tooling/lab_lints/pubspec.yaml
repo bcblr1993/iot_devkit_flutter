@@ -1,0 +1,12 @@
+name: lab_lints
+description: Custom analyzer lints enforcing Lab Console design tokens (colors, spacing, radius) across iot_devkit lib/.
+version: 0.1.0
+publish_to: "none"
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  analyzer: ">=6.0.0 <8.0.0"
+  analyzer_plugin: ^0.11.0
+  custom_lint_builder: ^0.6.4

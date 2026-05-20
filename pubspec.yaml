@@ -44,6 +44,8 @@ dev_dependencies:
   # UI 一致性治理（L1 静态 + L2 视觉回归）
   golden_toolkit: ^0.15.0
   custom_lint: ^0.6.4
+  lab_lints:
+    path: tooling/lab_lints
 
 flutter_launcher_icons:
   android: false
