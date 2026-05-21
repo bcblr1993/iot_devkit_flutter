@@ -1568,6 +1568,168 @@ abstract class AppLocalizations {
   /// **'Hosts Example'**
   String get certHostsExample;
 
+  /// No description provided for @certEndpointVerify.
+  ///
+  /// In en, this message translates to:
+  /// **'Endpoint Certificate Check'**
+  String get certEndpointVerify;
+
+  /// No description provided for @certEndpointVerifyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a ThingsBoard host and port to check whether TLS is enabled and whether the certificate matches the access address.'**
+  String get certEndpointVerifyHint;
+
+  /// No description provided for @certEndpointHost.
+  ///
+  /// In en, this message translates to:
+  /// **'Host'**
+  String get certEndpointHost;
+
+  /// No description provided for @certEndpointHostHint.
+  ///
+  /// In en, this message translates to:
+  /// **'For example 10.8.0.219 or tb.example.com'**
+  String get certEndpointHostHint;
+
+  /// No description provided for @certEndpointPort.
+  ///
+  /// In en, this message translates to:
+  /// **'Port'**
+  String get certEndpointPort;
+
+  /// No description provided for @certEndpointPortHint.
+  ///
+  /// In en, this message translates to:
+  /// **'For example 8080, 8443, or 8883'**
+  String get certEndpointPortHint;
+
+  /// No description provided for @certEndpointVerifyAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Check Endpoint'**
+  String get certEndpointVerifyAction;
+
+  /// No description provided for @certEndpointPortInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Port must be 1-65535'**
+  String get certEndpointPortInvalid;
+
+  /// No description provided for @certEndpointVerifyFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Endpoint check failed'**
+  String get certEndpointVerifyFailed;
+
+  /// No description provided for @certEndpointReadyTrusted.
+  ///
+  /// In en, this message translates to:
+  /// **'TLS is available and trusted by the system'**
+  String get certEndpointReadyTrusted;
+
+  /// No description provided for @certEndpointReadyUntrusted.
+  ///
+  /// In en, this message translates to:
+  /// **'TLS is available, but the certificate is not trusted by the system'**
+  String get certEndpointReadyUntrusted;
+
+  /// No description provided for @certEndpointHostMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'TLS is available, but the certificate SAN does not match the host'**
+  String get certEndpointHostMismatch;
+
+  /// No description provided for @certEndpointPlainHttpOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'This port is plain HTTP. The certificate is not active'**
+  String get certEndpointPlainHttpOnly;
+
+  /// No description provided for @certEndpointUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Endpoint is unreachable or protocol does not match'**
+  String get certEndpointUnreachable;
+
+  /// No description provided for @certEndpointTlsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'TLS'**
+  String get certEndpointTlsAvailable;
+
+  /// No description provided for @certEndpointPlainHttpAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'HTTP'**
+  String get certEndpointPlainHttpAvailable;
+
+  /// No description provided for @certEndpointSystemTrust.
+  ///
+  /// In en, this message translates to:
+  /// **'System Trust'**
+  String get certEndpointSystemTrust;
+
+  /// No description provided for @certEndpointHostMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Host Match'**
+  String get certEndpointHostMatch;
+
+  /// No description provided for @certEndpointCertificate.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate'**
+  String get certEndpointCertificate;
+
+  /// No description provided for @certEndpointSubject.
+  ///
+  /// In en, this message translates to:
+  /// **'Subject'**
+  String get certEndpointSubject;
+
+  /// No description provided for @certEndpointIssuer.
+  ///
+  /// In en, this message translates to:
+  /// **'Issuer'**
+  String get certEndpointIssuer;
+
+  /// No description provided for @certEndpointValidity.
+  ///
+  /// In en, this message translates to:
+  /// **'Validity'**
+  String get certEndpointValidity;
+
+  /// No description provided for @certEndpointSan.
+  ///
+  /// In en, this message translates to:
+  /// **'SAN'**
+  String get certEndpointSan;
+
+  /// No description provided for @certEndpointError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get certEndpointError;
+
+  /// No description provided for @certEndpointNoCertificate.
+  ///
+  /// In en, this message translates to:
+  /// **'No server certificate was read'**
+  String get certEndpointNoCertificate;
+
+  /// No description provided for @certEndpointYes.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes'**
+  String get certEndpointYes;
+
+  /// No description provided for @certEndpointNo.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get certEndpointNo;
+
   /// No description provided for @showPassword.
   ///
   /// In en, this message translates to:

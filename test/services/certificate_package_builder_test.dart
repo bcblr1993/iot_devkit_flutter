@@ -23,11 +23,12 @@ void main() {
       expect(plan.fileNames,
           containsAll(['server.pem', 'server_key.pem', 'cafile.pem']));
       expect(plan.envText, contains('SSL_ENABLED=true'));
+      expect(plan.envText, isNot(contains('HTTP_BIND_PORT=')));
       expect(plan.envText, contains('MQTT_SSL_ENABLED=true'));
       expect(plan.envText, contains('SSL_PEM_CERT=server.pem'));
       expect(plan.envText, contains('MQTT_SSL_PEM_CERT=server.pem'));
-      expect(plan.envText, isNot(contains('SSL_PEM_KEY_PASSWORD')));
-      expect(plan.envText, isNot(contains('MQTT_SSL_PEM_KEY_PASSWORD')));
+      expect(plan.envText, contains('SSL_PEM_KEY_PASSWORD=\n'));
+      expect(plan.envText, contains('MQTT_SSL_PEM_KEY_PASSWORD=\n'));
       expect(plan.hostsText, contains('tb.local'));
     });
 

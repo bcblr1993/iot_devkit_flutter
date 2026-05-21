@@ -6,6 +6,7 @@ import 'package:archive/archive_io.dart';
 import 'package:basic_utils/basic_utils.dart';
 import 'package:path/path.dart' as p;
 import 'package:pointycastle/asn1.dart';
+import 'package:pointycastle/digests/sha1.dart';
 
 import '../models/certificate_config.dart';
 import 'certificate_address_parser.dart';
@@ -60,6 +61,7 @@ class CertificateGeneratorService {
         'CN': 'IoT DevKit Local Root CA',
         'O': 'IoT DevKit',
       };
+      final caKeyIdentifier = _keyIdentifier(caPublicKey);
       final caCertPem = _generateCertificatePem(
         issuer: caSubject,
         subject: caSubject,
@@ -68,6 +70,7 @@ class CertificateGeneratorService {
         serialNumber: BigInt.from(DateTime.now().microsecondsSinceEpoch),
         validDays: request.validDays,
         isCa: true,
+        authorityKeyIdentifier: caKeyIdentifier,
       );
 
       final serverPair = CryptoUtils.generateRSAKeyPair();
@@ -88,6 +91,7 @@ class CertificateGeneratorService {
         validDays: request.validDays,
         isCa: false,
         addresses: parsedAddresses.addresses,
+        authorityKeyIdentifier: caKeyIdentifier,
       );
 
       await File(caCertPath).writeAsString(caCertPem);
@@ -187,6 +191,7 @@ class CertificateGeneratorService {
     required BigInt serialNumber,
     required int validDays,
     required bool isCa,
+    required Uint8List authorityKeyIdentifier,
     List<CertificateAddress> addresses = const [],
   }) {
     final algorithm = _algorithmIdentifier();
@@ -198,7 +203,12 @@ class CertificateGeneratorService {
       ..add(_validity(validDays))
       ..add(X509Utils.encodeDN(subject))
       ..add(_subjectPublicKeyInfo(subjectPublicKey))
-      ..add(_extensions(isCa: isCa, addresses: addresses));
+      ..add(_extensions(
+        isCa: isCa,
+        addresses: addresses,
+        subjectKeyIdentifier: _keyIdentifier(subjectPublicKey),
+        authorityKeyIdentifier: authorityKeyIdentifier,
+      ));
 
     final signer = Signer('SHA-256/RSA')
       ..init(true, PrivateKeyParameter<RSAPrivateKey>(signerPrivateKey));
@@ -245,6 +255,8 @@ class CertificateGeneratorService {
   ASN1Object _extensions({
     required bool isCa,
     required List<CertificateAddress> addresses,
+    required Uint8List subjectKeyIdentifier,
+    required Uint8List authorityKeyIdentifier,
   }) {
     final extensions = ASN1Sequence()
       ..add(_extension(
@@ -256,6 +268,14 @@ class CertificateGeneratorService {
         oid: '2.5.29.15',
         critical: true,
         value: _keyUsage(isCa ? [5, 6] : [0, 2]).encode(),
+      ))
+      ..add(_extension(
+        oid: '2.5.29.14',
+        value: _subjectKeyIdentifier(subjectKeyIdentifier).encode(),
+      ))
+      ..add(_extension(
+        oid: '2.5.29.35',
+        value: _authorityKeyIdentifier(authorityKeyIdentifier).encode(),
       ));
 
     if (!isCa) {
@@ -300,17 +320,31 @@ class CertificateGeneratorService {
   }
 
   ASN1BitString _keyUsage(List<int> bitIndexes) {
-    var valueBytes = 1;
+    final maxIndex = bitIndexes.reduce((a, b) => a > b ? a : b);
+    final byteLength = (maxIndex ~/ 8) + 1;
+    final unusedBits = (byteLength * 8) - maxIndex - 1;
+    final valueBytes = Uint8List(byteLength);
     for (final index in bitIndexes) {
-      valueBytes |= int.parse('8000', radix: 16) >> index;
+      final byteIndex = index ~/ 8;
+      final bitIndex = 7 - (index % 8);
+      valueBytes[byteIndex] |= 1 << bitIndex;
     }
-    return ASN1BitString.fromBytes(Uint8List.fromList([
-      3,
-      3,
-      1,
-      (valueBytes & int.parse('ff00', radix: 16)) >> 8,
-      valueBytes & int.parse('00ff', radix: 16),
-    ]));
+    return ASN1BitString(
+      stringValues: valueBytes,
+    )..unusedbits = unusedBits;
+  }
+
+  ASN1OctetString _subjectKeyIdentifier(Uint8List keyIdentifier) {
+    return ASN1OctetString(octets: keyIdentifier);
+  }
+
+  ASN1Sequence _authorityKeyIdentifier(Uint8List keyIdentifier) {
+    final keyId = ASN1Object(tag: 0x80)..valueBytes = keyIdentifier;
+    return ASN1Sequence()..add(keyId);
+  }
+
+  Uint8List _keyIdentifier(RSAPublicKey publicKey) {
+    return SHA1Digest().process(_subjectPublicKeyInfo(publicKey).encode());
   }
 
   ASN1Sequence _extendedKeyUsage() {

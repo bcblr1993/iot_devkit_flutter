@@ -51,9 +51,10 @@ void main() {
             archive.files.firstWhere((file) => file.name == 'thingsboard.env');
         final envText = String.fromCharCodes(envFile.content as List<int>);
         expect(envText, contains('SSL_ENABLED=true'));
+        expect(envText, isNot(contains('HTTP_BIND_PORT=')));
         expect(envText, contains('MQTT_SSL_ENABLED=true'));
-        expect(envText, isNot(contains('SSL_PEM_KEY_PASSWORD')));
-        expect(envText, isNot(contains('MQTT_SSL_PEM_KEY_PASSWORD')));
+        expect(envText, contains('SSL_PEM_KEY_PASSWORD=\n'));
+        expect(envText, contains('MQTT_SSL_PEM_KEY_PASSWORD=\n'));
 
         final certFile =
             archive.files.firstWhere((file) => file.name == 'server.pem');

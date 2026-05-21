@@ -98,7 +98,8 @@ class CertificatePackageBuilder {
         lines
           ..add('SSL_CREDENTIALS_TYPE=PEM')
           ..add('SSL_PEM_CERT=${files['certificate']}')
-          ..add('SSL_PEM_KEY=${files['privateKey']}');
+          ..add('SSL_PEM_KEY=${files['privateKey']}')
+          ..add('SSL_PEM_KEY_PASSWORD=');
       } else {
         lines
           ..add('SSL_CREDENTIALS_TYPE=KEYSTORE')
@@ -123,7 +124,8 @@ class CertificatePackageBuilder {
         lines
           ..add('MQTT_SSL_CREDENTIALS_TYPE=PEM')
           ..add('MQTT_SSL_PEM_CERT=${files['certificate']}')
-          ..add('MQTT_SSL_PEM_KEY=${files['privateKey']}');
+          ..add('MQTT_SSL_PEM_KEY=${files['privateKey']}')
+          ..add('MQTT_SSL_PEM_KEY_PASSWORD=');
       } else {
         lines
           ..add('MQTT_SSL_CREDENTIALS_TYPE=KEYSTORE')

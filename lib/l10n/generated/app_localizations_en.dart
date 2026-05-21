@@ -752,6 +752,93 @@ class AppLocalizationsEn extends AppLocalizations {
   String get certHostsExample => 'Hosts Example';
 
   @override
+  String get certEndpointVerify => 'Endpoint Certificate Check';
+
+  @override
+  String get certEndpointVerifyHint =>
+      'Enter a ThingsBoard host and port to check whether TLS is enabled and whether the certificate matches the access address.';
+
+  @override
+  String get certEndpointHost => 'Host';
+
+  @override
+  String get certEndpointHostHint => 'For example 10.8.0.219 or tb.example.com';
+
+  @override
+  String get certEndpointPort => 'Port';
+
+  @override
+  String get certEndpointPortHint => 'For example 8080, 8443, or 8883';
+
+  @override
+  String get certEndpointVerifyAction => 'Check Endpoint';
+
+  @override
+  String get certEndpointPortInvalid => 'Port must be 1-65535';
+
+  @override
+  String get certEndpointVerifyFailed => 'Endpoint check failed';
+
+  @override
+  String get certEndpointReadyTrusted =>
+      'TLS is available and trusted by the system';
+
+  @override
+  String get certEndpointReadyUntrusted =>
+      'TLS is available, but the certificate is not trusted by the system';
+
+  @override
+  String get certEndpointHostMismatch =>
+      'TLS is available, but the certificate SAN does not match the host';
+
+  @override
+  String get certEndpointPlainHttpOnly =>
+      'This port is plain HTTP. The certificate is not active';
+
+  @override
+  String get certEndpointUnreachable =>
+      'Endpoint is unreachable or protocol does not match';
+
+  @override
+  String get certEndpointTlsAvailable => 'TLS';
+
+  @override
+  String get certEndpointPlainHttpAvailable => 'HTTP';
+
+  @override
+  String get certEndpointSystemTrust => 'System Trust';
+
+  @override
+  String get certEndpointHostMatch => 'Host Match';
+
+  @override
+  String get certEndpointCertificate => 'Certificate';
+
+  @override
+  String get certEndpointSubject => 'Subject';
+
+  @override
+  String get certEndpointIssuer => 'Issuer';
+
+  @override
+  String get certEndpointValidity => 'Validity';
+
+  @override
+  String get certEndpointSan => 'SAN';
+
+  @override
+  String get certEndpointError => 'Error';
+
+  @override
+  String get certEndpointNoCertificate => 'No server certificate was read';
+
+  @override
+  String get certEndpointYes => 'Yes';
+
+  @override
+  String get certEndpointNo => 'No';
+
+  @override
   String get showPassword => 'Show password';
 
   @override

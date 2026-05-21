@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import '../../l10n/generated/app_localizations.dart';
 import '../../models/certificate_config.dart';
 import '../../services/certificate_address_parser.dart';
+import '../../services/certificate_endpoint_verifier.dart';
 import '../../services/certificate_generator_service.dart';
 import '../../services/certificate_package_builder.dart';
 import '../lab/lab.dart';
@@ -27,13 +28,18 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
     text: 'localhost\n127.0.0.1\n::1',
   );
   final _hostsIpController = TextEditingController(text: '127.0.0.1');
+  final _verifyHostController = TextEditingController(text: 'localhost');
+  final _verifyPortController = TextEditingController(text: '8080');
   final _service = const CertificateGeneratorService();
+  final _endpointVerifier = const CertificateEndpointVerifier();
 
   CertificateUsage _usage = CertificateUsage.shared;
   CertificateOutputFormat _format = CertificateOutputFormat.pem;
   bool _showPassword = false;
   bool _isGenerating = false;
+  bool _isVerifyingEndpoint = false;
   CertificateGenerationResult? _lastResult;
+  CertificateEndpointVerificationResult? _endpointResult;
 
   @override
   void initState() {
@@ -48,6 +54,8 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
     _passwordController.dispose();
     _addressesController.dispose();
     _hostsIpController.dispose();
+    _verifyHostController.dispose();
+    _verifyPortController.dispose();
     super.dispose();
   }
 
@@ -143,6 +151,13 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
                   child: LabSection(
                     title: l10n.certOutputPreview,
                     child: _buildOutputPreview(context, l10n, plan),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: LabSection(
+                    title: l10n.certEndpointVerify,
+                    child: _buildEndpointVerifier(context, l10n),
                   ),
                 ),
                 Row(
@@ -429,6 +444,177 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
     );
   }
 
+  Widget _buildEndpointVerifier(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) {
+    final theme = Theme.of(context);
+    final port = int.tryParse(_verifyPortController.text.trim());
+    final canVerify = _verifyHostController.text.trim().isNotEmpty &&
+        port != null &&
+        port > 0 &&
+        port <= 65535;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FormGrid(
+          minItemWidth: 240,
+          children: [
+            LabField(
+              label: l10n.certEndpointHost,
+              controller: _verifyHostController,
+              hintText: l10n.certEndpointHostHint,
+              onChanged: (_) => setState(() => _endpointResult = null),
+            ),
+            LabField(
+              label: l10n.certEndpointPort,
+              controller: _verifyPortController,
+              hintText: l10n.certEndpointPortHint,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              errorText:
+                  _verifyPortController.text.trim().isNotEmpty && !canVerify
+                      ? l10n.certEndpointPortInvalid
+                      : null,
+              onChanged: (_) => setState(() => _endpointResult = null),
+            ),
+            Align(
+              alignment: Alignment.bottomLeft,
+              child: LabButton(
+                label: l10n.certEndpointVerifyAction,
+                icon: Icons.travel_explore_outlined,
+                loading: _isVerifyingEndpoint,
+                variant: LabButtonVariant.primary,
+                size: LabButtonSize.lg,
+                fullWidth: true,
+                onPressed:
+                    canVerify && !_isVerifyingEndpoint ? _verifyEndpoint : null,
+              ),
+            ),
+          ],
+        ),
+        if (_endpointResult != null) ...[
+          const SizedBox(height: 14),
+          _buildEndpointResult(context, l10n, _endpointResult!),
+        ] else ...[
+          const SizedBox(height: 10),
+          Text(
+            l10n.certEndpointVerifyHint,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildEndpointResult(
+    BuildContext context,
+    AppLocalizations l10n,
+    CertificateEndpointVerificationResult result,
+  ) {
+    final theme = Theme.of(context);
+    final status = _endpointStatusText(l10n, result.status);
+    final statusColor = switch (result.status) {
+      CertificateEndpointStatus.readyTrusted ||
+      CertificateEndpointStatus.readyUntrusted =>
+        theme.colorScheme.primary,
+      CertificateEndpointStatus.hostMismatch ||
+      CertificateEndpointStatus.plainHttpOnly =>
+        theme.colorScheme.tertiary,
+      CertificateEndpointStatus.unreachable => theme.colorScheme.error,
+    };
+    final cert = result.certificate;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.65),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: statusColor.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.verified_outlined, size: 18, color: statusColor),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  status,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: statusColor,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _ResultChip(
+                label: l10n.certEndpointTlsAvailable,
+                value: _yesNo(l10n, result.tlsAvailable),
+              ),
+              _ResultChip(
+                label: l10n.certEndpointPlainHttpAvailable,
+                value: result.httpStatusCode == null
+                    ? _yesNo(l10n, result.plainHttpAvailable)
+                    : '${_yesNo(l10n, result.plainHttpAvailable)} / ${result.httpStatusCode}',
+              ),
+              _ResultChip(
+                label: l10n.certEndpointSystemTrust,
+                value: _yesNo(l10n, result.systemTrusted),
+              ),
+              _ResultChip(
+                label: l10n.certEndpointHostMatch,
+                value: _yesNo(l10n, result.hostMatchesCertificate),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (cert == null)
+            _ResultLine(
+              label: l10n.certEndpointCertificate,
+              value: l10n.certEndpointNoCertificate,
+            )
+          else ...[
+            _ResultLine(label: l10n.certEndpointSubject, value: cert.subject),
+            _ResultLine(label: l10n.certEndpointIssuer, value: cert.issuer),
+            _ResultLine(
+              label: l10n.certEndpointValidity,
+              value:
+                  '${_formatDateTime(cert.startValidity)} - ${_formatDateTime(cert.endValidity)}',
+            ),
+            _ResultLine(
+              label: l10n.certEndpointSan,
+              value: result.subjectAltNames.isEmpty
+                  ? '-'
+                  : result.subjectAltNames.join(', '),
+            ),
+          ],
+          if (result.tlsError != null && !result.tlsAvailable) ...[
+            const SizedBox(height: 8),
+            _ResultLine(
+              label: l10n.certEndpointError,
+              value: result.tlsError!,
+              danger: true,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildGeneratedPath(
     BuildContext context,
     AppLocalizations l10n,
@@ -581,6 +767,53 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
     }
   }
 
+  Future<void> _verifyEndpoint() async {
+    final l10n = AppLocalizations.of(context)!;
+    final host = _verifyHostController.text.trim();
+    final port = int.tryParse(_verifyPortController.text.trim());
+    if (host.isEmpty || port == null || port <= 0 || port > 65535) {
+      showLabToast(
+        context,
+        title: l10n.certEndpointPortInvalid,
+        kind: LabStatus.error,
+      );
+      return;
+    }
+
+    setState(() {
+      _isVerifyingEndpoint = true;
+      _endpointResult = null;
+    });
+
+    try {
+      final result = await _endpointVerifier.verify(host: host, port: port);
+      if (!mounted) return;
+      setState(() {
+        _endpointResult = result;
+      });
+      showLabToast(
+        context,
+        title: _endpointStatusText(l10n, result.status),
+        kind: result.status == CertificateEndpointStatus.unreachable
+            ? LabStatus.error
+            : LabStatus.info,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      showLabToast(
+        context,
+        title: '${l10n.certEndpointVerifyFailed}: $e',
+        kind: LabStatus.error,
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isVerifyingEndpoint = false;
+        });
+      }
+    }
+  }
+
   Future<void> _openGeneratedFolder() async {
     final result = _lastResult;
     if (result == null) return;
@@ -600,6 +833,116 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
         _lastResult = null;
       });
     }
+  }
+
+  String _endpointStatusText(
+    AppLocalizations l10n,
+    CertificateEndpointStatus status,
+  ) {
+    return switch (status) {
+      CertificateEndpointStatus.readyTrusted => l10n.certEndpointReadyTrusted,
+      CertificateEndpointStatus.readyUntrusted =>
+        l10n.certEndpointReadyUntrusted,
+      CertificateEndpointStatus.hostMismatch => l10n.certEndpointHostMismatch,
+      CertificateEndpointStatus.plainHttpOnly => l10n.certEndpointPlainHttpOnly,
+      CertificateEndpointStatus.unreachable => l10n.certEndpointUnreachable,
+    };
+  }
+
+  String _yesNo(AppLocalizations l10n, bool value) =>
+      value ? l10n.certEndpointYes : l10n.certEndpointNo;
+
+  String _formatDateTime(DateTime value) {
+    return value.toLocal().toString().split('.').first;
+  }
+}
+
+class _ResultChip extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _ResultChip({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.6),
+        ),
+      ),
+      child: RichText(
+        text: TextSpan(
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          children: [
+            TextSpan(text: '$label: '),
+            TextSpan(
+              text: value,
+              style: TextStyle(
+                color: theme.colorScheme.onSurface,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ResultLine extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool danger;
+
+  const _ResultLine({
+    required this.label,
+    required this.value,
+    this.danger = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color =
+        danger ? theme.colorScheme.error : theme.colorScheme.onSurfaceVariant;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 92,
+            child: Text(
+              label,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: color,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          Expanded(
+            child: SelectableText(
+              value,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: danger ? theme.colorScheme.error : null,
+                fontFamily: 'monospace',
+                height: 1.3,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

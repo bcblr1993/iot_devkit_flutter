@@ -744,6 +744,88 @@ class AppLocalizationsZh extends AppLocalizations {
   String get certHostsExample => 'hosts 示例';
 
   @override
+  String get certEndpointVerify => '端点证书验证';
+
+  @override
+  String get certEndpointVerifyHint =>
+      '输入 ThingsBoard 主机和端口，自动判断该端口是否启用 TLS、证书是否匹配当前访问地址。';
+
+  @override
+  String get certEndpointHost => '主机';
+
+  @override
+  String get certEndpointHostHint => '例如 10.8.0.219 或 tb.example.com';
+
+  @override
+  String get certEndpointPort => '端口';
+
+  @override
+  String get certEndpointPortHint => '例如 8080、8443、8883';
+
+  @override
+  String get certEndpointVerifyAction => '验证端点';
+
+  @override
+  String get certEndpointPortInvalid => '端口必须是 1-65535';
+
+  @override
+  String get certEndpointVerifyFailed => '端点验证失败';
+
+  @override
+  String get certEndpointReadyTrusted => 'TLS 可用，证书已被系统信任';
+
+  @override
+  String get certEndpointReadyUntrusted => 'TLS 可用，但证书尚未被系统信任';
+
+  @override
+  String get certEndpointHostMismatch => 'TLS 可用，但证书 SAN 与主机不匹配';
+
+  @override
+  String get certEndpointPlainHttpOnly => '该端口当前是普通 HTTP，证书没有生效';
+
+  @override
+  String get certEndpointUnreachable => '端点不可达或协议不匹配';
+
+  @override
+  String get certEndpointTlsAvailable => 'TLS';
+
+  @override
+  String get certEndpointPlainHttpAvailable => 'HTTP';
+
+  @override
+  String get certEndpointSystemTrust => '系统信任';
+
+  @override
+  String get certEndpointHostMatch => '主机匹配';
+
+  @override
+  String get certEndpointCertificate => '证书';
+
+  @override
+  String get certEndpointSubject => '主题';
+
+  @override
+  String get certEndpointIssuer => '签发者';
+
+  @override
+  String get certEndpointValidity => '有效期';
+
+  @override
+  String get certEndpointSan => 'SAN';
+
+  @override
+  String get certEndpointError => '错误';
+
+  @override
+  String get certEndpointNoCertificate => '未读取到服务端证书';
+
+  @override
+  String get certEndpointYes => '是';
+
+  @override
+  String get certEndpointNo => '否';
+
+  @override
   String get showPassword => '显示密码';
 
   @override
