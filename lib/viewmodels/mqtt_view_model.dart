@@ -39,6 +39,9 @@ class MqttViewModel extends ChangeNotifier {
   int _qos = 0;
   int get qos => _qos;
 
+  String _mqttProtocolVersion = 'mqtt_3_1_1';
+  String get mqttProtocolVersion => _mqttProtocolVersion;
+
   List<CustomKeyConfig> _basicCustomKeys = [];
   List<CustomKeyConfig> get basicCustomKeys => _basicCustomKeys;
 
@@ -149,6 +152,14 @@ class MqttViewModel extends ChangeNotifier {
     }
   }
 
+  void setMqttProtocolVersion(String val) {
+    if (_mqttProtocolVersion != val) {
+      _mqttProtocolVersion = val;
+      notifyListeners();
+      scheduleAutoSave();
+    }
+  }
+
   void updateBasicCustomKeys(List<CustomKeyConfig> keys) {
     _basicCustomKeys = keys;
     notifyListeners();
@@ -194,6 +205,7 @@ class MqttViewModel extends ChangeNotifier {
     portController.text = (mqtt['port'] ?? 1883).toString();
     topicController.text = mqtt['topic'] ?? 'v1/devices/me/telemetry';
     _qos = mqtt['qos'] ?? 0;
+    _mqttProtocolVersion = mqtt['protocol_version'] ?? 'mqtt_3_1_1';
     _enableSsl = mqtt['enable_ssl'] ?? false;
     caPathController.text = mqtt['ca_path'] ?? '';
     certPathController.text = mqtt['cert_path'] ?? '';
@@ -233,6 +245,7 @@ class MqttViewModel extends ChangeNotifier {
         'port': int.tryParse(portController.text) ?? 1883,
         'topic': topicController.text,
         'qos': _qos,
+        'protocol_version': _mqttProtocolVersion,
         'enable_ssl': _enableSsl,
         'ca_path': caPathController.text,
         'cert_path': certPathController.text,

@@ -231,6 +231,8 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                     onSslChanged: vm.setEnableSsl,
                     qos: vm.qos,
                     onQosChanged: vm.setQos,
+                    protocolVersion: vm.mqttProtocolVersion,
+                    onProtocolVersionChanged: vm.setMqttProtocolVersion,
                     caPathController: vm.caPathController,
                     certPathController: vm.certPathController,
                     keyPathController: vm.keyPathController,
@@ -464,9 +466,9 @@ class _SimulatorPanelState extends State<SimulatorPanel>
     return Padding(
       padding: EdgeInsets.fromLTRB(
         12.0 * effect.layoutDensity,
-        10,
-        12.0 * effect.layoutDensity,
         6,
+        12.0 * effect.layoutDensity,
+        3,
       ),
       child: SizedBox(
         width: double.infinity,

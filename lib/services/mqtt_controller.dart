@@ -312,6 +312,7 @@ class MqttController extends ChangeNotifier {
     int port = config['mqtt']['port'] ?? 1883;
     String topic = config['mqtt']['topic'] ?? 'v1/devices/me/telemetry';
     int qos = config['mqtt']['qos'] ?? 0;
+    String protocolVersion = config['mqtt']['protocol_version'] ?? 'mqtt_3_1_1';
 
     // SSL Config
     bool enableSsl = config['mqtt']['enable_ssl'] ?? false;
@@ -370,6 +371,7 @@ class MqttController extends ChangeNotifier {
           caPath: caPath,
           certPath: certPath,
           keyPath: keyPath,
+          protocolVersion: protocolVersion,
         ));
       }
 
@@ -409,6 +411,7 @@ class MqttController extends ChangeNotifier {
     int port = config['mqtt']['port'] ?? 1883;
     String topic = config['mqtt']['topic'] ?? 'v1/devices/me/telemetry';
     int qos = config['mqtt']['qos'] ?? 0;
+    String protocolVersion = config['mqtt']['protocol_version'] ?? 'mqtt_3_1_1';
 
     // SSL Config
     bool enableSsl = config['mqtt']['enable_ssl'] ?? false;
@@ -449,6 +452,7 @@ class MqttController extends ChangeNotifier {
             caPath: caPath,
             certPath: certPath,
             keyPath: keyPath,
+            protocolVersion: protocolVersion,
           ));
         }
 

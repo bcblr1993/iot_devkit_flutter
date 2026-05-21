@@ -60,6 +60,7 @@ class MqttClientManager {
     String? caPath,
     String? certPath,
     String? keyPath,
+    String protocolVersion = 'mqtt_3_1_1',
   }) async {
     // Store config for reconnection. The map instance is also the generation
     // token for this async connect attempt.
@@ -75,6 +76,7 @@ class MqttClientManager {
       'caPath': caPath,
       'certPath': certPath,
       'keyPath': keyPath,
+      'protocolVersion': protocolVersion,
     };
     _clientConfigs[clientId] = clientConfig;
 
@@ -98,7 +100,7 @@ class MqttClientManager {
 
     final client = MqttServerClient(host, clientId);
     client.port = port;
-    client.socketTimeout = 3000;
+    client.connectTimeoutPeriod = 3000;
     client.keepAlivePeriod = 60;
     client.logging(on: false);
     client.autoReconnect = false; // Manual handling
@@ -126,10 +128,10 @@ class MqttClientManager {
       client.secure = false;
     }
 
-    final connMess = MqttConnectMessage()
-        .withClientIdentifier(clientId)
-        .authenticateAs(username, password)
-        .startClean();
+    final connMess = _applyProtocolVersion(
+      MqttConnectMessage().withClientIdentifier(clientId),
+      protocolVersion,
+    ).authenticateAs(username, password).startClean();
     client.connectionMessage = connMess;
 
     client.onDisconnected = () {
@@ -230,8 +232,26 @@ class MqttClientManager {
         caPath: config['caPath'],
         certPath: config['certPath'],
         keyPath: config['keyPath'],
+        protocolVersion: config['protocolVersion'] ?? 'mqtt_3_1_1',
       );
     });
+  }
+
+  MqttConnectMessage _applyProtocolVersion(
+    MqttConnectMessage message,
+    String protocolVersion,
+  ) {
+    switch (protocolVersion) {
+      case 'mqtt_3_1':
+        return message
+            .withProtocolName(MqttClientConstants.mqttV31ProtocolName)
+            .withProtocolVersion(MqttClientConstants.mqttV31ProtocolVersion);
+      case 'mqtt_3_1_1':
+      default:
+        return message
+            .withProtocolName(MqttClientConstants.mqttV311ProtocolName)
+            .withProtocolVersion(MqttClientConstants.mqttV311ProtocolVersion);
+    }
   }
 
   Future<void> stopAll() async {

@@ -594,6 +594,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get qos2 => 'QoS 2';
 
   @override
+  String get mqttProtocolVersion => 'MQTT Protocol';
+
+  @override
+  String get mqttProtocolV311 => 'MQTT 3.1.1 (Recommended)';
+
+  @override
+  String get mqttProtocolV31 => 'MQTT 3.1 (Legacy)';
+
+  @override
   String get formValidationFailed =>
       'Form validation failed. Please check red fields.';
 

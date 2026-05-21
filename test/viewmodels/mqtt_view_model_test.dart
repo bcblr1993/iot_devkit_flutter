@@ -41,7 +41,15 @@ void main() {
       vm.hostController.text = 'test.host';
       final config = vm.getCompleteConfig();
       expect(config['mqtt']['host'], 'test.host');
+      expect(config['mqtt']['protocol_version'], 'mqtt_3_1_1');
       expect(config['data']['data_point_count'], 10);
+    });
+
+    test('setMqttProtocolVersion persists selected protocol', () {
+      vm.setMqttProtocolVersion('mqtt_3_1');
+      final config = vm.getCompleteConfig();
+      expect(vm.mqttProtocolVersion, 'mqtt_3_1');
+      expect(config['mqtt']['protocol_version'], 'mqtt_3_1');
     });
 
     testWidgets('startBasicSimulation blocks invalid device range',

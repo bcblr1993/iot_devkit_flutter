@@ -84,11 +84,14 @@ void main() {
     );
     addTearDown(controller.dispose);
 
-    await controller
-        .start(_twoDeviceConfig())
-        .timeout(const Duration(milliseconds: 500));
+    final config = _twoDeviceConfig();
+    config['mqtt']['protocol_version'] = 'mqtt_3_1';
+
+    await controller.start(config).timeout(const Duration(milliseconds: 500));
 
     expect(fakeManager.trackedClientCount, 2);
+    expect(fakeManager.protocolVersions['device1'], 'mqtt_3_1');
+    expect(fakeManager.protocolVersions['device2'], 'mqtt_3_1');
     expect(fakeManager.activeClientCount, 1);
     expect(controller.isRunning, isTrue);
     expect(controller.isBusy, isFalse);
@@ -197,6 +200,7 @@ class _FakeMqttClientManager extends MqttClientManager {
   final Map<String, SimulationContext> _contexts = {};
   final Map<String, MqttServerClient> _clients = {};
   final Set<String> _trackedClientIds = {};
+  final Map<String, String> protocolVersions = {};
 
   _FakeMqttClientManager({
     required super.onConnected,
@@ -237,9 +241,11 @@ class _FakeMqttClientManager extends MqttClientManager {
     String? caPath,
     String? certPath,
     String? keyPath,
+    String protocolVersion = 'mqtt_3_1_1',
   }) async {
     _trackedClientIds.add(clientId);
     _contexts[clientId] = context;
+    protocolVersions[clientId] = protocolVersion;
 
     if (successfulClientIds.contains(clientId)) {
       final client = MqttServerClient(host, clientId);

@@ -18,6 +18,8 @@ class MqttConfigSection extends StatelessWidget {
 
   final int qos;
   final ValueChanged<int> onQosChanged;
+  final String protocolVersion;
+  final ValueChanged<String> onProtocolVersionChanged;
 
   const MqttConfigSection({
     super.key,
@@ -32,6 +34,8 @@ class MqttConfigSection extends StatelessWidget {
     required this.onSslChanged,
     required this.qos,
     required this.onQosChanged,
+    required this.protocolVersion,
+    required this.onProtocolVersionChanged,
   });
 
   @override
@@ -70,6 +74,7 @@ class MqttConfigSection extends StatelessWidget {
               _buildTextField(context, l10n.port, portController, isRunning,
                   isNumber: true),
               _buildQosField(context, l10n, theme),
+              _buildProtocolField(context, l10n),
             ],
           ),
           const SizedBox(height: 10),
@@ -122,6 +127,19 @@ class MqttConfigSection extends StatelessWidget {
         LabSelectItem(2, l10n.qos2),
       ],
       onChanged: isRunning ? null : (v) => onQosChanged(v ?? 0),
+    );
+  }
+
+  Widget _buildProtocolField(BuildContext context, AppLocalizations l10n) {
+    return LabSelect<String>(
+      label: l10n.mqttProtocolVersion,
+      value: protocolVersion,
+      items: [
+        LabSelectItem('mqtt_3_1_1', l10n.mqttProtocolV311),
+        LabSelectItem('mqtt_3_1', l10n.mqttProtocolV31),
+      ],
+      onChanged:
+          isRunning ? null : (v) => onProtocolVersionChanged(v ?? 'mqtt_3_1_1'),
     );
   }
 

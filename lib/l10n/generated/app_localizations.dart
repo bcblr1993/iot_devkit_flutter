@@ -1262,6 +1262,24 @@ abstract class AppLocalizations {
   /// **'QoS 2'**
   String get qos2;
 
+  /// No description provided for @mqttProtocolVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'MQTT Protocol'**
+  String get mqttProtocolVersion;
+
+  /// No description provided for @mqttProtocolV311.
+  ///
+  /// In en, this message translates to:
+  /// **'MQTT 3.1.1 (Recommended)'**
+  String get mqttProtocolV311;
+
+  /// No description provided for @mqttProtocolV31.
+  ///
+  /// In en, this message translates to:
+  /// **'MQTT 3.1 (Legacy)'**
+  String get mqttProtocolV31;
+
   /// No description provided for @formValidationFailed.
   ///
   /// In en, this message translates to:

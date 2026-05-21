@@ -591,6 +591,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get qos2 => 'QoS 2';
 
   @override
+  String get mqttProtocolVersion => 'MQTT 协议版本';
+
+  @override
+  String get mqttProtocolV311 => 'MQTT 3.1.1（推荐）';
+
+  @override
+  String get mqttProtocolV31 => 'MQTT 3.1（旧版兼容）';
+
+  @override
   String get formValidationFailed => '表单验证失败，请检查红色字段。';
 
   @override
