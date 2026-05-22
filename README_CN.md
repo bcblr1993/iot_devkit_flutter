@@ -50,15 +50,23 @@
 
 ```
 lib/
-├── l10n/                  # 国际化资源文件 (.arb)
-├── models/                # 数据模型 (配置, 枚举)
-├── services/              # 业务逻辑 (MQTT服务, 主题管理)
+├── l10n/                  # 国际化资源 (.arb) 与生成的 AppLocalizations
+├── models/                # 数据模型 (配置、schema、模拟上下文)
+├── services/              # 业务逻辑 (主题、配置/profile、证书、日志)
+│   └── mqtt/              # 连接客户端管理 + 发送调度
+├── viewmodels/            # Provider/ChangeNotifier 状态 (MqttViewModel、Timesheet)
 ├── ui/
-│   ├── pages/             # 主要页面 (如首页)
-│   ├── tools/             # 独立工具组件 (JsonTool, TimestampTool)
-│   ├── widgets/           # 可复用组件 (侧边栏, 面板)
-│   └── styles/            # 主题定义
-└── main.dart              # 程序入口与全局 Provider 设置
+│   ├── shell/             # 应用骨架: 导航栏、内容切换、状态横幅
+│   ├── screens/           # 顶层页面 (首页、工时)
+│   ├── lab/               # Lab 设计系统 (tokens + 原子组件 + 画廊)
+│   ├── components/        # 通用 UI 原子组件 (AppSection、FormGrid、MetricChip 等)
+│   ├── tools/             # 独立工具 (JSON、时间戳、证书生成)
+│   ├── widgets/           # 模拟器专用组件 (配置、日志控制台、性能监控等)
+│   └── styles/            # 主题常量 / 效果
+├── utils/                 # 工具方法 (isolate worker、弹窗、toast、统计)
+├── config/                # 静态常量
+├── main.dart              # 程序入口与全局 Provider 设置
+└── main_gallery.dart      # Lab 设计系统画廊入口
 ```
 
 ---

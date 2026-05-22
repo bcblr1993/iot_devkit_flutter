@@ -50,15 +50,23 @@ This project has been refactored from an older version to a modern **Flutter** a
 
 ```
 lib/
-├── l10n/                  # Localization files (.arb)
-├── models/                # Data models (Config, Enums)
-├── services/              # Business Logic (MQTT, Theme Manager)
+├── l10n/                  # Localization (.arb) + generated AppLocalizations
+├── models/                # Data models (configs, schema, simulation context)
+├── services/              # Business logic (theme, config/profile, certificates, logging)
+│   └── mqtt/              # Client manager + send scheduler
+├── viewmodels/            # Provider/ChangeNotifier state (MqttViewModel, Timesheet)
 ├── ui/
-│   ├── pages/             # Main Screens (Home)
-│   ├── tools/             # Specific Tool Widgets (JsonTool, TimestampTool)
-│   ├── widgets/           # Reusable Components (SideBar, SimulatorPanel)
-│   └── styles/            # Theme definitions
-└── main.dart              # Entry point & App Provider setup
+│   ├── shell/             # App shell: navigation rail, content switcher, status banner
+│   ├── screens/           # Top-level screens (Home, Timesheet)
+│   ├── lab/               # Lab design system (tokens + atomic components + gallery)
+│   ├── components/        # Shared UI primitives (AppSection, FormGrid, MetricChip, ...)
+│   ├── tools/             # Standalone tools (JSON, Timestamp, Certificate generator)
+│   ├── widgets/           # Simulator-specific widgets (config, log console, monitor, ...)
+│   └── styles/            # Theme constants / effects
+├── utils/                 # Helpers (isolate worker, dialogs, toast, statistics)
+├── config/                # Static constants
+├── main.dart              # App entry & Provider setup
+└── main_gallery.dart      # Lab design-system gallery entry
 ```
 
 ---
