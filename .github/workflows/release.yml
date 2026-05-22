@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -103,10 +105,17 @@ jobs:
           flutter_distributor release --name release --jobs macos-dmg
         shell: bash
 
+      - name: Generate Release Notes
+        if: startsWith(github.ref, 'refs/tags/')
+        run: bash scripts/generate_release_notes.sh
+        shell: bash
+
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
+          name: IoT DevKit ${{ github.ref_name }}
+          body_path: dist/release-notes.md
           files: |
             dist/**/*.exe
             dist/**/*.dmg
