@@ -88,9 +88,10 @@ export https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_pr
 约 25 个 legacy 文件首行有 `// ignore_for_file: avoid_hardcoded_color, ...` 豁免。迁移某文件时:替换全部硬编码 → `dart run custom_lint` 确认该文件 0 违规 → **删掉首行 ignore 注释**(或只留未解决的规则)→ `./scripts/ui_check.sh` 全绿后提交。迁移粒度:**每组件独立 commit**,提交前跑 analyze + smoke,**未授权不要 push**。
 
 ### golden 失败处理
-- 你没动 Lab 组件却挂了 = 真回归,看 `test/golden/failures/*.png` diff 定位。
-- 你刚改了组件/token = 预期变化,跑 `./scripts/ui_golden_update.sh [组件名]` 刷新基线,**人工肉眼比对 PNG**,并在 commit message 注明刷新原因。
-- golden 文本只能用 ASCII(测试环境无 CJK fallback)。CI 固定 ubuntu-latest 单平台跑 golden(跨 OS 抗锯齿差异不可维护)。
+- **基线以 CI(ubuntu-latest + 固定 Flutter 版本)渲染为准**。在本机 macOS 直接跑 `flutter test test/golden/` / `./scripts/ui_check.sh` 会因跨 OS 抗锯齿差异**整体失配**(每个组件都差 ~1%~2%,差异只落在字形/边框边缘)—— 这不是回归,本机这几个 golden 报错可忽略。判断"是否真回归"只在 CI/Linux 上有效。
+- 在 **CI/Linux 上**没动 Lab 组件却挂了 = 真回归,看 `test/golden/failures/*.png` diff 定位(差异是整块色差/位移,而非仅边缘抗锯齿)。
+- 改了组件/token 需刷新基线:**必须在 Linux 环境生成**,否则刷出来的 macOS 基线又会和 CI 失配。两种方式:① 在 Linux/Docker 里跑 `./scripts/ui_golden_update.sh [组件名]`;② 让 CI 跑一遍,从失败 run 的 `golden-failures` artifact 下载 `*_testImage.png`(即 CI 实际渲染),改名覆盖 `test/golden/goldens/*.png`。两种都要**人工肉眼比对 PNG**,并在 commit message 注明刷新原因。
+- golden 文本只能用 ASCII(测试环境无 CJK fallback)。
 
 ## 测试映射(改了什么 → 跑什么)
 
