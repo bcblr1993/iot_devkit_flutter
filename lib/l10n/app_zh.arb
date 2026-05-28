@@ -283,6 +283,7 @@
   "certEndpointNo": "否",
   "showPassword": "显示密码",
   "hidePassword": "隐藏密码",
+  "enableSubscriptions": "启用订阅",
   "subscriptionsTitle": "订阅",
   "subscriptionsHint": "所有模拟设备连接成功后会订阅以下 topic",
   "subscriptionsEmpty": "暂无订阅，点击 + 或选择预设",

@@ -841,6 +841,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get hidePassword => '隐藏密码';
 
   @override
+  String get enableSubscriptions => '启用订阅';
+
+  @override
   String get subscriptionsTitle => '订阅';
 
   @override

@@ -281,6 +281,7 @@
   "certEndpointNo": "No",
   "showPassword": "Show password",
   "hidePassword": "Hide password",
+  "enableSubscriptions": "Enable subscriptions",
   "subscriptionsTitle": "Subscriptions",
   "subscriptionsHint": "Topics every simulated device subscribes to after connecting",
   "subscriptionsEmpty": "No subscriptions. Click + or pick a preset.",

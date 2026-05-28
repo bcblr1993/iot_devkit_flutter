@@ -10,7 +10,6 @@ import '../lab/lab.dart';
 import 'groups_manager.dart';
 import 'custom_keys_manager.dart';
 import 'mqtt_config_section.dart';
-import 'subscriptions_section.dart';
 import '../../services/config_service.dart';
 import 'log_console.dart';
 import 'performance_monitor.dart';
@@ -238,28 +237,11 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                     caPathController: vm.caPathController,
                     certPathController: vm.certPathController,
                     keyPathController: vm.keyPathController,
-                    // Discovery for connection-level subscriptions lives in
-                    // the MQTT section header — zero added height.
-                    extraTrailing: SubscriptionsMenuButton(
-                      subscriptions: vm.subscriptions,
-                      onChanged: vm.updateSubscriptions,
-                      isLocked: isRunning,
-                    ),
+                    // Subscriptions live INSIDE this panel now, gated by an
+                    // "Enable subscriptions" toggle mirroring the SSL one.
+                    subscriptions: vm.subscriptions,
+                    onSubscriptionsChanged: vm.updateSubscriptions,
                   ),
-                ),
-              ),
-
-              // Subscriptions section is hidden when the list is empty (its
-              // discovery lives in the MQTT broker section header). When the
-              // user adds the first row, the section expands here, between
-              // the MQTT config and the mode tabs.
-              Padding(
-                padding: EdgeInsets.symmetric(
-                    horizontal: 12.0 * effect.layoutDensity),
-                child: SubscriptionsSection(
-                  subscriptions: vm.subscriptions,
-                  isLocked: isRunning,
-                  onChanged: vm.updateSubscriptions,
                 ),
               ),
 

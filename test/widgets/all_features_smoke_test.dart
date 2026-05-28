@@ -46,31 +46,29 @@ void main() {
   });
 
   testWidgets(
-      'subscriptions smoke: RPC preset from menu adds row with auto-ack checkbox',
+      'subscriptions smoke: enable toggle + RPC preset reveals row with Auto-ACK',
       (tester) async {
     await _pumpSmokeApp(tester);
 
-    // When list is empty, only the discovery menu in the MQTT header is
-    // visible (the SUBSCRIPTIONS section itself collapses to SizedBox.shrink).
-    final menu = find.byTooltip('Add subscription').first;
-    expect(menu, findsOneWidget);
-    await tester.tap(menu);
+    // Flip the "Enable subscriptions" switch inside the MQTT broker panel
+    // (mirrors the SSL/TLS toggle pattern). Tap the embedded Switch directly
+    // — tapping the label text alone isn't a reliable hit target.
+    final enableToggle =
+        find.byKey(const ValueKey('enable_subscriptions_toggle'));
+    expect(enableToggle, findsOneWidget);
+    await tester.tap(find.descendant(of: enableToggle, matching: find.byType(Switch)));
     await tester.pumpAndSettle();
 
-    // Pick the RPC preset by ValueKey (PopupMenuItem InkWell is the tap target).
-    await tester.tap(find.byKey(const ValueKey('sub_menu_rpc_preset')));
+    // Tap the "ThingsBoard RPC" preset icon (its tooltip identifies it).
+    await tester.tap(find.byTooltip('Preset: ThingsBoard RPC').first);
     await tester.pumpAndSettle();
 
-    // Section is now visible with the canonical TB RPC filter and the
-    // Auto-ACK checkbox (only rendered when isThingsBoardRpcFilter == true).
-    expect(find.text('SUBSCRIPTIONS'), findsWidgets);
+    // Row appears with the canonical RPC filter and Auto-ACK checkbox.
     expect(find.text('v1/devices/me/rpc/request/+'), findsWidgets);
     expect(find.text('Auto-ACK'), findsWidgets);
 
-    // Re-opening the menu and picking RPC again is a no-op (de-dup by topic).
-    await tester.tap(menu);
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('sub_menu_rpc_preset')));
+    // Re-tap is a no-op (presets de-duplicate by topic).
+    await tester.tap(find.byTooltip('Preset: ThingsBoard RPC').first);
     await tester.pumpAndSettle();
     expect(
       find.text('v1/devices/me/rpc/request/+'),

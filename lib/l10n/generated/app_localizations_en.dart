@@ -854,6 +854,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hidePassword => 'Hide password';
 
   @override
+  String get enableSubscriptions => 'Enable subscriptions';
+
+  @override
   String get subscriptionsTitle => 'Subscriptions';
 
   @override

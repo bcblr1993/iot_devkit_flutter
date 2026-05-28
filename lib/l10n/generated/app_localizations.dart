@@ -1760,6 +1760,12 @@ abstract class AppLocalizations {
   /// **'Hide password'**
   String get hidePassword;
 
+  /// No description provided for @enableSubscriptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable subscriptions'**
+  String get enableSubscriptions;
+
   /// No description provided for @subscriptionsTitle.
   ///
   /// In en, this message translates to:
