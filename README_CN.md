@@ -1,48 +1,161 @@
-# IoT DevKit - MQTT 电子仿真器 (Flutter 版)
+<div align="center">
 
-**IoT DevKit** 是专为物联网开发者打造的强大跨平台工具箱。它目前集成了强大的 MQTT 模拟器、JSON 格式化/查看工具以及时间戳转换工具。
+<img src="assets/icon/original_icon.png" alt="IoT DevKit" width="120" height="120" />
 
-本项目已从旧版本由 **Flutter** 重构，支持 macOS、Windows 和 Linux 三大桌面平台。
+# IoT DevKit
 
-## 🚀 核心功能
+**面向 IoT 开发者的跨平台桌面工具箱 — Flutter 构建。**
 
-### 1. MQTT 模拟器 (MQTT Simulator)
-*   **基础模式**：模拟单个设备发送遥测数据。
-*   **高级模式**：模拟成千上万个设备，支持复杂的发送策略。
-*   **灵活配置**：
-    *   支持随机数、递增、静态值、布尔翻转等多种数据定义方式。
-    *   支持导入/导出模拟配置文件 (`.json`)。
-*   **高性能**：专为高频数据生成而优化。
+MQTT 设备模拟器 · JSON 格式化 · 时间戳转换 · X.509 证书生成 · 工时记录
 
-### 2. JSON 格式化工具 (JSON Formatter Tool)
-*   **校验与格式化**：支持 JSON 格式化与压缩 (Minify)，并提供错误提示。
-*   **交互式树状视图**：支持折叠/展开的 JSON 树形结构，便于查看复杂数据。
-*   **持久化**：自动保存您的输入内容和查看状态，防止数据丢失。
-*   **搜索功能**：可在特定 JSON 路径中过滤键和值。
+[![Release](https://img.shields.io/github/v/release/bcblr1993/iot_devkit_flutter?style=flat-square&color=ff7a00)](https://github.com/bcblr1993/iot_devkit_flutter/releases)
+[![Flutter](https://img.shields.io/badge/Flutter-3.41.8-02569B?style=flat-square&logo=flutter)](https://flutter.dev)
+[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-666?style=flat-square)](#-平台支持)
+[![UI Check](https://img.shields.io/github/actions/workflow/status/bcblr1993/iot_devkit_flutter/ui_check.yml?branch=main&style=flat-square&label=UI%20check&logo=github)](https://github.com/bcblr1993/iot_devkit_flutter/actions/workflows/ui_check.yml)
+[![Release Build](https://img.shields.io/github/actions/workflow/status/bcblr1993/iot_devkit_flutter/release.yml?style=flat-square&label=release&logo=github)](https://github.com/bcblr1993/iot_devkit_flutter/actions/workflows/release.yml)
+[![Stars](https://img.shields.io/github/stars/bcblr1993/iot_devkit_flutter?style=flat-square&color=ffd700)](https://github.com/bcblr1993/iot_devkit_flutter/stargazers)
 
-### 3. 时间戳转换器 (Timestamp Converter)
-*   **实时时钟**：显示毫秒级精度的当前时间。
-*   **双向转换**：支持时间戳 (秒/毫秒) 与日期字符串之间的互转。
-*   **多时区支持**：内置全球主流时区选择。
-*   **持久化**：记住您的输入历史和时区选择。
-*   **智能复制**：一键复制转换结果。
+[English](README.md) · [简体中文](README_CN.md)
 
-### 4. UI/UX 体验
-*   **现代设计**：基于 Material 3 风格的响应式布局。
-*   **多主题支持**：内置 8+ 款精美主题 (科技蓝、赛博朋克、自然绿等)。
-*   **国际化**：全面支持简体中文 (`zh`) 和 英文 (`en`)。
-*   **统一反馈**：采用非侵入式的底部状态栏展示操作反馈。
+</div>
+
+---
+
+## 📋 目录
+
+- [核心亮点](#-核心亮点)
+- [应用截图](#-应用截图)
+- [设计系统](#-设计系统)
+- [技术栈](#-技术栈)
+- [快速开始](#-快速开始)
+- [项目结构](#-项目结构)
+- [UI 一致性](#-ui-一致性)
+- [构建与发布](#-构建与发布)
+- [平台支持](#-平台支持)
+- [路线图](#-路线图)
+- [作者与许可](#-作者与许可)
+
+---
+
+## ✨ 核心亮点
+
+| | 功能 | 说明 |
+|---|---|---|
+| 📡 | **MQTT 模拟器** | 单设备或上千虚拟设备；随机/递增/静态/翻转 payload；profile 导入导出；低延迟发送调度（含 drop-vs-catch-up） |
+| 🔐 | **证书生成器** | 一键生成 IoT broker（ThingsBoard / EMQX）所需的 X.509 包：CA + 设备证书 + key + 可部署 zip |
+| 🧾 | **JSON 格式化** | 校验/压缩/格式化；可折叠交互式树视图；树内 key/value 搜索；自动持久化输入 |
+| ⏱ | **时间戳转换** | 毫秒级实时时钟；Unix ↔ ISO 双向；完整 IANA 时区；一键复制 |
+| 📅 | **工时记录** | 工时条目记录；周报一键复制；纯本地持久化 |
+| 🎨 | **8 套主题** | Lab Console 设计系统：5 暗（Signal / Plasma / Cobalt / Amber / Mint）+ 3 亮（Paper / Linen / Slate）|
+| 🌐 | **国际化** | 完整支持简体中文 + English；所有用户可见文案走 `.arb`，无硬编码 |
+| 🖥 | **桌面原生** | macOS / Windows / Linux 三端；窗口状态、文件选择器、原生菜单，非移动端思维 |
+
+---
+
+## 📸 应用截图
+
+> 下列截图从 [`docs/screenshots/`](docs/screenshots/) 加载。请把你的 PNG 按文件名放进去（约定见 [docs/screenshots/README.md](docs/screenshots/README.md)）。
+
+<table>
+<tr>
+<td width="50%" align="center">
+<img src="docs/screenshots/01-mqtt-simulator.png" alt="MQTT 模拟器" />
+<br/><sub><b>MQTT 模拟器</b> · 配置 + 日志面板</sub>
+</td>
+<td width="50%" align="center">
+<img src="docs/screenshots/02-json-formatter.png" alt="JSON 格式化" />
+<br/><sub><b>JSON 格式化</b> · 交互式树视图</sub>
+</td>
+</tr>
+<tr>
+<td width="50%" align="center">
+<img src="docs/screenshots/03-timestamp-converter.png" alt="时间戳转换" />
+<br/><sub><b>时间戳转换</b> · 双向 + 时区</sub>
+</td>
+<td width="50%" align="center">
+<img src="docs/screenshots/04-cert-generator.png" alt="证书生成器" />
+<br/><sub><b>证书生成器</b> · X.509 一键打包</sub>
+</td>
+</tr>
+</table>
+
+---
+
+## 🎨 设计系统
+
+Lab Console 设计系统 — 8 套主题 × 5 组原子组件，全部 golden 测试覆盖。下面的 PNG 是 CI 用来卡 PR 的真实渲染基线：
+
+<table>
+<tr>
+<td align="center" width="50%">
+<img src="test/golden/goldens/lab_buttons_signal.png" alt="Lab 按钮（Signal · 暗）" />
+<br/><sub><b>按钮</b> · Signal 主题（暗）</sub>
+</td>
+<td align="center" width="50%">
+<img src="test/golden/goldens/lab_buttons_paper.png" alt="Lab 按钮（Paper · 亮）" />
+<br/><sub><b>按钮</b> · Paper 主题（亮）</sub>
+</td>
+</tr>
+<tr>
+<td align="center"><img src="test/golden/goldens/lab_form_signal.png" alt="Lab 表单" /><br/><sub><b>表单</b> · 输入框 / 分段 / 复选 / 开关</sub></td>
+<td align="center"><img src="test/golden/goldens/lab_panels_paper.png" alt="Lab 面板" /><br/><sub><b>面板</b> · 分组面板 + 统计卡</sub></td>
+</tr>
+<tr>
+<td align="center"><img src="test/golden/goldens/lab_feedback_signal.png" alt="Lab 反馈" /><br/><sub><b>反馈</b> · Pill / 状态点 / 行内提示</sub></td>
+<td align="center"><img src="test/golden/goldens/lab_dialog_paper.png" alt="Lab 弹窗" /><br/><sub><b>弹窗</b> · 确认 + 危险</sub></td>
+</tr>
+</table>
+
+打开设计系统画廊预览（含全部 8 套主题切换）：
+
+```bash
+flutter run -d macos -t lib/main_gallery.dart
+```
 
 ---
 
 ## 🛠 技术栈
 
-*   **框架**：Flutter (Dart)
-*   **状态管理**：Provider (`ChangeNotifier`)
-*   **本地存储**：Shared Preferences (用于持久化)
-*   **MQTT**：`mqtt_client` 库
-*   **国际化**：`flutter_localizations` (.arb 文件)
-*   **打包工具**：`flutter_distributor` / Inno Setup (Windows)
+| 层 | 选型 |
+|---|---|
+| 框架 | [Flutter](https://flutter.dev) 3.41.8（Material 3）|
+| 语言 | Dart `>=3.0.0 <4.0.0` |
+| 状态管理 | [`provider`](https://pub.dev/packages/provider)（`ChangeNotifier`）|
+| MQTT | [`mqtt_client`](https://pub.dev/packages/mqtt_client) |
+| 本地存储 | [`shared_preferences`](https://pub.dev/packages/shared_preferences) |
+| 国际化 | `flutter_localizations` + `.arb` |
+| 加密/证书 | [`pointycastle`](https://pub.dev/packages/pointycastle) + [`basic_utils`](https://pub.dev/packages/basic_utils) |
+| 图表 | [`fl_chart`](https://pub.dev/packages/fl_chart) |
+| 桌面 | [`window_manager`](https://pub.dev/packages/window_manager) + [`file_picker`](https://pub.dev/packages/file_picker) |
+| 打包 | [`flutter_distributor`](https://pub.dev/packages/flutter_distributor) + Inno Setup（Windows）|
+| 视觉回归 | [`golden_toolkit`](https://pub.dev/packages/golden_toolkit) |
+| 静态分析 | `flutter_lints` + 自研 [`lab_lints`](tooling/lab_lints/)（3 条规则）|
+
+---
+
+## 🚀 快速开始
+
+### 前置条件
+
+- 已装 [Flutter SDK](https://flutter.dev/docs/get-started/install) — 项目锁定 `3.41.8` 以保证 CI 可复现
+- VS Code 或 Android Studio
+- 桌面工具链：Xcode（macOS）、Visual Studio 2022 + 桌面 C++（Windows）、GTK 3（Linux）
+
+### 安装与运行
+
+```bash
+git clone https://github.com/bcblr1993/iot_devkit_flutter.git
+cd iot_devkit_flutter
+
+flutter pub get
+flutter run -d macos          # 或: -d windows / -d linux
+```
+
+### 预览设计系统画廊
+
+```bash
+flutter run -d macos -t lib/main_gallery.dart
+```
 
 ---
 
@@ -50,75 +163,122 @@
 
 ```
 lib/
-├── l10n/                  # 国际化资源 (.arb) 与生成的 AppLocalizations
-├── models/                # 数据模型 (配置、schema、模拟上下文)
-├── services/              # 业务逻辑 (主题、配置/profile、证书、日志)
-│   └── mqtt/              # 连接客户端管理 + 发送调度
-├── viewmodels/            # Provider/ChangeNotifier 状态 (MqttViewModel、Timesheet)
-├── ui/
-│   ├── shell/             # 应用骨架: 导航栏、内容切换、状态横幅
-│   ├── screens/           # 顶层页面 (首页、工时)
-│   ├── lab/               # Lab 设计系统 (tokens + 原子组件 + 画廊)
-│   ├── components/        # 通用 UI 原子组件 (AppSection、FormGrid、MetricChip 等)
-│   ├── tools/             # 独立工具 (JSON、时间戳、证书生成)
-│   ├── widgets/           # 模拟器专用组件 (配置、日志控制台、性能监控等)
-│   └── styles/            # 主题常量 / 效果
-├── utils/                 # 工具方法 (isolate worker、弹窗、toast、统计)
-├── config/                # 静态常量
-├── main.dart              # 程序入口与全局 Provider 设置
-└── main_gallery.dart      # Lab 设计系统画廊入口
+├── main.dart                   # 程序入口 + Provider 装配
+├── main_gallery.dart           # Lab 设计系统画廊入口
+├── l10n/                       # .arb 源文件（en / zh）+ 生成的 AppLocalizations
+├── models/                     # 纯数据模型（配置、schema、模拟上下文）
+├── viewmodels/                 # ChangeNotifier 状态（MqttViewModel、TimesheetProvider）
+├── services/
+│   ├── mqtt/                   # 客户端管理 + 发送调度
+│   ├── lab_theme_manager.dart  # 8 主题持久化
+│   ├── profile_service.dart    # Profile 导入导出
+│   ├── certificate_*.dart      # X.509 生成 + zip 打包
+│   └── log_storage_service.dart
+├── utils/                      # isolate worker、dialog、toast、统计
+└── ui/
+    ├── shell/                  # NavigationRail + 内容切换 + 状态横幅
+    ├── screens/                # 顶层页面（Home、Timesheet）
+    ├── lab/                    # ✨ 设计系统 — tokens + 原子组件
+    │   ├── tokens/             # LabTokens、LabThemes、OKLCH、文本主题
+    │   └── components/         # LabButton / LabField / LabSection / LabDialog / ...
+    ├── components/             # 项目通用组件
+    ├── tools/                  # 独立工具页（JSON / 时间戳 / 证书）
+    ├── widgets/                # 模拟器专用组件
+    └── styles/                 # 旧主题常量
+
+tooling/lab_lints/              # 自研 analyzer 规则（颜色 / 间距 / 圆角）
+test/golden/                    # 视觉回归基线（signal + paper）
+test/widgets/                   # widget smoke 测试
+docs/                           # 设计系统文档、UI 一致性指南、发布说明
 ```
 
 ---
 
-## ⚡️ 快速开始
+## ✅ UI 一致性
 
-### 前置条件
-*   已安装 [Flutter SDK](https://flutter.dev/docs/get-started/install)。
-*   推荐使用 VS Code 或 Android Studio。
+项目内置**三层防线**对抗 UI 漂移 — 每个 PR 都会在 CI 跑完：
 
-### 安装步骤
-1.  克隆仓库到本地。
-2.  安装依赖：
-    ```bash
-    flutter pub get
-    ```
-3.  生成国际化代码 (如有需要)：
-    ```bash
-    flutter gen-l10n
-    ```
+```
+L1  静态     │  flutter analyze  +  dart run custom_lint         （lab_lints 规则）
+L2  视觉     │  flutter test test/golden/                         （golden PNG diff）
+L3  冒烟     │  flutter test test/widgets/                        （widget smoke）
+```
 
-### 本地运行
+本地一键检查：
+
 ```bash
-# MacOS
-flutter run -d macos
-
-# Windows
-flutter run -d windows
+./scripts/ui_check.sh
 ```
+
+主动调整组件后刷新基线（务必人工 review PNG）：
+
+```bash
+./scripts/ui_golden_update.sh [组件名]
+```
+
+完整指南 & PR checklist：**[`docs/ui_consistency_guide.md`](docs/ui_consistency_guide.md)**。
 
 ---
 
-## 📦 构建与打包
+## 📦 构建与发布
 
 ### 手动构建
-*   **macOS**: `flutter build macos --release` (产物路径: `build/macos/Build/Products/Release/`)
-*   **Windows**: `flutter build windows --release` (产物路径: `build/windows/runner/Release/`)
 
-### 自动化打包 (推荐)
-本项目配置了 `flutter_distributor` 和 GitHub Actions。
+```bash
+flutter build macos   --release   # → build/macos/Build/Products/Release/
+flutter build windows --release   # → build/windows/runner/Release/
+flutter build linux   --release   # → build/linux/x64/release/bundle/
+```
 
-1.  **本地打包**：
-    *   安装工具：`dart pub global activate flutter_distributor`
-    *   生成 MacOS DMG：`flutter_distributor release --name release --jobs macos-dmg`
-    *   生成 Windows EXE：`flutter_distributor release --name release --jobs windows-exe` (需要安装 Inno Setup)
+### 本地打分发包
 
-2.  **CI/CD (GitHub Actions)**：
-    *   只需打一个 tag (如 `v1.0.0`) 并推送到 GitHub，即可触发 `.github/workflows` 中定义的自动构建流程。
+```bash
+dart pub global activate flutter_distributor
+
+flutter_distributor release --name release --jobs macos-dmg
+flutter_distributor release --name release --jobs windows-exe   # 需要 Inno Setup
+```
+
+### CI 自动发布
+
+打 annotated tag（如 `v1.6.6`），[`.github/workflows/release.yml`](.github/workflows/release.yml) 会自动构建 macOS + Windows + Linux 三平台产物并创建 GitHub Release。发布说明优先取 [`docs/releases/vX.Y.Z.md`](docs/releases/)。
 
 ---
 
-## 📝 作者
+## 🖥 平台支持
 
-**Chen Xu**
-*   项目：IoT DevKit Refactor
+| 系统 | 构建 | 分发形式 |
+|---|:-:|---|
+| macOS 12+（Intel & Apple Silicon）| ✅ | `flutter_distributor` 生成 `.dmg` |
+| Windows 10 / 11（x64）| ✅ | Inno Setup 生成 `.exe` 安装包 |
+| Linux（Ubuntu 22.04+）| ✅ | tarball |
+
+> 注意：不能在 macOS / Linux 上直接交叉编译 Windows 产物。请用 [`.github/workflows/release.yml`](.github/workflows/release.yml) 一键三平台。
+
+---
+
+## 🗺 路线图
+
+- [x] MQTT 3.1.1 协议版本选择
+- [x] Lab Console 设计系统 + 8 套主题
+- [x] UI 一致性三层防线（静态 + 视觉 + 冒烟）
+- [ ] 剩余 25 个 legacy 文件迁移到 LabTokens
+- [ ] MQTT 5 支持
+- [ ] 可插拔的 payload 生成器（自定义 Dart 片段）
+- [ ] 历史会话回放
+
+欢迎在 [Issues](https://github.com/bcblr1993/iot_devkit_flutter/issues) 提需求。
+
+---
+
+## 📝 作者与许可
+
+由 **Chen Xu**（[@bcblr1993](https://github.com/bcblr1993)）构建。
+
+许可证：见仓库根目录。如未放置 LICENSE 文件，则视为作者保留全部权利，直到添加正式许可。
+
+<div align="center">
+
+如果它帮你省了时间，欢迎点一个 ⭐ — 这能让更多人发现它。
+
+</div>
