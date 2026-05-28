@@ -80,35 +80,220 @@ class SubscriptionsSection extends StatelessWidget {
     );
 
     if (subscriptions.isEmpty) {
-      // Compact empty state — single line header only; no body padding, no
-      // hint text (hint omitted to avoid horizontal overflow on narrow
-      // windows). Smoke test asserts no RenderFlex overflow at min size.
-      return LabSection(
-        title: l10n.subscriptionsTitle,
-        trailing: trailing,
-        padded: false,
-        child: const SizedBox.shrink(),
-      );
+      // Empty list contributes ZERO vertical space — discovery lives in the
+      // MQTT broker section's trailing area instead (see
+      // SubscriptionsMenuButton.forMqttHeader). Keeping the empty state
+      // collapsed lets the simulator panel fit the 800×600 minimum window.
+      return const SizedBox.shrink();
     }
 
-    // Mounted inside the basic / advanced tab's SingleChildScrollView,
-    // so we let the outer scroll handle vertical overflow.
+    // Populated — full LabSection. Wrap the rows in a bounded scroll so a
+    // long subscription list can't push the mode tabs / log dock off-screen.
     return LabSection(
       title: l10n.subscriptionsTitle,
       hint: l10n.subscriptionsHint,
       trailing: trailing,
-      child: Column(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 220),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              for (var i = 0; i < subscriptions.length; i++) ...[
+                if (i > 0) SizedBox(height: tokens.sMd),
+                _SubscriptionRow(
+                  key: ValueKey(subscriptions[i].id),
+                  sub: subscriptions[i],
+                  isLocked: isLocked,
+                  onChanged: (s) => _replace(i, s),
+                  onRemove: () => _removeAt(i),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Drop-in trailing widget for [MqttConfigSection.extraTrailing] — surfaces
+/// the subscription presets and add-blank action in the section header so
+/// users discover subscriptions are a connection-level concept even when
+/// the list is empty.
+///
+/// Adds **zero** vertical height to the simulator panel layout because it
+/// sits inside the LabSection's existing 30-px header strip.
+class SubscriptionsMenuButton extends StatelessWidget {
+  final List<SubscriptionConfig> subscriptions;
+  final ValueChanged<List<SubscriptionConfig>> onChanged;
+  final bool isLocked;
+
+  const SubscriptionsMenuButton({
+    super.key,
+    required this.subscriptions,
+    required this.onChanged,
+    required this.isLocked,
+  });
+
+  void _add(SubscriptionConfig sub) {
+    onChanged([...subscriptions, sub]);
+  }
+
+  void _addPresetIfMissing(SubscriptionConfig preset) {
+    if (subscriptions.any((s) => s.topic == preset.topic)) return;
+    _add(preset);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
+
+    return PopupMenuButton<_SubMenuAction>(
+      tooltip: l10n.subscriptionAdd,
+      enabled: !isLocked,
+      // Override the default 48×48 IconButton hit-area: render a compact
+      // 24×24 chip that matches LabIconButton sm. Adding the button to the
+      // MQTT header trailing must NOT grow LabSection's header strip.
+      padding: EdgeInsets.zero,
+      splashRadius: 14,
+      child: SizedBox(
+        width: 24,
+        height: 24,
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: scheme.outline),
+            borderRadius: BorderRadius.circular(5),
+          ),
+          child: Icon(Icons.add_link,
+              size: 14, color: scheme.onSurfaceVariant),
+        ),
+      ),
+      onSelected: (action) {
+        switch (action) {
+          case _SubMenuAction.rpcPreset:
+            _addPresetIfMissing(SubscriptionConfig.thingsboardRpcPreset());
+          case _SubMenuAction.attributesPreset:
+            _addPresetIfMissing(
+                SubscriptionConfig.thingsboardAttributesPreset());
+          case _SubMenuAction.blank:
+            _add(SubscriptionConfig());
+        }
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          key: const ValueKey('sub_menu_rpc_preset'),
+          value: _SubMenuAction.rpcPreset,
+          child: Row(children: [
+            Icon(Icons.bolt, size: 16, color: scheme.primary),
+            const SizedBox(width: 8),
+            Text(l10n.subscriptionPresetThingsBoardRpc),
+          ]),
+        ),
+        PopupMenuItem(
+          key: const ValueKey('sub_menu_attrs_preset'),
+          value: _SubMenuAction.attributesPreset,
+          child: Row(children: [
+            Icon(Icons.tune, size: 16, color: scheme.primary),
+            const SizedBox(width: 8),
+            Text(l10n.subscriptionPresetThingsBoardAttributes),
+          ]),
+        ),
+        const PopupMenuDivider(),
+        PopupMenuItem(
+          key: const ValueKey('sub_menu_blank'),
+          value: _SubMenuAction.blank,
+          child: Row(children: [
+            Icon(Icons.add, size: 16, color: scheme.onSurfaceVariant),
+            const SizedBox(width: 8),
+            Text(l10n.subscriptionAdd),
+          ]),
+        ),
+      ],
+    );
+  }
+}
+
+enum _SubMenuAction { rpcPreset, attributesPreset, blank }
+
+/// Legacy compact bar kept for backwards-compat — currently unused after the
+/// menu-button refactor. Retained in case we want to expose discovery in a
+/// secondary location later.
+// ignore: unused_element
+class _DiscoveryBar extends StatelessWidget {
+  final String title;
+  final VoidCallback rpcPreset;
+  final VoidCallback attrPreset;
+  final VoidCallback addBlank;
+  final bool isLocked;
+  final AppLocalizations l10n;
+
+  const _DiscoveryBar({
+    required this.title,
+    required this.rpcPreset,
+    required this.attrPreset,
+    required this.addBlank,
+    required this.isLocked,
+    required this.l10n,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final tokens = LabTokens.of(context);
+    final textTheme = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(
+          horizontal: tokens.sLg, vertical: tokens.sXxs),
+      child: Row(
         children: [
-          for (var i = 0; i < subscriptions.length; i++) ...[
-            if (i > 0) SizedBox(height: tokens.sMd),
-            _SubscriptionRow(
-              key: ValueKey(subscriptions[i].id),
-              sub: subscriptions[i],
-              isLocked: isLocked,
-              onChanged: (s) => _replace(i, s),
-              onRemove: () => _removeAt(i),
+          Container(
+            width: 4,
+            height: 12,
+            decoration: BoxDecoration(
+              color: scheme.primary,
+              borderRadius: BorderRadius.circular(tokens.rXs - 1),
             ),
-          ],
+          ),
+          SizedBox(width: tokens.sMd),
+          Text(
+            title.toUpperCase(),
+            style: textTheme.titleMedium?.copyWith(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.6,
+            ),
+          ),
+          SizedBox(width: tokens.sMd),
+          Text(
+            l10n.subscriptionsEmpty,
+            style: textTheme.labelLarge?.copyWith(
+              fontSize: 11,
+              color: tokens.faint,
+            ),
+          ),
+          const Spacer(),
+          LabIconButton(
+            icon: Icons.bolt,
+            size: LabButtonSize.sm,
+            tooltip: l10n.subscriptionPresetThingsBoardRpc,
+            onPressed: isLocked ? null : rpcPreset,
+          ),
+          SizedBox(width: tokens.sXs),
+          LabIconButton(
+            icon: Icons.tune,
+            size: LabButtonSize.sm,
+            tooltip: l10n.subscriptionPresetThingsBoardAttributes,
+            onPressed: isLocked ? null : attrPreset,
+          ),
+          SizedBox(width: tokens.sXs),
+          LabIconButton(
+            icon: Icons.add,
+            size: LabButtonSize.sm,
+            tooltip: l10n.subscriptionAdd,
+            onPressed: isLocked ? null : addBlank,
+          ),
         ],
       ),
     );

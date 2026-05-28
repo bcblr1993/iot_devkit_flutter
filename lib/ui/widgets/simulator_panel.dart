@@ -238,15 +238,30 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                     caPathController: vm.caPathController,
                     certPathController: vm.certPathController,
                     keyPathController: vm.keyPathController,
+                    // Discovery for connection-level subscriptions lives in
+                    // the MQTT section header — zero added height.
+                    extraTrailing: SubscriptionsMenuButton(
+                      subscriptions: vm.subscriptions,
+                      onChanged: vm.updateSubscriptions,
+                      isLocked: isRunning,
+                    ),
                   ),
                 ),
               ),
 
-              // Note: SubscriptionsSection lives INSIDE the basic / advanced
-              // tab content (a SingleChildScrollView) — keeping it out of the
-              // parent Column avoids competing for vertical space with the
-              // log dock on the minimum window size. Both tabs bind to the
-              // same vm.subscriptions, so edits stay consistent across modes.
+              // Subscriptions section is hidden when the list is empty (its
+              // discovery lives in the MQTT broker section header). When the
+              // user adds the first row, the section expands here, between
+              // the MQTT config and the mode tabs.
+              Padding(
+                padding: EdgeInsets.symmetric(
+                    horizontal: 12.0 * effect.layoutDensity),
+                child: SubscriptionsSection(
+                  subscriptions: vm.subscriptions,
+                  isLocked: isRunning,
+                  onChanged: vm.updateSubscriptions,
+                ),
+              ),
 
               // Config Tabs or Performance Monitor (Collapsible)
               Expanded(
@@ -350,17 +365,6 @@ class _SimulatorPanelState extends State<SimulatorPanel>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Subscriptions live above the device config — same widget is
-            // mounted in the Advanced tab; both bind to vm.subscriptions so
-            // edits in one are reflected in the other after Provider notifies.
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: SubscriptionsSection(
-                subscriptions: vm.subscriptions,
-                isLocked: isRunning,
-                onChanged: vm.updateSubscriptions,
-              ),
-            ),
             Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: LabSection(
@@ -460,24 +464,10 @@ class _SimulatorPanelState extends State<SimulatorPanel>
       child: Form(
         key: vm.formKeyAdvanced,
         autovalidateMode: AutovalidateMode.onUserInteraction,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Mirror of Basic tab — same vm.subscriptions data source.
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: SubscriptionsSection(
-                subscriptions: vm.subscriptions,
-                isLocked: isRunning,
-                onChanged: vm.updateSubscriptions,
-              ),
-            ),
-            GroupsManager(
-              groups: vm.groups,
-              isLocked: isRunning,
-              onGroupsChanged: vm.updateGroups,
-            ),
-          ],
+        child: GroupsManager(
+          groups: vm.groups,
+          isLocked: isRunning,
+          onGroupsChanged: vm.updateGroups,
         ),
       ),
     );

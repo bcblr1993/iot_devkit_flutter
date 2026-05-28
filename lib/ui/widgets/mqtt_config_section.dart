@@ -22,6 +22,11 @@ class MqttConfigSection extends StatelessWidget {
   final String protocolVersion;
   final ValueChanged<String> onProtocolVersionChanged;
 
+  /// Optional widget appended to the section's trailing area (sits to the
+  /// left of the TLS/TCP badge). Lets callers surface connection-level
+  /// affordances (e.g. "add subscription") without growing the layout.
+  final Widget? extraTrailing;
+
   const MqttConfigSection({
     super.key,
     required this.isRunning,
@@ -37,6 +42,7 @@ class MqttConfigSection extends StatelessWidget {
     required this.onQosChanged,
     required this.protocolVersion,
     required this.onProtocolVersionChanged,
+    this.extraTrailing,
   });
 
   @override
@@ -45,26 +51,34 @@ class MqttConfigSection extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return LabSection(
-      title: l10n.mqttBroker,
-      trailing: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: enableSsl
-              ? colorScheme.primary.withValues(alpha: 0.08)
-              : colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Text(
-          enableSsl ? 'TLS' : 'TCP',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color:
-                enableSsl ? colorScheme.primary : colorScheme.onSurfaceVariant,
-          ),
+    final tlsBadge = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: enableSsl
+            ? colorScheme.primary.withValues(alpha: 0.08)
+            : colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        enableSsl ? 'TLS' : 'TCP',
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color:
+              enableSsl ? colorScheme.primary : colorScheme.onSurfaceVariant,
         ),
       ),
+    );
+
+    return LabSection(
+      title: l10n.mqttBroker,
+      trailing: extraTrailing == null
+          ? tlsBadge
+          : Row(mainAxisSize: MainAxisSize.min, children: [
+              extraTrailing!,
+              const SizedBox(width: 8),
+              tlsBadge,
+            ]),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

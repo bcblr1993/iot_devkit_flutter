@@ -45,28 +45,33 @@ void main() {
     await _pressButton(tester, 'Close', last: true);
   });
 
-  testWidgets('subscriptions smoke: preset RPC adds row with auto-ack checkbox',
+  testWidgets(
+      'subscriptions smoke: RPC preset from menu adds row with auto-ack checkbox',
       (tester) async {
     await _pumpSmokeApp(tester);
 
-    // Section title uppercases inside LabSection header.
+    // When list is empty, only the discovery menu in the MQTT header is
+    // visible (the SUBSCRIPTIONS section itself collapses to SizedBox.shrink).
+    final menu = find.byTooltip('Add subscription').first;
+    expect(menu, findsOneWidget);
+    await tester.tap(menu);
+    await tester.pumpAndSettle();
+
+    // Pick the RPC preset by ValueKey (PopupMenuItem InkWell is the tap target).
+    await tester.tap(find.byKey(const ValueKey('sub_menu_rpc_preset')));
+    await tester.pumpAndSettle();
+
+    // Section is now visible with the canonical TB RPC filter and the
+    // Auto-ACK checkbox (only rendered when isThingsBoardRpcFilter == true).
     expect(find.text('SUBSCRIPTIONS'), findsWidgets);
-
-    // Tap the icon-only "Preset: ThingsBoard RPC" — identified by its tooltip.
-    final rpcButton =
-        find.byTooltip('Preset: ThingsBoard RPC').first;
-    expect(rpcButton, findsOneWidget);
-    await tester.tap(rpcButton);
-    await tester.pump(const Duration(milliseconds: 260));
-
-    // Topic field populates with the canonical TB RPC filter; auto-ack is
-    // a checkbox child rendered only when isThingsBoardRpcFilter == true.
     expect(find.text('v1/devices/me/rpc/request/+'), findsWidgets);
     expect(find.text('Auto-ACK'), findsWidgets);
 
-    // Tapping the preset again is a no-op (de-dup by topic).
-    await tester.tap(rpcButton);
-    await tester.pump(const Duration(milliseconds: 200));
+    // Re-opening the menu and picking RPC again is a no-op (de-dup by topic).
+    await tester.tap(menu);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('sub_menu_rpc_preset')));
+    await tester.pumpAndSettle();
     expect(
       find.text('v1/devices/me/rpc/request/+'),
       findsWidgets,
