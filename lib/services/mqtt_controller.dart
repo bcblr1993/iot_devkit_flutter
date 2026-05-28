@@ -7,6 +7,7 @@ import '../utils/statistics_collector.dart';
 import '../models/group_config.dart';
 import '../models/custom_key_config.dart';
 import '../models/simulation_context.dart';
+import '../models/subscription_config.dart';
 import 'data_generator.dart';
 import 'mqtt/mqtt_client_manager.dart';
 import 'mqtt/scheduler_service.dart';
@@ -240,6 +241,10 @@ class MqttController extends ChangeNotifier {
 
     statisticsCollector.reset();
 
+    // Push subscription list to manager BEFORE any client connects, so each
+    // freshly-connected client picks up subscriptions in _handleConnectionSuccess.
+    _clientManager.setSubscriptions(_readSubscriptionsFromConfig(config));
+
     try {
       // Determine Mode
       String mode = config['mode'] ?? 'basic';
@@ -295,6 +300,23 @@ class MqttController extends ChangeNotifier {
   }
 
   // --- Internal Start Logic ---
+
+  /// Decode the `subscriptions: [...]` list from a profile config map.
+  /// Tolerates missing key / wrong type via [SubscriptionConfig.listFromProfile].
+  /// Falls back through both raw maps and pre-decoded [SubscriptionConfig]
+  /// objects so callers (UI / tests) don't have to normalize.
+  List<SubscriptionConfig> _readSubscriptionsFromConfig(
+      Map<String, dynamic> config) {
+    final raw = config['subscriptions'];
+    if (raw is List<SubscriptionConfig>) return raw;
+    if (raw is List) {
+      return raw
+          .whereType<Map<String, dynamic>>()
+          .map(SubscriptionConfig.fromJson)
+          .toList();
+    }
+    return SubscriptionConfig.listFromProfile(config);
+  }
 
   Future<void> _startBasicMode(Map<String, dynamic> config) async {
     int startIdx = config['device_start_number'] ?? 1;

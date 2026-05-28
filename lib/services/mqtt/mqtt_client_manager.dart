@@ -4,12 +4,25 @@ import 'package:logging/logging.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 import '../../models/simulation_context.dart';
+import '../../models/subscription_config.dart';
+
+/// Max characters of inbound MQTT payload to surface in the log; longer
+/// payloads are tail-truncated with a "... +N bytes" marker so the log dock
+/// doesn't choke on a 100KB shared-attributes blob.
+const int _inboundPayloadLogLimit = 1024;
 
 class MqttClientManager {
   final _logger = Logger('MqttClientManager');
 
   // Active Clients
   final Map<String, MqttServerClient> _clients = {};
+
+  // Per-client inbound message stream subscription (so we can cancel cleanly).
+  final Map<String, StreamSubscription> _messageSubscriptions = {};
+
+  // Subscriptions applied to every (re)connected client. Set via
+  // [setSubscriptions] before / during start. Immutable snapshot.
+  List<SubscriptionConfig> _subscriptions = const <SubscriptionConfig>[];
 
   // Reconnection Logic
   final Map<String, Map<String, dynamic>> _clientConfigs = {};
@@ -38,6 +51,20 @@ class MqttClientManager {
   bool get hasActiveClients => _clients.isNotEmpty;
   int get activeClientCount => _clients.length;
   int get trackedClientCount => _clientConfigs.length;
+
+  /// Snapshot of the active subscription list (for diagnostics / tests).
+  List<SubscriptionConfig> get subscriptions =>
+      List.unmodifiable(_subscriptions);
+
+  /// Replace the subscription set. Newly-connected clients (including
+  /// reconnects) will pick up the new list. Already-connected clients are
+  /// **not** retroactively re-subscribed in this version — restart the
+  /// simulation if you change topics while running.
+  void setSubscriptions(List<SubscriptionConfig> subs) {
+    _subscriptions = List.unmodifiable(
+      subs.where((s) => s.enabled && s.topic.trim().isNotEmpty),
+    );
+  }
 
   SimulationContext? getClientContext(String clientId) {
     return _clientConfigs[clientId]?['context'] as SimulationContext?;
@@ -173,6 +200,77 @@ class MqttClientManager {
     _reconnectAttempts[clientId] = 0; // Reset retries
     onConnected(clientId, client);
     onLog('[$clientId] Connected', 'success', tag: _getTag(clientId));
+    _applySubscriptionsTo(clientId, client);
+  }
+
+  /// Wire inbound messages to the log channel and register every enabled
+  /// subscription on this freshly-connected client.
+  void _applySubscriptionsTo(String clientId, MqttServerClient client) {
+    // 1) inbound stream listener — replace any stale one for this clientId.
+    unawaited(_messageSubscriptions.remove(clientId)?.cancel());
+    final updates = client.updates;
+    if (updates != null) {
+      _messageSubscriptions[clientId] = updates.listen(
+        (events) => _handleInboundMessages(clientId, client, events),
+        onError: (Object e) => onLog(
+          '[$clientId] Subscription stream error: $e',
+          'warning',
+          tag: _getTag(clientId),
+        ),
+      );
+    }
+
+    // 2) subscribe each enabled topic; failures are logged but non-fatal so
+    //    one bad row can't take down the whole client.
+    for (final sub in _subscriptions) {
+      try {
+        client.subscribe(sub.topic, _toMqttQos(sub.qos));
+        onLog(
+          '[$clientId] Subscribed: ${sub.topic} (QoS ${sub.qos})',
+          'info',
+          tag: _getTag(clientId),
+        );
+      } catch (e) {
+        onLog(
+          '[$clientId] Subscribe failed for ${sub.topic}: $e',
+          'warning',
+          tag: _getTag(clientId),
+        );
+      }
+    }
+  }
+
+  void _handleInboundMessages(
+    String clientId,
+    MqttServerClient client,
+    List<MqttReceivedMessage<MqttMessage?>> events,
+  ) {
+    for (final event in events) {
+      final msg = event.payload;
+      if (msg is! MqttPublishMessage) continue;
+      final raw = MqttPublishPayload.bytesToStringAsString(msg.payload.message);
+      final payload = raw.length > _inboundPayloadLogLimit
+          ? '${raw.substring(0, _inboundPayloadLogLimit)}... +${raw.length - _inboundPayloadLogLimit} bytes'
+          : raw;
+      onLog(
+        '[$clientId] [← ${event.topic}] $payload',
+        'info',
+        tag: _getTag(clientId),
+      );
+      // Auto-ACK for ThingsBoard server-side RPC — implemented in C5.
+    }
+  }
+
+  static MqttQos _toMqttQos(int qos) {
+    switch (qos) {
+      case 2:
+        return MqttQos.exactlyOnce;
+      case 1:
+        return MqttQos.atLeastOnce;
+      case 0:
+      default:
+        return MqttQos.atMostOnce;
+    }
   }
 
   void _handleConnectionFailure(String clientId, dynamic error) {
@@ -186,6 +284,7 @@ class MqttClientManager {
     // Identity Check: Only handle if THIS client is the currently active one
     if (_clients[clientId] == client) {
       _clients.remove(clientId);
+      unawaited(_messageSubscriptions.remove(clientId)?.cancel());
       onDisconnected(clientId);
       onLog('[$clientId] Disconnected, will retry...', 'warning',
           tag: _getTag(clientId));
@@ -264,6 +363,12 @@ class MqttClientManager {
     _reconnectTimers.clear();
     _reconnectAttempts.clear();
     _clientConfigs.clear();
+
+    // 1b. Cancel every inbound message stream subscription
+    for (final sub in _messageSubscriptions.values) {
+      unawaited(sub.cancel());
+    }
+    _messageSubscriptions.clear();
 
     // 2. Disconnect clients safely
     // Create a copy of values to avoid concurrent modification issues during iteration
