@@ -852,4 +852,48 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hidePassword => 'Hide password';
+
+  @override
+  String get subscriptionsTitle => 'Subscriptions';
+
+  @override
+  String get subscriptionsHint =>
+      'Topics every simulated device subscribes to after connecting';
+
+  @override
+  String get subscriptionsEmpty =>
+      'No subscriptions. Click + or pick a preset.';
+
+  @override
+  String get subscriptionAdd => 'Add subscription';
+
+  @override
+  String get subscriptionTopicHint => 'Topic filter (supports + and #)';
+
+  @override
+  String get subscriptionTopicRequired => 'Topic is required';
+
+  @override
+  String get subscriptionQos => 'QoS';
+
+  @override
+  String get subscriptionEnabledTooltip => 'Enable / disable this subscription';
+
+  @override
+  String get subscriptionDelete => 'Remove subscription';
+
+  @override
+  String get subscriptionAutoAck => 'Auto-ACK';
+
+  @override
+  String subscriptionAutoAckHint(Object id) {
+    return 'On a ThingsBoard RPC request, auto-publish an empty response to v1/devices/me/rpc/response/$id';
+  }
+
+  @override
+  String get subscriptionPresetThingsBoardRpc => 'Preset: ThingsBoard RPC';
+
+  @override
+  String get subscriptionPresetThingsBoardAttributes =>
+      'Preset: Shared Attributes';
 }

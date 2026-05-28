@@ -282,5 +282,18 @@
   "certEndpointYes": "是",
   "certEndpointNo": "否",
   "showPassword": "显示密码",
-  "hidePassword": "隐藏密码"
+  "hidePassword": "隐藏密码",
+  "subscriptionsTitle": "订阅",
+  "subscriptionsHint": "所有模拟设备连接成功后会订阅以下 topic",
+  "subscriptionsEmpty": "暂无订阅，点击 + 或选择预设",
+  "subscriptionAdd": "新增订阅",
+  "subscriptionTopicHint": "Topic 过滤器（支持 + 和 #）",
+  "subscriptionTopicRequired": "Topic 不能为空",
+  "subscriptionQos": "QoS",
+  "subscriptionEnabledTooltip": "启用 / 禁用该订阅",
+  "subscriptionDelete": "删除该订阅",
+  "subscriptionAutoAck": "自动回包",
+  "subscriptionAutoAckHint": "收到 ThingsBoard RPC 请求时，自动向 v1/devices/me/rpc/response/{id} 回一个空响应",
+  "subscriptionPresetThingsBoardRpc": "预设：ThingsBoard RPC",
+  "subscriptionPresetThingsBoardAttributes": "预设：共享属性"
 }
