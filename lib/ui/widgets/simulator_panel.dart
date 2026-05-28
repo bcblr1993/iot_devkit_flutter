@@ -10,6 +10,7 @@ import '../lab/lab.dart';
 import 'groups_manager.dart';
 import 'custom_keys_manager.dart';
 import 'mqtt_config_section.dart';
+import 'subscriptions_section.dart';
 import '../../services/config_service.dart';
 import 'log_console.dart';
 import 'performance_monitor.dart';
@@ -241,6 +242,12 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                 ),
               ),
 
+              // Note: SubscriptionsSection lives INSIDE the basic / advanced
+              // tab content (a SingleChildScrollView) — keeping it out of the
+              // parent Column avoids competing for vertical space with the
+              // log dock on the minimum window size. Both tabs bind to the
+              // same vm.subscriptions, so edits stay consistent across modes.
+
               // Config Tabs or Performance Monitor (Collapsible)
               Expanded(
                 child: (isRunning && _showMonitor)
@@ -343,6 +350,17 @@ class _SimulatorPanelState extends State<SimulatorPanel>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Subscriptions live above the device config — same widget is
+            // mounted in the Advanced tab; both bind to vm.subscriptions so
+            // edits in one are reflected in the other after Provider notifies.
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: SubscriptionsSection(
+                subscriptions: vm.subscriptions,
+                isLocked: isRunning,
+                onChanged: vm.updateSubscriptions,
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: LabSection(
@@ -442,10 +460,24 @@ class _SimulatorPanelState extends State<SimulatorPanel>
       child: Form(
         key: vm.formKeyAdvanced,
         autovalidateMode: AutovalidateMode.onUserInteraction,
-        child: GroupsManager(
-          groups: vm.groups,
-          isLocked: isRunning,
-          onGroupsChanged: vm.updateGroups,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Mirror of Basic tab — same vm.subscriptions data source.
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: SubscriptionsSection(
+                subscriptions: vm.subscriptions,
+                isLocked: isRunning,
+                onChanged: vm.updateSubscriptions,
+              ),
+            ),
+            GroupsManager(
+              groups: vm.groups,
+              isLocked: isRunning,
+              onGroupsChanged: vm.updateGroups,
+            ),
+          ],
         ),
       ),
     );

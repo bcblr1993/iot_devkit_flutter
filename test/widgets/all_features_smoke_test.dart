@@ -45,6 +45,35 @@ void main() {
     await _pressButton(tester, 'Close', last: true);
   });
 
+  testWidgets('subscriptions smoke: preset RPC adds row with auto-ack checkbox',
+      (tester) async {
+    await _pumpSmokeApp(tester);
+
+    // Section title uppercases inside LabSection header.
+    expect(find.text('SUBSCRIPTIONS'), findsWidgets);
+
+    // Tap the icon-only "Preset: ThingsBoard RPC" — identified by its tooltip.
+    final rpcButton =
+        find.byTooltip('Preset: ThingsBoard RPC').first;
+    expect(rpcButton, findsOneWidget);
+    await tester.tap(rpcButton);
+    await tester.pump(const Duration(milliseconds: 260));
+
+    // Topic field populates with the canonical TB RPC filter; auto-ack is
+    // a checkbox child rendered only when isThingsBoardRpcFilter == true.
+    expect(find.text('v1/devices/me/rpc/request/+'), findsWidgets);
+    expect(find.text('Auto-ACK'), findsWidgets);
+
+    // Tapping the preset again is a no-op (de-dup by topic).
+    await tester.tap(rpcButton);
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(
+      find.text('v1/devices/me/rpc/request/+'),
+      findsWidgets,
+      reason: 'preset must not duplicate when topic already present',
+    );
+  });
+
   testWidgets('timestamp smoke: converts in both directions', (tester) async {
     await _pumpSmokeApp(tester);
     await _selectRailDestination(tester, 1);

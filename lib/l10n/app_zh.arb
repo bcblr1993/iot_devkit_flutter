@@ -293,7 +293,7 @@
   "subscriptionEnabledTooltip": "启用 / 禁用该订阅",
   "subscriptionDelete": "删除该订阅",
   "subscriptionAutoAck": "自动回包",
-  "subscriptionAutoAckHint": "收到 ThingsBoard RPC 请求时，自动向 v1/devices/me/rpc/response/{id} 回一个空响应",
+  "subscriptionAutoAckHint": "收到 ThingsBoard RPC 请求时，自动向 v1/devices/me/rpc/response/<id> 回一个空响应",
   "subscriptionPresetThingsBoardRpc": "预设：ThingsBoard RPC",
   "subscriptionPresetThingsBoardAttributes": "预设：共享属性"
 }

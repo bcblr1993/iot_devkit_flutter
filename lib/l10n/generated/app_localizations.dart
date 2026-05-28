@@ -1823,8 +1823,8 @@ abstract class AppLocalizations {
   /// No description provided for @subscriptionAutoAckHint.
   ///
   /// In en, this message translates to:
-  /// **'On a ThingsBoard RPC request, auto-publish an empty response to v1/devices/me/rpc/response/{id}'**
-  String subscriptionAutoAckHint(Object id);
+  /// **'On a ThingsBoard RPC request, auto-publish an empty response to v1/devices/me/rpc/response/<id>'**
+  String get subscriptionAutoAckHint;
 
   /// No description provided for @subscriptionPresetThingsBoardRpc.
   ///

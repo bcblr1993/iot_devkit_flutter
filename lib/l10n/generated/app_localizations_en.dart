@@ -886,9 +886,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get subscriptionAutoAck => 'Auto-ACK';
 
   @override
-  String subscriptionAutoAckHint(Object id) {
-    return 'On a ThingsBoard RPC request, auto-publish an empty response to v1/devices/me/rpc/response/$id';
-  }
+  String get subscriptionAutoAckHint =>
+      'On a ThingsBoard RPC request, auto-publish an empty response to v1/devices/me/rpc/response/<id>';
 
   @override
   String get subscriptionPresetThingsBoardRpc => 'Preset: ThingsBoard RPC';

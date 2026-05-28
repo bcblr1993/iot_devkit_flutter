@@ -291,7 +291,7 @@
   "subscriptionEnabledTooltip": "Enable / disable this subscription",
   "subscriptionDelete": "Remove subscription",
   "subscriptionAutoAck": "Auto-ACK",
-  "subscriptionAutoAckHint": "On a ThingsBoard RPC request, auto-publish an empty response to v1/devices/me/rpc/response/{id}",
+  "subscriptionAutoAckHint": "On a ThingsBoard RPC request, auto-publish an empty response to v1/devices/me/rpc/response/<id>",
   "subscriptionPresetThingsBoardRpc": "Preset: ThingsBoard RPC",
   "subscriptionPresetThingsBoardAttributes": "Preset: Shared Attributes"
 }

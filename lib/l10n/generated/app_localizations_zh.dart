@@ -871,9 +871,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get subscriptionAutoAck => '自动回包';
 
   @override
-  String subscriptionAutoAckHint(Object id) {
-    return '收到 ThingsBoard RPC 请求时，自动向 v1/devices/me/rpc/response/$id 回一个空响应';
-  }
+  String get subscriptionAutoAckHint =>
+      '收到 ThingsBoard RPC 请求时，自动向 v1/devices/me/rpc/response/<id> 回一个空响应';
 
   @override
   String get subscriptionPresetThingsBoardRpc => '预设：ThingsBoard RPC';
