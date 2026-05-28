@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:iot_devkit/models/group_config.dart';
 import 'package:iot_devkit/models/custom_key_config.dart';
+import 'package:iot_devkit/models/subscription_config.dart';
 import 'package:iot_devkit/services/config_service.dart';
 import 'package:iot_devkit/services/data_generator.dart';
 import 'package:iot_devkit/services/profile_service.dart';
@@ -47,6 +48,12 @@ class MqttViewModel extends ChangeNotifier {
 
   List<GroupConfig> _groups = [];
   List<GroupConfig> get groups => _groups;
+
+  /// MQTT subscriptions applied to every connected client after the simulator
+  /// reaches the `running` state. Empty by default — populated either via UI
+  /// or via legacy profile migration.
+  List<SubscriptionConfig> _subscriptions = [];
+  List<SubscriptionConfig> get subscriptions => _subscriptions;
 
   String _format = 'default';
   String get format => _format;
@@ -172,6 +179,12 @@ class MqttViewModel extends ChangeNotifier {
     scheduleAutoSave();
   }
 
+  void updateSubscriptions(List<SubscriptionConfig> subs) {
+    _subscriptions = subs;
+    notifyListeners();
+    scheduleAutoSave();
+  }
+
   // --- Logic ---
 
   void scheduleAutoSave() {
@@ -235,6 +248,9 @@ class MqttViewModel extends ChangeNotifier {
           .toList();
     }
 
+    // Legacy profiles (pre-1.7) have no `subscriptions` key; default to [].
+    _subscriptions = SubscriptionConfig.listFromProfile(config);
+
     notifyListeners();
   }
 
@@ -264,6 +280,7 @@ class MqttViewModel extends ChangeNotifier {
       },
       'custom_keys': _basicCustomKeys.map((e) => e.toJson()).toList(),
       'groups': _groups.map((e) => e.toJson()).toList(),
+      'subscriptions': _subscriptions.map((e) => e.toJson()).toList(),
     };
   }
 
