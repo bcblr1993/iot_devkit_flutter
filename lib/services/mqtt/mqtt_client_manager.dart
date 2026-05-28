@@ -257,8 +257,65 @@ class MqttClientManager {
         'info',
         tag: _getTag(clientId),
       );
-      // Auto-ACK for ThingsBoard server-side RPC — implemented in C5.
+      _maybeAutoAck(clientId, client, event.topic);
     }
+  }
+
+  /// If any enabled subscription targets the ThingsBoard RPC request filter
+  /// with `autoAck == true`, publish an empty `{}` to the matching response
+  /// topic on the same client. Logged as `[→ response/<id>]`.
+  /// Failures are non-fatal: we just log a warning.
+  void _maybeAutoAck(
+    String clientId,
+    MqttServerClient client,
+    String requestTopic,
+  ) {
+    SubscriptionConfig? autoAck;
+    for (final s in _subscriptions) {
+      if (s.autoAck && s.isThingsBoardRpcFilter && s.enabled) {
+        autoAck = s;
+        break;
+      }
+    }
+    if (autoAck == null) return;
+
+    final responseTopic = rpcResponseTopicFor(requestTopic);
+    if (responseTopic == null) return;
+
+    try {
+      final builder = MqttClientPayloadBuilder()..addString('{}');
+      client.publishMessage(responseTopic, _toMqttQos(autoAck.qos),
+          builder.payload!);
+      onLog(
+        '[$clientId] [→ $responseTopic] {} (auto-ack)',
+        'info',
+        tag: _getTag(clientId),
+      );
+    } catch (e) {
+      onLog(
+        '[$clientId] Auto-ack publish failed for $responseTopic: $e',
+        'warning',
+        tag: _getTag(clientId),
+      );
+    }
+  }
+
+  /// Maps a ThingsBoard RPC request topic to its response counterpart.
+  ///
+  ///   v1/devices/me/rpc/request/42   → v1/devices/me/rpc/response/42
+  ///
+  /// Returns `null` when:
+  ///   · topic does not start with the RPC request prefix
+  ///   · the id segment is empty
+  ///   · the id segment contains a `/` (multi-segment, invalid for TB RPC)
+  ///
+  /// Exposed as a top-level static so unit tests don't need a live client.
+  static String? rpcResponseTopicFor(String requestTopic) {
+    const prefix = 'v1/devices/me/rpc/request/';
+    if (!requestTopic.startsWith(prefix)) return null;
+    final id = requestTopic.substring(prefix.length);
+    if (id.isEmpty || id.contains('/')) return null;
+    return 'v1/devices/me/rpc/response/$id';
   }
 
   static MqttQos _toMqttQos(int qos) {
