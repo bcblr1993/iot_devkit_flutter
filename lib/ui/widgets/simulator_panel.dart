@@ -292,15 +292,6 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                         ),
                       ),
               ),
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  12.0 * effect.layoutDensity,
-                  0,
-                  12.0 * effect.layoutDensity,
-                  8.0 * effect.layoutDensity,
-                ),
-                child: _buildSimulationStatusStrip(context, l10n),
-              ),
               Divider(
                   height: 1,
                   thickness: 1,
@@ -328,6 +319,10 @@ class _SimulatorPanelState extends State<SimulatorPanel>
           onClear: widget.onClearLog,
           onMaximize: () => setState(() => _isLogMaximized = !_isLogMaximized),
           effect: effect,
+          // Live stats (device/online/sent/success/fail/CPU/mem) now ride in
+          // the log dock header bar instead of a standalone strip above the
+          // action buttons.
+          headerContent: _buildSimulationStatusBar(context, l10n),
         ),
       ],
     );
@@ -689,7 +684,10 @@ class _SimulatorPanelState extends State<SimulatorPanel>
     );
   }
 
-  Widget _buildSimulationStatusStrip(
+  /// Live stats bar embedded in the log dock header (device/online/sent/
+  /// success/fail/CPU/mem). No outer box — it sits inside the dock's 54-px
+  /// header row, horizontally scrollable so the pills never overflow.
+  Widget _buildSimulationStatusBar(
       BuildContext context, AppLocalizations l10n) {
     final mqttController = Provider.of<MqttController>(context, listen: false);
     final theme = Theme.of(context);
@@ -705,76 +703,59 @@ class _SimulatorPanelState extends State<SimulatorPanel>
         final stats = mqttController.statisticsCollector;
         final showRunState = mqttController.runState != SimulationRunState.idle;
         final stateLabel = _runStateLabel(context, mqttController.runState);
-        return Container(
-          height: 42,
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          decoration: BoxDecoration(
-            color: colors.surfaceContainerLowest,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: colors.outlineVariant.withValues(alpha: 0.42),
-            ),
-          ),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: ClipRect(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    if (!isSmallScreen) ...[
-                      if (showRunState) ...[
-                        LabPill(
-                          label:
-                              '${_localized(context, zh: '状态', en: 'State')} $stateLabel',
-                          color: _runStateColor(theme, mqttController.runState),
-                        ),
-                        const SizedBox(width: 10),
-                      ],
-                      LabPill(
-                          label: '${l10n.totalDevices} ${stats.totalDevices}',
-                          color: Colors.blue),
-                      const SizedBox(width: 10),
-                      LabPill(
-                          label: '${l10n.online} ${stats.onlineDevices}',
-                          color: Colors.green),
-                      const SizedBox(width: 10),
-                      LabPill(
-                          label: '${l10n.statSent} ${stats.totalMessages}',
-                          color: theme.colorScheme.onSurface),
-                      const SizedBox(width: 10),
-                      LabPill(
-                          label: '${l10n.statSuccess} ${stats.successCount}',
-                          color: Colors.green),
-                      const SizedBox(width: 10),
-                      LabPill(
-                          label: '${l10n.statFailed} ${stats.failureCount}',
-                          color: theme.colorScheme.error),
-                      const SizedBox(width: 10),
-                      LabPill(
-                          label:
-                              '${l10n.cpuUsage} ${stats.cpuUsage.toStringAsFixed(1)}%',
-                          color: Colors.purple),
-                      const SizedBox(width: 10),
-                      LabPill(
-                          label:
-                              '${l10n.memoryUsage} ${(stats.memoryUsage / 1024 / 1024).toStringAsFixed(0)} MB',
-                          color: Colors.indigo),
-                    ] else
-                      Text(
-                        '${showRunState ? '$stateLabel · ' : ''}D:${stats.onlineDevices}/${stats.totalDevices} S:${stats.successCount} F:${stats.failureCount}',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: colors.onSurfaceVariant,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                  ],
+        // Bare Row — the host LogConsole header wraps this in a horizontal
+        // scroller, so we don't add our own here (avoids nested scroll views).
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!isSmallScreen) ...[
+              if (showRunState) ...[
+                LabPill(
+                  label:
+                      '${_localized(context, zh: '状态', en: 'State')} $stateLabel',
+                  color: _runStateColor(theme, mqttController.runState),
                 ),
+                const SizedBox(width: 8),
+              ],
+              LabPill(
+                  label: '${l10n.totalDevices} ${stats.totalDevices}',
+                  color: Colors.blue),
+              const SizedBox(width: 8),
+              LabPill(
+                  label: '${l10n.online} ${stats.onlineDevices}',
+                  color: Colors.green),
+              const SizedBox(width: 8),
+              LabPill(
+                  label: '${l10n.statSent} ${stats.totalMessages}',
+                  color: theme.colorScheme.onSurface),
+              const SizedBox(width: 8),
+              LabPill(
+                  label: '${l10n.statSuccess} ${stats.successCount}',
+                  color: Colors.green),
+              const SizedBox(width: 8),
+              LabPill(
+                  label: '${l10n.statFailed} ${stats.failureCount}',
+                  color: theme.colorScheme.error),
+              const SizedBox(width: 8),
+              LabPill(
+                  label:
+                      '${l10n.cpuUsage} ${stats.cpuUsage.toStringAsFixed(1)}%',
+                  color: Colors.purple),
+              const SizedBox(width: 8),
+              LabPill(
+                  label:
+                      '${l10n.memoryUsage} ${(stats.memoryUsage / 1024 / 1024).toStringAsFixed(0)} MB',
+                  color: Colors.indigo),
+            ] else
+              Text(
+                '${showRunState ? '$stateLabel · ' : ''}D:${stats.onlineDevices}/${stats.totalDevices} S:${stats.successCount} F:${stats.failureCount}',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  fontWeight: FontWeight.w700,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ),
+          ],
         );
       },
     );

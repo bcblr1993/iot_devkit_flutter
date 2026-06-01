@@ -148,9 +148,11 @@ class _LogConsoleState extends State<LogConsole> {
       ),
       child: Column(
         children: [
+          // headerContent (live stats) now rides inside the header bar's
+          // middle slot — see _buildHeader — so it's visible whether the dock
+          // is collapsed or expanded. No separate stats strip below the header.
           _buildHeader(context, l10n, visibleLogs),
           if (widget.isExpanded) ...[
-            if (widget.headerContent != null) _buildStatsStrip(context),
             _buildFilterStrip(context),
             if (_isSearchVisible) _buildSearchStrip(context, l10n, visibleLogs),
             Expanded(child: _buildLogBody(context, l10n, visibleLogs)),
@@ -210,11 +212,24 @@ class _LogConsoleState extends State<LogConsole> {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: widget.isExpanded || lastLog == null
-                    ? const SizedBox.shrink()
-                    : _LastLogPreview(
-                        log: lastLog,
-                      ),
+                child: widget.headerContent != null
+                    // Live stats bar (device/online/sent/... pills) injected by
+                    // the simulator panel — shown in both collapsed & expanded
+                    // states, in the empty middle area of the header row.
+                    // Wrapped in a horizontal scroller here so ANY headerContent
+                    // (however wide) never overflows the compact header.
+                    ? Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ClipRect(
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: widget.headerContent!,
+                          ),
+                        ),
+                      )
+                    : (widget.isExpanded || lastLog == null
+                        ? const SizedBox.shrink()
+                        : _LastLogPreview(log: lastLog)),
               ),
               const SizedBox(width: 8),
               Flexible(
@@ -308,31 +323,6 @@ class _LogConsoleState extends State<LogConsole> {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatsStrip(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-
-    return Container(
-      height: 40,
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerLow.withValues(alpha: 0.74),
-        border: Border(
-          top: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.45)),
-        ),
-      ),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: ClipRect(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: widget.headerContent!,
           ),
         ),
       ),
