@@ -1843,6 +1843,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Preset: Shared Attributes'**
   String get subscriptionPresetThingsBoardAttributes;
+
+  /// No description provided for @themeTagSignal.
+  ///
+  /// In en, this message translates to:
+  /// **'default · lime'**
+  String get themeTagSignal;
+
+  /// No description provided for @themeTagPlasma.
+  ///
+  /// In en, this message translates to:
+  /// **'cyberpunk · magenta'**
+  String get themeTagPlasma;
+
+  /// No description provided for @themeTagCobalt.
+  ///
+  /// In en, this message translates to:
+  /// **'tech blue'**
+  String get themeTagCobalt;
+
+  /// No description provided for @themeTagAmber.
+  ///
+  /// In en, this message translates to:
+  /// **'CRT · warm'**
+  String get themeTagAmber;
+
+  /// No description provided for @themeTagMint.
+  ///
+  /// In en, this message translates to:
+  /// **'nature · teal'**
+  String get themeTagMint;
+
+  /// No description provided for @themeTagPaper.
+  ///
+  /// In en, this message translates to:
+  /// **'light · for daylight'**
+  String get themeTagPaper;
+
+  /// No description provided for @themeTagLinen.
+  ///
+  /// In en, this message translates to:
+  /// **'light · warm clay'**
+  String get themeTagLinen;
+
+  /// No description provided for @themeTagSlate.
+  ///
+  /// In en, this message translates to:
+  /// **'light · cool cobalt'**
+  String get themeTagSlate;
 }
 
 class _AppLocalizationsDelegate

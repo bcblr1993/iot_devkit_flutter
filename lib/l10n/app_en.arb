@@ -294,5 +294,13 @@
   "subscriptionAutoAck": "Auto-ACK",
   "subscriptionAutoAckHint": "On a ThingsBoard RPC request, auto-publish an empty response to v1/devices/me/rpc/response/<id>",
   "subscriptionPresetThingsBoardRpc": "Preset: ThingsBoard RPC",
-  "subscriptionPresetThingsBoardAttributes": "Preset: Shared Attributes"
+  "subscriptionPresetThingsBoardAttributes": "Preset: Shared Attributes",
+  "themeTagSignal": "default · lime",
+  "themeTagPlasma": "cyberpunk · magenta",
+  "themeTagCobalt": "tech blue",
+  "themeTagAmber": "CRT · warm",
+  "themeTagMint": "nature · teal",
+  "themeTagPaper": "light · for daylight",
+  "themeTagLinen": "light · warm clay",
+  "themeTagSlate": "light · cool cobalt"
 }

@@ -296,5 +296,13 @@
   "subscriptionAutoAck": "自动回包",
   "subscriptionAutoAckHint": "收到 ThingsBoard RPC 请求时，自动向 v1/devices/me/rpc/response/<id> 回一个空响应",
   "subscriptionPresetThingsBoardRpc": "预设：ThingsBoard RPC",
-  "subscriptionPresetThingsBoardAttributes": "预设：共享属性"
+  "subscriptionPresetThingsBoardAttributes": "预设：共享属性",
+  "themeTagSignal": "默认 · 青柠绿",
+  "themeTagPlasma": "赛博朋克 · 品红",
+  "themeTagCobalt": "科技蓝",
+  "themeTagAmber": "CRT · 暖调",
+  "themeTagMint": "自然 · 青绿",
+  "themeTagPaper": "浅色 · 日光",
+  "themeTagLinen": "浅色 · 暖陶土",
+  "themeTagSlate": "浅色 · 冷钴蓝"
 }

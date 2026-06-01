@@ -173,6 +173,32 @@ class SettingsMenu extends StatelessWidget {
   }
 }
 
+/// Localized descriptor shown after the theme's (brand) name in the picker.
+/// Falls back to the theme's built-in English [LabTheme.tag] for any id that
+/// isn't mapped (defensive — keeps unknown/future themes rendering).
+String _localizedThemeTag(AppLocalizations l10n, LabTheme t) {
+  switch (t.id) {
+    case 'signal':
+      return l10n.themeTagSignal;
+    case 'plasma':
+      return l10n.themeTagPlasma;
+    case 'cobalt':
+      return l10n.themeTagCobalt;
+    case 'amber':
+      return l10n.themeTagAmber;
+    case 'mint':
+      return l10n.themeTagMint;
+    case 'paper':
+      return l10n.themeTagPaper;
+    case 'linen':
+      return l10n.themeTagLinen;
+    case 'slate':
+      return l10n.themeTagSlate;
+    default:
+      return t.tag;
+  }
+}
+
 class _ThemePickerGrid extends StatelessWidget {
   final List<LabTheme> themes;
   final String selectedId;
@@ -186,6 +212,7 @@ class _ThemePickerGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 560),
       child: LayoutBuilder(
@@ -204,7 +231,9 @@ class _ThemePickerGrid extends StatelessWidget {
             itemBuilder: (context, index) {
               final t = themes[index];
               return _ThemeOptionCard(
-                label: '${t.name} · ${t.tag}',
+                // Theme `name` (Signal/Plasma/...) stays as a brand label in
+                // both locales; the descriptor tag is localized.
+                label: '${t.name} · ${_localizedThemeTag(l10n, t)}',
                 colors: [
                   t.colorScheme.primary,
                   t.colorScheme.secondary,
