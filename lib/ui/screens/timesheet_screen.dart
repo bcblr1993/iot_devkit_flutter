@@ -45,32 +45,29 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 980),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildHeader(context, provider),
-                  const SizedBox(height: 12),
-                  _buildQuickEditor(context, provider),
-                  const SizedBox(height: 12),
-                  if (provider.isLoading)
-                    Padding(
-                      padding: const EdgeInsets.all(48),
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                    )
-                  else
-                    _buildDailyLogs(context, provider),
-                ],
-              ),
-            ),
+        // Fill the available width (no centered max-width cap) so the page
+        // adapts to wide windows like the other tools.
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildHeader(context, provider),
+              const SizedBox(height: 12),
+              _buildQuickEditor(context, provider),
+              const SizedBox(height: 12),
+              if (provider.isLoading)
+                Padding(
+                  padding: const EdgeInsets.all(48),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                )
+              else
+                _buildDailyLogs(context, provider),
+            ],
           ),
         ),
       ),
