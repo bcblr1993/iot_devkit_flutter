@@ -882,4 +882,28 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get subscriptionPresetThingsBoardAttributes => '预设：共享属性';
+
+  @override
+  String get themeTagSignal => '默认 · 青柠绿';
+
+  @override
+  String get themeTagPlasma => '赛博朋克 · 品红';
+
+  @override
+  String get themeTagCobalt => '科技蓝';
+
+  @override
+  String get themeTagAmber => 'CRT · 暖调';
+
+  @override
+  String get themeTagMint => '自然 · 青绿';
+
+  @override
+  String get themeTagPaper => '浅色 · 日光';
+
+  @override
+  String get themeTagLinen => '浅色 · 暖陶土';
+
+  @override
+  String get themeTagSlate => '浅色 · 冷钴蓝';
 }

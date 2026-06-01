@@ -898,4 +898,28 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get subscriptionPresetThingsBoardAttributes =>
       'Preset: Shared Attributes';
+
+  @override
+  String get themeTagSignal => 'default · lime';
+
+  @override
+  String get themeTagPlasma => 'cyberpunk · magenta';
+
+  @override
+  String get themeTagCobalt => 'tech blue';
+
+  @override
+  String get themeTagAmber => 'CRT · warm';
+
+  @override
+  String get themeTagMint => 'nature · teal';
+
+  @override
+  String get themeTagPaper => 'light · for daylight';
+
+  @override
+  String get themeTagLinen => 'light · warm clay';
+
+  @override
+  String get themeTagSlate => 'light · cool cobalt';
 }
