@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:iot_devkit/l10n/generated/app_localizations.dart';
+import 'package:iot_devkit/models/subscription_config.dart';
 import 'package:iot_devkit/viewmodels/mqtt_view_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -50,6 +53,85 @@ void main() {
       final config = vm.getCompleteConfig();
       expect(vm.mqttProtocolVersion, 'mqtt_3_1');
       expect(config['mqtt']['protocol_version'], 'mqtt_3_1');
+    });
+
+    group('subscriptions', () {
+      test('default: empty list, disabled', () {
+        expect(vm.subscriptions, isEmpty);
+        expect(vm.subscriptionsEnabled, isFalse);
+        final config = vm.getCompleteConfig();
+        expect(config['subscriptions'], isEmpty);
+        expect(config['subscriptions_enabled'], isFalse);
+      });
+
+      test('updateSubscriptions serializes into getCompleteConfig', () {
+        vm.updateSubscriptions([
+          SubscriptionConfig.thingsboardRpcPreset(),
+          SubscriptionConfig(topic: 'custom/topic', qos: 2),
+        ]);
+        final config = vm.getCompleteConfig();
+        final subs = config['subscriptions'] as List;
+        expect(subs.length, 2);
+        expect(subs[0]['topic'], 'v1/devices/me/rpc/request/+');
+        expect(subs[0]['auto_ack'], isTrue);
+        expect(subs[1]['topic'], 'custom/topic');
+        expect(subs[1]['qos'], 2);
+      });
+
+      test('setSubscriptionsEnabled toggles the master flag', () {
+        expect(vm.subscriptionsEnabled, isFalse);
+        vm.setSubscriptionsEnabled(true);
+        expect(vm.subscriptionsEnabled, isTrue);
+        expect(vm.getCompleteConfig()['subscriptions_enabled'], isTrue);
+      });
+
+      test('legacy profile with subscriptions but no flag auto-enables',
+          () async {
+        // Simulate loading a pre-1.7 profile persisted under the config key:
+        // it has a `subscriptions` array but NO `subscriptions_enabled`.
+        final legacyJson = jsonEncode({
+          'mqtt': {'host': 'legacy.host', 'port': 1883},
+          'subscriptions': [
+            SubscriptionConfig.thingsboardRpcPreset().toJson(),
+          ],
+          // intentionally no 'subscriptions_enabled'
+        });
+        SharedPreferences.setMockInitialValues({
+          'simulator_config': legacyJson,
+        });
+
+        final legacy = MqttViewModel();
+        addTearDown(legacy.dispose);
+        await legacy.loadConfig();
+        // Let the constructor's async _initProfile settle so its late
+        // notifyListeners fires before tearDown disposes the VM.
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+
+        expect(legacy.subscriptions.length, 1);
+        expect(legacy.subscriptionsEnabled, isTrue,
+            reason: 'legacy subs without flag should default to enabled');
+      });
+
+      test('profile with explicit subscriptions_enabled=false stays disabled',
+          () async {
+        final json = jsonEncode({
+          'mqtt': {'host': 'h', 'port': 1883},
+          'subscriptions': [
+            SubscriptionConfig.thingsboardRpcPreset().toJson(),
+          ],
+          'subscriptions_enabled': false,
+        });
+        SharedPreferences.setMockInitialValues({'simulator_config': json});
+
+        final vm2 = MqttViewModel();
+        addTearDown(vm2.dispose);
+        await vm2.loadConfig();
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+
+        expect(vm2.subscriptions.length, 1,
+            reason: 'rows are preserved even when disabled');
+        expect(vm2.subscriptionsEnabled, isFalse);
+      });
     });
 
     testWidgets('startBasicSimulation blocks invalid device range',

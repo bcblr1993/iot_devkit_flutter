@@ -8,7 +8,7 @@ import '../components/form_grid.dart';
 import '../lab/lab.dart';
 import 'subscriptions_section.dart';
 
-class MqttConfigSection extends StatefulWidget {
+class MqttConfigSection extends StatelessWidget {
   final bool isRunning;
   final TextEditingController hostController;
   final TextEditingController portController;
@@ -30,6 +30,13 @@ class MqttConfigSection extends StatefulWidget {
   final List<SubscriptionConfig> subscriptions;
   final ValueChanged<List<SubscriptionConfig>> onSubscriptionsChanged;
 
+  /// Master switch — mirrors the SSL toggle. Drives both visibility of the
+  /// embedded [SubscriptionsSection] and whether subscriptions apply at
+  /// runtime (gated in the controller). Lifted to the view model so the state
+  /// persists across profile switches / restarts.
+  final bool subscriptionsEnabled;
+  final ValueChanged<bool> onSubscriptionsEnabledChanged;
+
   const MqttConfigSection({
     super.key,
     required this.isRunning,
@@ -47,38 +54,9 @@ class MqttConfigSection extends StatefulWidget {
     required this.onProtocolVersionChanged,
     required this.subscriptions,
     required this.onSubscriptionsChanged,
+    required this.subscriptionsEnabled,
+    required this.onSubscriptionsEnabledChanged,
   });
-
-  @override
-  State<MqttConfigSection> createState() => _MqttConfigSectionState();
-}
-
-class _MqttConfigSectionState extends State<MqttConfigSection> {
-  /// Mirrors the SSL/TLS toggle pattern: when off the subscription block is
-  /// hidden entirely. When on, the embedded [SubscriptionsSection] surfaces
-  /// presets + manual add + the row list.
-  ///
-  /// Default-on if the loaded profile already has subscriptions so users
-  /// don't have to re-enable after a profile switch.
-  late bool _showSubscriptions;
-
-  @override
-  void initState() {
-    super.initState();
-    _showSubscriptions = widget.subscriptions.isNotEmpty;
-  }
-
-  @override
-  void didUpdateWidget(covariant MqttConfigSection oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Re-open automatically when a profile switch brings in subscriptions
-    // that weren't there before.
-    if (!_showSubscriptions &&
-        oldWidget.subscriptions.isEmpty &&
-        widget.subscriptions.isNotEmpty) {
-      _showSubscriptions = true;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,24 +67,24 @@ class _MqttConfigSectionState extends State<MqttConfigSection> {
     final tlsBadge = Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: widget.enableSsl
+        color: enableSsl
             ? colorScheme.primary.withValues(alpha: 0.08)
             : colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
-        widget.enableSsl ? 'TLS' : 'TCP',
+        enableSsl ? 'TLS' : 'TCP',
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w700,
-          color: widget.enableSsl
+          color: enableSsl
               ? colorScheme.primary
               : colorScheme.onSurfaceVariant,
         ),
       ),
     );
 
-    final subscriptionCount = widget.subscriptions.length;
+    final subscriptionCount = subscriptions.length;
     final subsCountBadge = subscriptionCount == 0
         ? null
         : Container(
@@ -136,9 +114,9 @@ class _MqttConfigSectionState extends State<MqttConfigSection> {
             minItemWidth: 180,
             children: [
               _buildTextField(
-                  context, l10n.host, widget.hostController, widget.isRunning),
+                  context, l10n.host, hostController, isRunning),
               _buildTextField(
-                  context, l10n.port, widget.portController, widget.isRunning,
+                  context, l10n.port, portController, isRunning,
                   isNumber: true),
               _buildQosField(context, l10n, theme),
               _buildProtocolField(context, l10n),
@@ -146,7 +124,7 @@ class _MqttConfigSectionState extends State<MqttConfigSection> {
           ),
           const SizedBox(height: 10),
           _buildTextField(
-              context, l10n.topic, widget.topicController, widget.isRunning),
+              context, l10n.topic, topicController, isRunning),
           const SizedBox(height: 10),
 
           // — Two compact toggles on a single row: SSL/TLS + Subscriptions —
@@ -157,24 +135,23 @@ class _MqttConfigSectionState extends State<MqttConfigSection> {
             height: 32,
             child: LayoutBuilder(builder: (context, constraints) {
               final sslToggle = _CompactToggle(
-                icon: widget.enableSsl
+                icon: enableSsl
                     ? Icons.lock_outline
                     : Icons.lock_open_outlined,
                 label: l10n.enableSsl,
-                value: widget.enableSsl,
-                onChanged: widget.isRunning ? null : widget.onSslChanged,
+                value: enableSsl,
+                onChanged: isRunning ? null : onSslChanged,
               );
               final subsToggle = _CompactToggle(
                 key: const ValueKey('enable_subscriptions_toggle'),
-                icon: _showSubscriptions
+                icon: subscriptionsEnabled
                     ? Icons.sync_alt
                     : Icons.sync_disabled,
                 label: l10n.enableSubscriptions,
-                value: _showSubscriptions,
+                value: subscriptionsEnabled,
                 trailing: subsCountBadge,
-                onChanged: widget.isRunning
-                    ? null
-                    : (v) => setState(() => _showSubscriptions = v),
+                onChanged:
+                    isRunning ? null : onSubscriptionsEnabledChanged,
               );
               // Narrow viewport → stack via Wrap? Single row is preferred for
               // ≥ 460 px section width, which holds even at the OS min.
@@ -192,25 +169,25 @@ class _MqttConfigSectionState extends State<MqttConfigSection> {
               ]);
             }),
           ),
-          if (widget.enableSsl) ...[
+          if (enableSsl) ...[
             const SizedBox(height: 8),
             FormGrid(
               minItemWidth: 260,
               children: [
                 _buildSslField(context, l10n.caCertificate,
-                    widget.caPathController, widget.isRunning, null, l10n),
+                    caPathController, isRunning, null, l10n),
                 _buildSslField(context, l10n.clientCertificate,
-                    widget.certPathController, widget.isRunning, null, l10n),
+                    certPathController, isRunning, null, l10n),
                 _buildSslField(context, l10n.privateKey,
-                    widget.keyPathController, widget.isRunning, null, l10n),
+                    keyPathController, isRunning, null, l10n),
               ],
             ),
           ],
-          if (_showSubscriptions)
+          if (subscriptionsEnabled)
             SubscriptionsSection(
-              subscriptions: widget.subscriptions,
-              isLocked: widget.isRunning,
-              onChanged: widget.onSubscriptionsChanged,
+              subscriptions: subscriptions,
+              isLocked: isRunning,
+              onChanged: onSubscriptionsChanged,
             ),
         ],
       ),
@@ -221,27 +198,27 @@ class _MqttConfigSectionState extends State<MqttConfigSection> {
       BuildContext context, AppLocalizations l10n, ThemeData theme) {
     return LabSelect<int>(
       label: l10n.qosLabel,
-      value: widget.qos,
+      value: qos,
       items: [
         LabSelectItem(0, l10n.qos0),
         LabSelectItem(1, l10n.qos1),
         LabSelectItem(2, l10n.qos2),
       ],
-      onChanged: widget.isRunning ? null : (v) => widget.onQosChanged(v ?? 0),
+      onChanged: isRunning ? null : (v) => onQosChanged(v ?? 0),
     );
   }
 
   Widget _buildProtocolField(BuildContext context, AppLocalizations l10n) {
     return LabSelect<String>(
       label: l10n.mqttProtocolVersion,
-      value: widget.protocolVersion,
+      value: protocolVersion,
       items: [
         LabSelectItem('mqtt_3_1_1', l10n.mqttProtocolV311),
         LabSelectItem('mqtt_3_1', l10n.mqttProtocolV31),
       ],
-      onChanged: widget.isRunning
+      onChanged: isRunning
           ? null
-          : (v) => widget.onProtocolVersionChanged(v ?? 'mqtt_3_1_1'),
+          : (v) => onProtocolVersionChanged(v ?? 'mqtt_3_1_1'),
     );
   }
 

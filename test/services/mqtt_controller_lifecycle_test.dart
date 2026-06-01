@@ -145,6 +145,45 @@ void main() {
     await controller.stop().timeout(const Duration(milliseconds: 200));
   });
 
+  test('subscriptions_enabled=false suppresses subscriptions even if list set',
+      () async {
+    late _FakeMqttClientManager fakeManager;
+    final controller = MqttController(
+      initializeWorkers: false,
+      stabilizationDelay: Duration.zero,
+      clientManagerFactory: ({
+        required onConnected,
+        required onDisconnected,
+        onConnectionFailed,
+        onReconnectScheduled,
+        required onLog,
+      }) {
+        fakeManager = _FakeMqttClientManager(
+          onConnected: onConnected,
+          onDisconnected: onDisconnected,
+          onConnectionFailed: onConnectionFailed,
+          onReconnectScheduled: onReconnectScheduled,
+          onLog: onLog,
+        );
+        return fakeManager;
+      },
+    );
+    addTearDown(controller.dispose);
+
+    final config = _zeroDeviceConfig();
+    config['subscriptions_enabled'] = false; // master switch OFF
+    config['subscriptions'] = [
+      SubscriptionConfig.thingsboardRpcPreset().toJson(),
+    ];
+
+    await controller.start(config).timeout(const Duration(milliseconds: 500));
+
+    expect(fakeManager.subscriptions, isEmpty,
+        reason: 'master switch off must suppress all subscriptions');
+
+    await controller.stop().timeout(const Duration(milliseconds: 200));
+  });
+
   test('controller without subscriptions key leaves manager list empty',
       () async {
     late _FakeMqttClientManager fakeManager;

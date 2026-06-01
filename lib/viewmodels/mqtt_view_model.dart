@@ -55,6 +55,12 @@ class MqttViewModel extends ChangeNotifier {
   List<SubscriptionConfig> _subscriptions = [];
   List<SubscriptionConfig> get subscriptions => _subscriptions;
 
+  /// Master switch (mirrors the SSL toggle). When false, subscriptions are
+  /// neither shown nor applied at runtime, even if [_subscriptions] is
+  /// non-empty (the rows are kept so toggling back on restores them).
+  bool _subscriptionsEnabled = false;
+  bool get subscriptionsEnabled => _subscriptionsEnabled;
+
   String _format = 'default';
   String get format => _format;
 
@@ -185,6 +191,14 @@ class MqttViewModel extends ChangeNotifier {
     scheduleAutoSave();
   }
 
+  void setSubscriptionsEnabled(bool val) {
+    if (_subscriptionsEnabled != val) {
+      _subscriptionsEnabled = val;
+      notifyListeners();
+      scheduleAutoSave();
+    }
+  }
+
   // --- Logic ---
 
   void scheduleAutoSave() {
@@ -250,6 +264,11 @@ class MqttViewModel extends ChangeNotifier {
 
     // Legacy profiles (pre-1.7) have no `subscriptions` key; default to [].
     _subscriptions = SubscriptionConfig.listFromProfile(config);
+    // `subscriptions_enabled` defaults to "on when there are subscriptions"
+    // for legacy profiles that predate the flag, so existing topics keep
+    // working after upgrade.
+    _subscriptionsEnabled =
+        (config['subscriptions_enabled'] as bool?) ?? _subscriptions.isNotEmpty;
 
     notifyListeners();
   }
@@ -281,6 +300,7 @@ class MqttViewModel extends ChangeNotifier {
       'custom_keys': _basicCustomKeys.map((e) => e.toJson()).toList(),
       'groups': _groups.map((e) => e.toJson()).toList(),
       'subscriptions': _subscriptions.map((e) => e.toJson()).toList(),
+      'subscriptions_enabled': _subscriptionsEnabled,
     };
   }
 

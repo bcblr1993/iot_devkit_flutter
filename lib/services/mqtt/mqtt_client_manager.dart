@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart' show immutable, visibleForTesting;
 import 'package:logging/logging.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
@@ -10,6 +11,28 @@ import '../../models/subscription_config.dart';
 /// payloads are tail-truncated with a "... +N bytes" marker so the log dock
 /// doesn't choke on a 100KB shared-attributes blob.
 const int _inboundPayloadLogLimit = 1024;
+
+/// Outcome of processing one inbound MQTT message. Pure data — produced by
+/// [MqttClientManager.decideInbound] so the receive→log→auto-ack decision can
+/// be unit-tested without a live broker.
+@immutable
+class InboundAction {
+  /// Payload text to surface in the log (already truncated if oversized).
+  final String displayPayload;
+
+  /// Topic to auto-publish an empty `{}` response to, or null when no
+  /// ThingsBoard RPC auto-ack applies to this message.
+  final String? autoAckTopic;
+
+  /// QoS to use for the auto-ack publish (mirrors the matched subscription).
+  final int autoAckQos;
+
+  const InboundAction({
+    required this.displayPayload,
+    this.autoAckTopic,
+    this.autoAckQos = 1,
+  });
+}
 
 class MqttClientManager {
   final _logger = Logger('MqttClientManager');
@@ -61,9 +84,18 @@ class MqttClientManager {
   /// **not** retroactively re-subscribed in this version — restart the
   /// simulation if you change topics while running.
   void setSubscriptions(List<SubscriptionConfig> subs) {
-    _subscriptions = List.unmodifiable(
-      subs.where((s) => s.enabled && s.topic.trim().isNotEmpty),
-    );
+    _subscriptions = List.unmodifiable(effectiveSubscriptions(subs));
+  }
+
+  /// The subscriptions that will actually be sent to the broker: enabled rows
+  /// with a non-blank topic. Disabled or empty-topic rows are dropped.
+  /// Pure + static so it can be unit-tested independently.
+  static List<SubscriptionConfig> effectiveSubscriptions(
+    List<SubscriptionConfig> subs,
+  ) {
+    return subs
+        .where((s) => s.enabled && s.topic.trim().isNotEmpty)
+        .toList(growable: false);
   }
 
   SimulationContext? getClientContext(String clientId) {
@@ -249,43 +281,99 @@ class MqttClientManager {
       final msg = event.payload;
       if (msg is! MqttPublishMessage) continue;
       final raw = MqttPublishPayload.bytesToStringAsString(msg.payload.message);
-      final payload = raw.length > _inboundPayloadLogLimit
-          ? '${raw.substring(0, _inboundPayloadLogLimit)}... +${raw.length - _inboundPayloadLogLimit} bytes'
-          : raw;
-      onLog(
-        '[$clientId] [← ${event.topic}] $payload',
-        'info',
-        tag: _getTag(clientId),
-      );
-      _maybeAutoAck(clientId, client, event.topic);
+      processInbound(clientId, client, event.topic, raw);
     }
   }
 
-  /// If any enabled subscription targets the ThingsBoard RPC request filter
-  /// with `autoAck == true`, publish an empty `{}` to the matching response
-  /// topic on the same client. Logged as `[→ response/<id>]`.
-  /// Failures are non-fatal: we just log a warning.
-  void _maybeAutoAck(
+  /// Process a single inbound message: log it and, when applicable, fire the
+  /// ThingsBoard RPC auto-ack. Split out from the stream handler so tests can
+  /// drive it directly with a topic + payload (no broker, no stream plumbing).
+  @visibleForTesting
+  void processInbound(
     String clientId,
     MqttServerClient client,
-    String requestTopic,
+    String topic,
+    String rawPayload,
   ) {
-    SubscriptionConfig? autoAck;
-    for (final s in _subscriptions) {
-      if (s.autoAck && s.isThingsBoardRpcFilter && s.enabled) {
-        autoAck = s;
+    final action = decideInbound(_subscriptions, topic, rawPayload);
+    onLog(
+      '[$clientId] [← $topic] ${action.displayPayload}',
+      'info',
+      tag: _getTag(clientId),
+    );
+    final ackTopic = action.autoAckTopic;
+    if (ackTopic != null) {
+      _publishAutoAck(clientId, client, ackTopic, _toMqttQos(action.autoAckQos));
+    }
+  }
+
+  /// Pure decision: given the active subscription set, an inbound [topic] and
+  /// its [rawPayload], decide what to log and whether to auto-ack.
+  ///
+  /// Auto-ack fires only when ALL hold:
+  ///   · some subscription is enabled + autoAck + a ThingsBoard RPC filter
+  ///   · the inbound topic maps to a valid RPC response topic
+  ///
+  /// Static + side-effect free → fully unit-testable.
+  @visibleForTesting
+  static InboundAction decideInbound(
+    List<SubscriptionConfig> subscriptions,
+    String topic,
+    String rawPayload,
+  ) {
+    final display = formatInboundPayload(rawPayload);
+
+    SubscriptionConfig? ackSub;
+    for (final s in subscriptions) {
+      if (s.enabled && s.autoAck && s.isThingsBoardRpcFilter) {
+        ackSub = s;
         break;
       }
     }
-    if (autoAck == null) return;
+    if (ackSub == null) {
+      return InboundAction(displayPayload: display);
+    }
 
-    final responseTopic = rpcResponseTopicFor(requestTopic);
-    if (responseTopic == null) return;
+    final responseTopic = rpcResponseTopicFor(topic);
+    if (responseTopic == null) {
+      return InboundAction(displayPayload: display);
+    }
 
+    return InboundAction(
+      displayPayload: display,
+      autoAckTopic: responseTopic,
+      autoAckQos: ackSub.qos,
+    );
+  }
+
+  /// Truncate an oversized payload for the log dock, appending a byte-count
+  /// marker. Payloads within [_inboundPayloadLogLimit] pass through unchanged.
+  @visibleForTesting
+  static String formatInboundPayload(String raw) {
+    if (raw.length <= _inboundPayloadLogLimit) return raw;
+    final kept = raw.substring(0, _inboundPayloadLogLimit);
+    return '$kept... +${raw.length - _inboundPayloadLogLimit} bytes';
+  }
+
+  /// Test seam: when set, auto-ack publishes are routed here instead of
+  /// [MqttServerClient.publishMessage] (which needs a live connection).
+  @visibleForTesting
+  void Function(String topic, MqttQos qos)? debugPublishOverride;
+
+  void _publishAutoAck(
+    String clientId,
+    MqttServerClient client,
+    String responseTopic,
+    MqttQos qos,
+  ) {
     try {
-      final builder = MqttClientPayloadBuilder()..addString('{}');
-      client.publishMessage(responseTopic, _toMqttQos(autoAck.qos),
-          builder.payload!);
+      final override = debugPublishOverride;
+      if (override != null) {
+        override(responseTopic, qos);
+      } else {
+        final builder = MqttClientPayloadBuilder()..addString('{}');
+        client.publishMessage(responseTopic, qos, builder.payload!);
+      }
       onLog(
         '[$clientId] [→ $responseTopic] {} (auto-ack)',
         'info',

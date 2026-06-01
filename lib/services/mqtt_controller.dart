@@ -307,6 +307,12 @@ class MqttController extends ChangeNotifier {
   /// objects so callers (UI / tests) don't have to normalize.
   List<SubscriptionConfig> _readSubscriptionsFromConfig(
       Map<String, dynamic> config) {
+    // Master switch: explicit `false` disables all subscriptions even if the
+    // list is non-empty. A missing flag (legacy profile) is treated as enabled
+    // so pre-1.7 profiles with topics keep subscribing after upgrade.
+    if (config['subscriptions_enabled'] == false) {
+      return const <SubscriptionConfig>[];
+    }
     final raw = config['subscriptions'];
     if (raw is List<SubscriptionConfig>) return raw;
     if (raw is List) {

@@ -241,6 +241,8 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                     // "Enable subscriptions" toggle mirroring the SSL one.
                     subscriptions: vm.subscriptions,
                     onSubscriptionsChanged: vm.updateSubscriptions,
+                    subscriptionsEnabled: vm.subscriptionsEnabled,
+                    onSubscriptionsEnabledChanged: vm.setSubscriptionsEnabled,
                   ),
                 ),
               ),
