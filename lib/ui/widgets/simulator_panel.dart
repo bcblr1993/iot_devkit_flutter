@@ -237,6 +237,12 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                     caPathController: vm.caPathController,
                     certPathController: vm.certPathController,
                     keyPathController: vm.keyPathController,
+                    // Subscriptions live INSIDE this panel now, gated by an
+                    // "Enable subscriptions" toggle mirroring the SSL one.
+                    subscriptions: vm.subscriptions,
+                    onSubscriptionsChanged: vm.updateSubscriptions,
+                    subscriptionsEnabled: vm.subscriptionsEnabled,
+                    onSubscriptionsEnabledChanged: vm.setSubscriptionsEnabled,
                   ),
                 ),
               ),

@@ -1759,6 +1759,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Hide password'**
   String get hidePassword;
+
+  /// No description provided for @enableSubscriptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable subscriptions'**
+  String get enableSubscriptions;
+
+  /// No description provided for @subscriptionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscriptions'**
+  String get subscriptionsTitle;
+
+  /// No description provided for @subscriptionsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Topics every simulated device subscribes to after connecting'**
+  String get subscriptionsHint;
+
+  /// No description provided for @subscriptionsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No subscriptions. Click + or pick a preset.'**
+  String get subscriptionsEmpty;
+
+  /// No description provided for @subscriptionAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add subscription'**
+  String get subscriptionAdd;
+
+  /// No description provided for @subscriptionTopicHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic filter (supports + and #)'**
+  String get subscriptionTopicHint;
+
+  /// No description provided for @subscriptionTopicRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic is required'**
+  String get subscriptionTopicRequired;
+
+  /// No description provided for @subscriptionQos.
+  ///
+  /// In en, this message translates to:
+  /// **'QoS'**
+  String get subscriptionQos;
+
+  /// No description provided for @subscriptionEnabledTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable / disable this subscription'**
+  String get subscriptionEnabledTooltip;
+
+  /// No description provided for @subscriptionDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove subscription'**
+  String get subscriptionDelete;
+
+  /// No description provided for @subscriptionAutoAck.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-ACK'**
+  String get subscriptionAutoAck;
+
+  /// No description provided for @subscriptionAutoAckHint.
+  ///
+  /// In en, this message translates to:
+  /// **'On a ThingsBoard RPC request, auto-publish an empty response to v1/devices/me/rpc/response/<id>'**
+  String get subscriptionAutoAckHint;
+
+  /// No description provided for @subscriptionPresetThingsBoardRpc.
+  ///
+  /// In en, this message translates to:
+  /// **'Preset: ThingsBoard RPC'**
+  String get subscriptionPresetThingsBoardRpc;
+
+  /// No description provided for @subscriptionPresetThingsBoardAttributes.
+  ///
+  /// In en, this message translates to:
+  /// **'Preset: Shared Attributes'**
+  String get subscriptionPresetThingsBoardAttributes;
 }
 
 class _AppLocalizationsDelegate

@@ -839,4 +839,47 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get hidePassword => '隐藏密码';
+
+  @override
+  String get enableSubscriptions => '启用订阅';
+
+  @override
+  String get subscriptionsTitle => '订阅';
+
+  @override
+  String get subscriptionsHint => '所有模拟设备连接成功后会订阅以下 topic';
+
+  @override
+  String get subscriptionsEmpty => '暂无订阅，点击 + 或选择预设';
+
+  @override
+  String get subscriptionAdd => '新增订阅';
+
+  @override
+  String get subscriptionTopicHint => 'Topic 过滤器（支持 + 和 #）';
+
+  @override
+  String get subscriptionTopicRequired => 'Topic 不能为空';
+
+  @override
+  String get subscriptionQos => 'QoS';
+
+  @override
+  String get subscriptionEnabledTooltip => '启用 / 禁用该订阅';
+
+  @override
+  String get subscriptionDelete => '删除该订阅';
+
+  @override
+  String get subscriptionAutoAck => '自动回包';
+
+  @override
+  String get subscriptionAutoAckHint =>
+      '收到 ThingsBoard RPC 请求时，自动向 v1/devices/me/rpc/response/<id> 回一个空响应';
+
+  @override
+  String get subscriptionPresetThingsBoardRpc => '预设：ThingsBoard RPC';
+
+  @override
+  String get subscriptionPresetThingsBoardAttributes => '预设：共享属性';
 }

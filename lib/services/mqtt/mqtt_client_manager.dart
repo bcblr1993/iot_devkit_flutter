@@ -1,15 +1,51 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart' show immutable, visibleForTesting;
 import 'package:logging/logging.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 import '../../models/simulation_context.dart';
+import '../../models/subscription_config.dart';
+
+/// Max characters of inbound MQTT payload to surface in the log; longer
+/// payloads are tail-truncated with a "... +N bytes" marker so the log dock
+/// doesn't choke on a 100KB shared-attributes blob.
+const int _inboundPayloadLogLimit = 1024;
+
+/// Outcome of processing one inbound MQTT message. Pure data — produced by
+/// [MqttClientManager.decideInbound] so the receive→log→auto-ack decision can
+/// be unit-tested without a live broker.
+@immutable
+class InboundAction {
+  /// Payload text to surface in the log (already truncated if oversized).
+  final String displayPayload;
+
+  /// Topic to auto-publish an empty `{}` response to, or null when no
+  /// ThingsBoard RPC auto-ack applies to this message.
+  final String? autoAckTopic;
+
+  /// QoS to use for the auto-ack publish (mirrors the matched subscription).
+  final int autoAckQos;
+
+  const InboundAction({
+    required this.displayPayload,
+    this.autoAckTopic,
+    this.autoAckQos = 1,
+  });
+}
 
 class MqttClientManager {
   final _logger = Logger('MqttClientManager');
 
   // Active Clients
   final Map<String, MqttServerClient> _clients = {};
+
+  // Per-client inbound message stream subscription (so we can cancel cleanly).
+  final Map<String, StreamSubscription> _messageSubscriptions = {};
+
+  // Subscriptions applied to every (re)connected client. Set via
+  // [setSubscriptions] before / during start. Immutable snapshot.
+  List<SubscriptionConfig> _subscriptions = const <SubscriptionConfig>[];
 
   // Reconnection Logic
   final Map<String, Map<String, dynamic>> _clientConfigs = {};
@@ -38,6 +74,29 @@ class MqttClientManager {
   bool get hasActiveClients => _clients.isNotEmpty;
   int get activeClientCount => _clients.length;
   int get trackedClientCount => _clientConfigs.length;
+
+  /// Snapshot of the active subscription list (for diagnostics / tests).
+  List<SubscriptionConfig> get subscriptions =>
+      List.unmodifiable(_subscriptions);
+
+  /// Replace the subscription set. Newly-connected clients (including
+  /// reconnects) will pick up the new list. Already-connected clients are
+  /// **not** retroactively re-subscribed in this version — restart the
+  /// simulation if you change topics while running.
+  void setSubscriptions(List<SubscriptionConfig> subs) {
+    _subscriptions = List.unmodifiable(effectiveSubscriptions(subs));
+  }
+
+  /// The subscriptions that will actually be sent to the broker: enabled rows
+  /// with a non-blank topic. Disabled or empty-topic rows are dropped.
+  /// Pure + static so it can be unit-tested independently.
+  static List<SubscriptionConfig> effectiveSubscriptions(
+    List<SubscriptionConfig> subs,
+  ) {
+    return subs
+        .where((s) => s.enabled && s.topic.trim().isNotEmpty)
+        .toList(growable: false);
+  }
 
   SimulationContext? getClientContext(String clientId) {
     return _clientConfigs[clientId]?['context'] as SimulationContext?;
@@ -173,6 +232,190 @@ class MqttClientManager {
     _reconnectAttempts[clientId] = 0; // Reset retries
     onConnected(clientId, client);
     onLog('[$clientId] Connected', 'success', tag: _getTag(clientId));
+    _applySubscriptionsTo(clientId, client);
+  }
+
+  /// Wire inbound messages to the log channel and register every enabled
+  /// subscription on this freshly-connected client.
+  void _applySubscriptionsTo(String clientId, MqttServerClient client) {
+    // 1) inbound stream listener — replace any stale one for this clientId.
+    unawaited(_messageSubscriptions.remove(clientId)?.cancel());
+    final updates = client.updates;
+    if (updates != null) {
+      _messageSubscriptions[clientId] = updates.listen(
+        (events) => _handleInboundMessages(clientId, client, events),
+        onError: (Object e) => onLog(
+          '[$clientId] Subscription stream error: $e',
+          'warning',
+          tag: _getTag(clientId),
+        ),
+      );
+    }
+
+    // 2) subscribe each enabled topic; failures are logged but non-fatal so
+    //    one bad row can't take down the whole client.
+    for (final sub in _subscriptions) {
+      try {
+        client.subscribe(sub.topic, _toMqttQos(sub.qos));
+        onLog(
+          '[$clientId] Subscribed: ${sub.topic} (QoS ${sub.qos})',
+          'info',
+          tag: _getTag(clientId),
+        );
+      } catch (e) {
+        onLog(
+          '[$clientId] Subscribe failed for ${sub.topic}: $e',
+          'warning',
+          tag: _getTag(clientId),
+        );
+      }
+    }
+  }
+
+  void _handleInboundMessages(
+    String clientId,
+    MqttServerClient client,
+    List<MqttReceivedMessage<MqttMessage?>> events,
+  ) {
+    for (final event in events) {
+      final msg = event.payload;
+      if (msg is! MqttPublishMessage) continue;
+      final raw = MqttPublishPayload.bytesToStringAsString(msg.payload.message);
+      processInbound(clientId, client, event.topic, raw);
+    }
+  }
+
+  /// Process a single inbound message: log it and, when applicable, fire the
+  /// ThingsBoard RPC auto-ack. Split out from the stream handler so tests can
+  /// drive it directly with a topic + payload (no broker, no stream plumbing).
+  @visibleForTesting
+  void processInbound(
+    String clientId,
+    MqttServerClient client,
+    String topic,
+    String rawPayload,
+  ) {
+    final action = decideInbound(_subscriptions, topic, rawPayload);
+    onLog(
+      '[$clientId] [← $topic] ${action.displayPayload}',
+      'info',
+      tag: _getTag(clientId),
+    );
+    final ackTopic = action.autoAckTopic;
+    if (ackTopic != null) {
+      _publishAutoAck(clientId, client, ackTopic, _toMqttQos(action.autoAckQos));
+    }
+  }
+
+  /// Pure decision: given the active subscription set, an inbound [topic] and
+  /// its [rawPayload], decide what to log and whether to auto-ack.
+  ///
+  /// Auto-ack fires only when ALL hold:
+  ///   · some subscription is enabled + autoAck + a ThingsBoard RPC filter
+  ///   · the inbound topic maps to a valid RPC response topic
+  ///
+  /// Static + side-effect free → fully unit-testable.
+  @visibleForTesting
+  static InboundAction decideInbound(
+    List<SubscriptionConfig> subscriptions,
+    String topic,
+    String rawPayload,
+  ) {
+    final display = formatInboundPayload(rawPayload);
+
+    SubscriptionConfig? ackSub;
+    for (final s in subscriptions) {
+      if (s.enabled && s.autoAck && s.isThingsBoardRpcFilter) {
+        ackSub = s;
+        break;
+      }
+    }
+    if (ackSub == null) {
+      return InboundAction(displayPayload: display);
+    }
+
+    final responseTopic = rpcResponseTopicFor(topic);
+    if (responseTopic == null) {
+      return InboundAction(displayPayload: display);
+    }
+
+    return InboundAction(
+      displayPayload: display,
+      autoAckTopic: responseTopic,
+      autoAckQos: ackSub.qos,
+    );
+  }
+
+  /// Truncate an oversized payload for the log dock, appending a byte-count
+  /// marker. Payloads within [_inboundPayloadLogLimit] pass through unchanged.
+  @visibleForTesting
+  static String formatInboundPayload(String raw) {
+    if (raw.length <= _inboundPayloadLogLimit) return raw;
+    final kept = raw.substring(0, _inboundPayloadLogLimit);
+    return '$kept... +${raw.length - _inboundPayloadLogLimit} bytes';
+  }
+
+  /// Test seam: when set, auto-ack publishes are routed here instead of
+  /// [MqttServerClient.publishMessage] (which needs a live connection).
+  @visibleForTesting
+  void Function(String topic, MqttQos qos)? debugPublishOverride;
+
+  void _publishAutoAck(
+    String clientId,
+    MqttServerClient client,
+    String responseTopic,
+    MqttQos qos,
+  ) {
+    try {
+      final override = debugPublishOverride;
+      if (override != null) {
+        override(responseTopic, qos);
+      } else {
+        final builder = MqttClientPayloadBuilder()..addString('{}');
+        client.publishMessage(responseTopic, qos, builder.payload!);
+      }
+      onLog(
+        '[$clientId] [→ $responseTopic] {} (auto-ack)',
+        'info',
+        tag: _getTag(clientId),
+      );
+    } catch (e) {
+      onLog(
+        '[$clientId] Auto-ack publish failed for $responseTopic: $e',
+        'warning',
+        tag: _getTag(clientId),
+      );
+    }
+  }
+
+  /// Maps a ThingsBoard RPC request topic to its response counterpart.
+  ///
+  ///   v1/devices/me/rpc/request/42   → v1/devices/me/rpc/response/42
+  ///
+  /// Returns `null` when:
+  ///   · topic does not start with the RPC request prefix
+  ///   · the id segment is empty
+  ///   · the id segment contains a `/` (multi-segment, invalid for TB RPC)
+  ///
+  /// Exposed as a top-level static so unit tests don't need a live client.
+  static String? rpcResponseTopicFor(String requestTopic) {
+    const prefix = 'v1/devices/me/rpc/request/';
+    if (!requestTopic.startsWith(prefix)) return null;
+    final id = requestTopic.substring(prefix.length);
+    if (id.isEmpty || id.contains('/')) return null;
+    return 'v1/devices/me/rpc/response/$id';
+  }
+
+  static MqttQos _toMqttQos(int qos) {
+    switch (qos) {
+      case 2:
+        return MqttQos.exactlyOnce;
+      case 1:
+        return MqttQos.atLeastOnce;
+      case 0:
+      default:
+        return MqttQos.atMostOnce;
+    }
   }
 
   void _handleConnectionFailure(String clientId, dynamic error) {
@@ -186,6 +429,7 @@ class MqttClientManager {
     // Identity Check: Only handle if THIS client is the currently active one
     if (_clients[clientId] == client) {
       _clients.remove(clientId);
+      unawaited(_messageSubscriptions.remove(clientId)?.cancel());
       onDisconnected(clientId);
       onLog('[$clientId] Disconnected, will retry...', 'warning',
           tag: _getTag(clientId));
@@ -264,6 +508,12 @@ class MqttClientManager {
     _reconnectTimers.clear();
     _reconnectAttempts.clear();
     _clientConfigs.clear();
+
+    // 1b. Cancel every inbound message stream subscription
+    for (final sub in _messageSubscriptions.values) {
+      unawaited(sub.cancel());
+    }
+    _messageSubscriptions.clear();
 
     // 2. Disconnect clients safely
     // Create a copy of values to avoid concurrent modification issues during iteration

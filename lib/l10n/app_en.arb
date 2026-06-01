@@ -280,5 +280,19 @@
   "certEndpointYes": "Yes",
   "certEndpointNo": "No",
   "showPassword": "Show password",
-  "hidePassword": "Hide password"
+  "hidePassword": "Hide password",
+  "enableSubscriptions": "Enable subscriptions",
+  "subscriptionsTitle": "Subscriptions",
+  "subscriptionsHint": "Topics every simulated device subscribes to after connecting",
+  "subscriptionsEmpty": "No subscriptions. Click + or pick a preset.",
+  "subscriptionAdd": "Add subscription",
+  "subscriptionTopicHint": "Topic filter (supports + and #)",
+  "subscriptionTopicRequired": "Topic is required",
+  "subscriptionQos": "QoS",
+  "subscriptionEnabledTooltip": "Enable / disable this subscription",
+  "subscriptionDelete": "Remove subscription",
+  "subscriptionAutoAck": "Auto-ACK",
+  "subscriptionAutoAckHint": "On a ThingsBoard RPC request, auto-publish an empty response to v1/devices/me/rpc/response/<id>",
+  "subscriptionPresetThingsBoardRpc": "Preset: ThingsBoard RPC",
+  "subscriptionPresetThingsBoardAttributes": "Preset: Shared Attributes"
 }

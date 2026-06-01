@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:iot_devkit/models/simulation_context.dart';
+import 'package:iot_devkit/models/subscription_config.dart';
 import 'package:iot_devkit/services/mqtt/mqtt_client_manager.dart';
 import 'package:iot_devkit/services/mqtt_controller.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
@@ -99,6 +100,122 @@ void main() {
     expect(controller.runStateMessage, contains('1/2'));
 
     await controller.stop().timeout(const Duration(milliseconds: 500));
+  });
+
+  test('subscriptions are pushed to client manager before any connect attempt',
+      () async {
+    late _FakeMqttClientManager fakeManager;
+    final controller = MqttController(
+      initializeWorkers: false,
+      stabilizationDelay: Duration.zero,
+      clientManagerFactory: ({
+        required onConnected,
+        required onDisconnected,
+        onConnectionFailed,
+        onReconnectScheduled,
+        required onLog,
+      }) {
+        fakeManager = _FakeMqttClientManager(
+          onConnected: onConnected,
+          onDisconnected: onDisconnected,
+          onConnectionFailed: onConnectionFailed,
+          onReconnectScheduled: onReconnectScheduled,
+          onLog: onLog,
+        );
+        return fakeManager;
+      },
+    );
+    addTearDown(controller.dispose);
+
+    final config = _zeroDeviceConfig();
+    config['subscriptions'] = [
+      SubscriptionConfig.thingsboardRpcPreset().toJson(),
+      // Disabled rows must be filtered out by MqttClientManager.setSubscriptions
+      SubscriptionConfig(topic: 'disabled/topic', enabled: false).toJson(),
+      // Empty topic also dropped
+      SubscriptionConfig(topic: '   ').toJson(),
+    ];
+
+    await controller.start(config).timeout(const Duration(milliseconds: 500));
+
+    expect(fakeManager.subscriptions.length, 1);
+    expect(fakeManager.subscriptions.first.topic,
+        'v1/devices/me/rpc/request/+');
+
+    await controller.stop().timeout(const Duration(milliseconds: 200));
+  });
+
+  test('subscriptions_enabled=false suppresses subscriptions even if list set',
+      () async {
+    late _FakeMqttClientManager fakeManager;
+    final controller = MqttController(
+      initializeWorkers: false,
+      stabilizationDelay: Duration.zero,
+      clientManagerFactory: ({
+        required onConnected,
+        required onDisconnected,
+        onConnectionFailed,
+        onReconnectScheduled,
+        required onLog,
+      }) {
+        fakeManager = _FakeMqttClientManager(
+          onConnected: onConnected,
+          onDisconnected: onDisconnected,
+          onConnectionFailed: onConnectionFailed,
+          onReconnectScheduled: onReconnectScheduled,
+          onLog: onLog,
+        );
+        return fakeManager;
+      },
+    );
+    addTearDown(controller.dispose);
+
+    final config = _zeroDeviceConfig();
+    config['subscriptions_enabled'] = false; // master switch OFF
+    config['subscriptions'] = [
+      SubscriptionConfig.thingsboardRpcPreset().toJson(),
+    ];
+
+    await controller.start(config).timeout(const Duration(milliseconds: 500));
+
+    expect(fakeManager.subscriptions, isEmpty,
+        reason: 'master switch off must suppress all subscriptions');
+
+    await controller.stop().timeout(const Duration(milliseconds: 200));
+  });
+
+  test('controller without subscriptions key leaves manager list empty',
+      () async {
+    late _FakeMqttClientManager fakeManager;
+    final controller = MqttController(
+      initializeWorkers: false,
+      stabilizationDelay: Duration.zero,
+      clientManagerFactory: ({
+        required onConnected,
+        required onDisconnected,
+        onConnectionFailed,
+        onReconnectScheduled,
+        required onLog,
+      }) {
+        fakeManager = _FakeMqttClientManager(
+          onConnected: onConnected,
+          onDisconnected: onDisconnected,
+          onConnectionFailed: onConnectionFailed,
+          onReconnectScheduled: onReconnectScheduled,
+          onLog: onLog,
+        );
+        return fakeManager;
+      },
+    );
+    addTearDown(controller.dispose);
+
+    // Legacy config — no `subscriptions` key at all (pre-1.7 profile shape).
+    await controller
+        .start(_zeroDeviceConfig())
+        .timeout(const Duration(milliseconds: 500));
+
+    expect(fakeManager.subscriptions, isEmpty);
+    await controller.stop().timeout(const Duration(milliseconds: 200));
   });
 
   test('stop timeout still resets state to idle', () async {
@@ -201,6 +318,7 @@ class _FakeMqttClientManager extends MqttClientManager {
   final Map<String, MqttServerClient> _clients = {};
   final Set<String> _trackedClientIds = {};
   final Map<String, String> protocolVersions = {};
+  List<SubscriptionConfig> _capturedSubscriptions = const [];
 
   _FakeMqttClientManager({
     required super.onConnected,
@@ -226,6 +344,18 @@ class _FakeMqttClientManager extends MqttClientManager {
     void Function(String clientId, MqttServerClient client) action,
   ) {
     _clients.forEach(action);
+  }
+
+  @override
+  List<SubscriptionConfig> get subscriptions => _capturedSubscriptions;
+
+  @override
+  void setSubscriptions(List<SubscriptionConfig> subs) {
+    // Mirror the real manager: filter disabled / blank-topic rows so the
+    // captured list reflects what would actually be sent to broker.
+    _capturedSubscriptions = List.unmodifiable(
+      subs.where((s) => s.enabled && s.topic.trim().isNotEmpty),
+    );
   }
 
   @override

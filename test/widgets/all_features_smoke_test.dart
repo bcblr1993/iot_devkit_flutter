@@ -45,6 +45,38 @@ void main() {
     await _pressButton(tester, 'Close', last: true);
   });
 
+  testWidgets(
+      'subscriptions smoke: enable toggle + RPC preset reveals row with Auto-ACK',
+      (tester) async {
+    await _pumpSmokeApp(tester);
+
+    // Flip the "Enable subscriptions" switch inside the MQTT broker panel
+    // (mirrors the SSL/TLS toggle pattern). Tap the embedded Switch directly
+    // — tapping the label text alone isn't a reliable hit target.
+    final enableToggle =
+        find.byKey(const ValueKey('enable_subscriptions_toggle'));
+    expect(enableToggle, findsOneWidget);
+    await tester.tap(find.descendant(of: enableToggle, matching: find.byType(Switch)));
+    await tester.pumpAndSettle();
+
+    // Tap the "ThingsBoard RPC" preset icon (its tooltip identifies it).
+    await tester.tap(find.byTooltip('Preset: ThingsBoard RPC').first);
+    await tester.pumpAndSettle();
+
+    // Row appears with the canonical RPC filter and Auto-ACK checkbox.
+    expect(find.text('v1/devices/me/rpc/request/+'), findsWidgets);
+    expect(find.text('Auto-ACK'), findsWidgets);
+
+    // Re-tap is a no-op (presets de-duplicate by topic).
+    await tester.tap(find.byTooltip('Preset: ThingsBoard RPC').first);
+    await tester.pumpAndSettle();
+    expect(
+      find.text('v1/devices/me/rpc/request/+'),
+      findsWidgets,
+      reason: 'preset must not duplicate when topic already present',
+    );
+  });
+
   testWidgets('timestamp smoke: converts in both directions', (tester) async {
     await _pumpSmokeApp(tester);
     await _selectRailDestination(tester, 1);
