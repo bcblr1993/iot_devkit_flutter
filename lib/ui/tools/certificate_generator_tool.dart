@@ -78,139 +78,136 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
       color: theme.colorScheme.surface,
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1180),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(context, l10n),
-                const SizedBox(height: 18),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: LabSection(
-                    title: l10n.certUsage,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        FormGrid(
-                          minItemWidth: 320,
-                          children: [
-                            _buildUsageSelector(context, l10n),
-                            _buildFormatSelector(context, l10n),
-                            _buildPasswordField(context, l10n),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        _buildHint(context, l10n.certOpenSslHint),
-                      ],
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: LabSection(
-                    title: l10n.certSanAddresses,
-                    trailing: Text(
-                      l10n.certLocalDefaults,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        FormGrid(
-                          minItemWidth: 360,
-                          children: [
-                            LabField(
-                              label: l10n.certSanAddresses,
-                              controller: _addressesController,
-                              minLines: 5,
-                              maxLines: 8,
-                              hintText: l10n.certSanHint,
-                              errorText: parsed.hasInvalid
-                                  ? '${l10n.certInvalidAddresses}: ${parsed.invalidTokens.join(', ')}'
-                                  : null,
-                            ),
-                            LabField(
-                              label: l10n.certHostsIp,
-                              controller: _hostsIpController,
-                              hintText: l10n.certHostsIpHint,
-                              errorText: _hostsIpError(l10n),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        _buildParsedAddressChips(context, l10n, parsed),
-                      ],
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: LabSection(
-                    title: l10n.certOutputPreview,
-                    child: _buildOutputPreview(context, l10n, plan),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: LabSection(
-                    title: l10n.certEndpointVerify,
-                    child: _buildEndpointVerifier(context, l10n),
-                  ),
-                ),
-                Row(
+        // Fill the available width (no centered max-width cap) so the page
+        // adapts to wide windows like the other tools.
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(context, l10n),
+            const SizedBox(height: 18),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: LabSection(
+                title: l10n.certUsage,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: LabButton(
-                        label: l10n.certGenerateZip,
-                        icon: Icons.archive_outlined,
-                        variant: LabButtonVariant.primary,
-                        size: LabButtonSize.lg,
-                        fullWidth: true,
-                        loading: _isGenerating,
-                        onPressed: validationError == null && !_isGenerating
-                            ? _generateZip
-                            : null,
-                      ),
+                    FormGrid(
+                      minItemWidth: 320,
+                      children: [
+                        _buildUsageSelector(context, l10n),
+                        _buildFormatSelector(context, l10n),
+                        _buildPasswordField(context, l10n),
+                      ],
                     ),
-                    if (_lastResult != null) ...[
-                      const SizedBox(width: 12),
-                      LabButton(
-                        label: l10n.certCopyConfig,
-                        icon: Icons.copy_all_outlined,
-                        size: LabButtonSize.lg,
-                        onPressed: _copyGeneratedConfig,
-                      ),
-                      const SizedBox(width: 12),
-                      LabButton(
-                        label: l10n.certOpenFolder,
-                        icon: Icons.folder_open_outlined,
-                        size: LabButtonSize.lg,
-                        onPressed: _openGeneratedFolder,
-                      ),
-                    ],
+                    const SizedBox(height: 12),
+                    _buildHint(context, l10n.certOpenSslHint),
                   ],
                 ),
-                if (validationError != null) ...[
-                  const SizedBox(height: 10),
-                  Text(
-                    validationError,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.error,
-                      fontWeight: FontWeight.w600,
-                    ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: LabSection(
+                title: l10n.certSanAddresses,
+                trailing: Text(
+                  l10n.certLocalDefaults,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
-                ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    FormGrid(
+                      minItemWidth: 360,
+                      children: [
+                        LabField(
+                          label: l10n.certSanAddresses,
+                          controller: _addressesController,
+                          minLines: 5,
+                          maxLines: 8,
+                          hintText: l10n.certSanHint,
+                          errorText: parsed.hasInvalid
+                              ? '${l10n.certInvalidAddresses}: ${parsed.invalidTokens.join(', ')}'
+                              : null,
+                        ),
+                        LabField(
+                          label: l10n.certHostsIp,
+                          controller: _hostsIpController,
+                          hintText: l10n.certHostsIpHint,
+                          errorText: _hostsIpError(l10n),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    _buildParsedAddressChips(context, l10n, parsed),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: LabSection(
+                title: l10n.certOutputPreview,
+                child: _buildOutputPreview(context, l10n, plan),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: LabSection(
+                title: l10n.certEndpointVerify,
+                child: _buildEndpointVerifier(context, l10n),
+              ),
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: LabButton(
+                    label: l10n.certGenerateZip,
+                    icon: Icons.archive_outlined,
+                    variant: LabButtonVariant.primary,
+                    size: LabButtonSize.lg,
+                    fullWidth: true,
+                    loading: _isGenerating,
+                    onPressed: validationError == null && !_isGenerating
+                        ? _generateZip
+                        : null,
+                  ),
+                ),
                 if (_lastResult != null) ...[
-                  const SizedBox(height: 12),
-                  _buildGeneratedPath(context, l10n, _lastResult!.zipPath),
+                  const SizedBox(width: 12),
+                  LabButton(
+                    label: l10n.certCopyConfig,
+                    icon: Icons.copy_all_outlined,
+                    size: LabButtonSize.lg,
+                    onPressed: _copyGeneratedConfig,
+                  ),
+                  const SizedBox(width: 12),
+                  LabButton(
+                    label: l10n.certOpenFolder,
+                    icon: Icons.folder_open_outlined,
+                    size: LabButtonSize.lg,
+                    onPressed: _openGeneratedFolder,
+                  ),
                 ],
               ],
             ),
-          ),
+            if (validationError != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                validationError,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.error,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+            if (_lastResult != null) ...[
+              const SizedBox(height: 12),
+              _buildGeneratedPath(context, l10n, _lastResult!.zipPath),
+            ],
+          ],
         ),
       ),
     );
