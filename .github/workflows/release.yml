@@ -35,7 +35,13 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      # Run the full test suite only on Linux: golden baselines are rendered
+      # on Ubuntu (see CLAUDE.md), so test/golden/* mismatches on macOS/Windows
+      # runners due to cross-OS font antialiasing — running them there would
+      # fail the release for non-regressions. Visual regression is already
+      # gated per-PR by ui_check.yml on Ubuntu.
       - name: Run Tests
+        if: matrix.os == 'ubuntu-latest'
         run: flutter test
 
       - name: Set Build Date and Version
