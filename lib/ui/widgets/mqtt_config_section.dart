@@ -128,67 +128,61 @@ class MqttConfigSection extends StatelessWidget {
           const SizedBox(height: 10),
 
           // — Two compact toggles on a single row: SSL/TLS + Subscriptions —
-          // Combining them saves ~40 px of vertical space vs. two stacked
-          // SwitchListTiles, which is what lets the panel still fit at the
-          // 800×600 minimum window size.
-          SizedBox(
-            height: 32,
-            child: LayoutBuilder(builder: (context, constraints) {
-              final sslToggle = _CompactToggle(
-                icon: enableSsl
-                    ? Icons.lock_outline
-                    : Icons.lock_open_outlined,
-                label: l10n.enableSsl,
-                value: enableSsl,
-                onChanged: isRunning ? null : onSslChanged,
-              );
-              final subsToggle = _CompactToggle(
-                key: const ValueKey('enable_subscriptions_toggle'),
-                icon: subscriptionsEnabled
-                    ? Icons.sync_alt
-                    : Icons.sync_disabled,
-                label: l10n.enableSubscriptions,
-                value: subscriptionsEnabled,
-                trailing: subsCountBadge,
-                onChanged:
-                    isRunning ? null : onSubscriptionsEnabledChanged,
-              );
-              // Narrow viewport → stack via Wrap? Single row is preferred for
-              // ≥ 460 px section width, which holds even at the OS min.
-              if (constraints.maxWidth < 460) {
-                return Row(children: [
-                  Expanded(child: sslToggle),
-                  const SizedBox(width: 8),
-                  Expanded(child: subsToggle),
-                ]);
-              }
-              return Row(children: [
-                Expanded(child: sslToggle),
-                const SizedBox(width: 16),
-                Expanded(child: subsToggle),
-              ]);
-            }),
-          ),
+          // Combining them saves vertical space vs. two stacked SwitchListTiles.
+          // Use the row's natural height (the adaptive Switch is taller than
+          // 32 px on macOS — a fixed height clipped it and overlapped the SSL
+          // labels below).
+          LayoutBuilder(builder: (context, constraints) {
+            final sslToggle = _CompactToggle(
+              icon: enableSsl ? Icons.lock_outline : Icons.lock_open_outlined,
+              label: l10n.enableSsl,
+              value: enableSsl,
+              onChanged: isRunning ? null : onSslChanged,
+            );
+            final subsToggle = _CompactToggle(
+              key: const ValueKey('enable_subscriptions_toggle'),
+              icon: subscriptionsEnabled ? Icons.sync_alt : Icons.sync_disabled,
+              label: l10n.enableSubscriptions,
+              value: subscriptionsEnabled,
+              trailing: subsCountBadge,
+              onChanged: isRunning ? null : onSubscriptionsEnabledChanged,
+            );
+            return Row(children: [
+              Expanded(child: sslToggle),
+              SizedBox(width: constraints.maxWidth < 460 ? 8 : 16),
+              Expanded(child: subsToggle),
+            ]);
+          }),
           if (enableSsl) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             FormGrid(
               minItemWidth: 260,
               children: [
-                _buildSslField(context, l10n.caCertificate,
-                    caPathController, isRunning, null, l10n),
+                _buildSslField(context, l10n.caCertificate, caPathController,
+                    isRunning, null, l10n),
                 _buildSslField(context, l10n.clientCertificate,
                     certPathController, isRunning, null, l10n),
-                _buildSslField(context, l10n.privateKey,
-                    keyPathController, isRunning, null, l10n),
+                _buildSslField(context, l10n.privateKey, keyPathController,
+                    isRunning, null, l10n),
               ],
             ),
           ],
-          if (subscriptionsEnabled)
+          if (subscriptionsEnabled) ...[
+            // Clear separation from the toggle row / SSL fields above so the
+            // subscription toolbar doesn't butt against them.
+            const SizedBox(height: 12),
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 12),
             SubscriptionsSection(
               subscriptions: subscriptions,
               isLocked: isRunning,
               onChanged: onSubscriptionsChanged,
             ),
+          ],
         ],
       ),
     );
