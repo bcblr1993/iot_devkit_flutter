@@ -458,6 +458,9 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
       children: [
         FormGrid(
           minItemWidth: 240,
+          // Bottom-align so the (label-less) verify button lines up with the
+          // host/port input boxes instead of floating up at the label row.
+          crossAxisAlignment: WrapCrossAlignment.end,
           children: [
             LabField(
               label: l10n.certEndpointHost,
@@ -477,18 +480,15 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
                       : null,
               onChanged: (_) => setState(() => _endpointResult = null),
             ),
-            Align(
-              alignment: Alignment.bottomLeft,
-              child: LabButton(
-                label: l10n.certEndpointVerifyAction,
-                icon: Icons.travel_explore_outlined,
-                loading: _isVerifyingEndpoint,
-                variant: LabButtonVariant.primary,
-                size: LabButtonSize.lg,
-                fullWidth: true,
-                onPressed:
-                    canVerify && !_isVerifyingEndpoint ? _verifyEndpoint : null,
-              ),
+            LabButton(
+              label: l10n.certEndpointVerifyAction,
+              icon: Icons.travel_explore_outlined,
+              loading: _isVerifyingEndpoint,
+              variant: LabButtonVariant.primary,
+              size: LabButtonSize.md,
+              fullWidth: true,
+              onPressed:
+                  canVerify && !_isVerifyingEndpoint ? _verifyEndpoint : null,
             ),
           ],
         ),

@@ -278,7 +278,10 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
                 );
               }
 
+              // Bottom-align so the button sits level with the hours input
+              // box (the field has a label above, the button doesn't).
               return Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   SizedBox(width: 180, child: hoursField),
                   const Spacer(),
