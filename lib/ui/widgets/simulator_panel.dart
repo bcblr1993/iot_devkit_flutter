@@ -700,63 +700,79 @@ class _SimulatorPanelState extends State<SimulatorPanel>
         mqttController.statisticsCollector,
       ]),
       builder: (context, _) {
+        final tokens = LabTokens.of(context);
         final stats = mqttController.statisticsCollector;
         final showRunState = mqttController.runState != SimulationRunState.idle;
         final stateLabel = _runStateLabel(context, mqttController.runState);
-        // Bare Row — the host LogConsole header wraps this in a horizontal
-        // scroller, so we don't add our own here (avoids nested scroll views).
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (!isSmallScreen) ...[
-              if (showRunState) ...[
-                LabPill(
-                  label:
-                      '${_localized(context, zh: '状态', en: 'State')} $stateLabel',
-                  color: _runStateColor(theme, mqttController.runState),
-                ),
-                const SizedBox(width: 8),
-              ],
-              LabPill(
-                  label: '${l10n.totalDevices} ${stats.totalDevices}',
-                  color: Colors.blue),
-              const SizedBox(width: 8),
-              LabPill(
-                  label: '${l10n.online} ${stats.onlineDevices}',
-                  color: Colors.green),
-              const SizedBox(width: 8),
-              LabPill(
-                  label: '${l10n.statSent} ${stats.totalMessages}',
-                  color: theme.colorScheme.onSurface),
-              const SizedBox(width: 8),
-              LabPill(
-                  label: '${l10n.statSuccess} ${stats.successCount}',
-                  color: Colors.green),
-              const SizedBox(width: 8),
-              LabPill(
-                  label: '${l10n.statFailed} ${stats.failureCount}',
-                  color: theme.colorScheme.error),
-              const SizedBox(width: 8),
-              LabPill(
-                  label:
-                      '${l10n.cpuUsage} ${stats.cpuUsage.toStringAsFixed(1)}%',
-                  color: Colors.purple),
-              const SizedBox(width: 8),
-              LabPill(
-                  label:
-                      '${l10n.memoryUsage} ${(stats.memoryUsage / 1024 / 1024).toStringAsFixed(0)} MB',
-                  color: Colors.indigo),
-            ] else
-              Text(
-                '${showRunState ? '$stateLabel · ' : ''}D:${stats.onlineDevices}/${stats.totalDevices} S:${stats.successCount} F:${stats.failureCount}',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: colors.onSurfaceVariant,
-                  fontWeight: FontWeight.w700,
-                ),
-                overflow: TextOverflow.ellipsis,
+
+        // Compact, unified metric strip (label muted + value emphasized).
+        // Only success/failure carry a semantic accent; everything else stays
+        // neutral so the bar reads as one consistent dashboard rather than a
+        // rainbow of bordered pills. The host LogConsole header wraps this in
+        // a horizontal scroller, so overflow scrolls instead of being clipped.
+        if (isSmallScreen) {
+          return Text(
+            '${showRunState ? '$stateLabel · ' : ''}D:${stats.onlineDevices}/${stats.totalDevices} S:${stats.successCount} F:${stats.failureCount}',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: colors.onSurfaceVariant,
+              fontWeight: FontWeight.w700,
+            ),
+            overflow: TextOverflow.ellipsis,
+          );
+        }
+
+        final segments = <Widget>[
+          if (showRunState)
+            _StatSegment(
+              label: _localized(context, zh: '状态', en: 'State'),
+              value: stateLabel,
+              valueColor: _runStateColor(theme, mqttController.runState),
+            ),
+          _StatSegment(label: l10n.totalDevices, value: '${stats.totalDevices}'),
+          _StatSegment(
+            label: l10n.online,
+            value: '${stats.onlineDevices}',
+            valueColor: stats.onlineDevices > 0 ? tokens.ok : null,
+          ),
+          _StatSegment(label: l10n.statSent, value: '${stats.totalMessages}'),
+          _StatSegment(
+            label: l10n.statSuccess,
+            value: '${stats.successCount}',
+            valueColor: stats.successCount > 0 ? tokens.ok : null,
+          ),
+          _StatSegment(
+            label: l10n.statFailed,
+            value: '${stats.failureCount}',
+            valueColor: stats.failureCount > 0 ? colors.error : null,
+          ),
+          _StatSegment(
+            label: l10n.cpuUsage,
+            value: '${stats.cpuUsage.toStringAsFixed(1)}%',
+          ),
+          _StatSegment(
+            label: l10n.memoryUsage,
+            value:
+                '${(stats.memoryUsage / 1024 / 1024).toStringAsFixed(0)} MB',
+          ),
+        ];
+
+        // Interleave thin dividers between segments.
+        final children = <Widget>[];
+        for (var i = 0; i < segments.length; i++) {
+          if (i > 0) {
+            children.add(Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Container(
+                width: 1,
+                height: 12,
+                color: colors.outlineVariant.withValues(alpha: 0.6),
               ),
-          ],
-        );
+            ));
+          }
+          children.add(segments[i]);
+        }
+
+        return Row(mainAxisSize: MainAxisSize.min, children: children);
       },
     );
   }
@@ -796,5 +812,49 @@ class _SimulatorPanelState extends State<SimulatorPanel>
     required String en,
   }) {
     return Localizations.localeOf(context).languageCode == 'zh' ? zh : en;
+  }
+}
+
+/// One metric in the log-dock status strip: a muted label + an emphasized
+/// (mono) value. Unified neutral styling — callers pass [valueColor] only for
+/// semantically meaningful values (online/success → ok, failure → error).
+class _StatSegment extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? valueColor;
+
+  const _StatSegment({
+    required this.label,
+    required this.value,
+    this.valueColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final tokens = LabTokens.of(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontFamily: tokens.monoFamily,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: valueColor ?? theme.colorScheme.onSurface,
+          ),
+        ),
+      ],
+    );
   }
 }
