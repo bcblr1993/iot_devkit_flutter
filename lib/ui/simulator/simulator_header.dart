@@ -1,8 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../services/mqtt_controller.dart';
 import '../../services/profile_service.dart';
 import '../lab/lab.dart';
+
+/// Map the controller's [SimulationRunState] onto the design-system
+/// [LabConnectionState]. The two enums are name-for-name identical, so this
+/// is a pure presentation adapter — no business logic lives here.
+LabConnectionState _toLabState(SimulationRunState s) => switch (s) {
+      SimulationRunState.idle => LabConnectionState.idle,
+      SimulationRunState.starting => LabConnectionState.starting,
+      SimulationRunState.connecting => LabConnectionState.connecting,
+      SimulationRunState.running => LabConnectionState.running,
+      SimulationRunState.reconnecting => LabConnectionState.reconnecting,
+      SimulationRunState.partialRunning => LabConnectionState.partialRunning,
+      SimulationRunState.stopping => LabConnectionState.stopping,
+      SimulationRunState.failed => LabConnectionState.failed,
+    };
 
 class SimulatorHeader extends StatelessWidget {
   final bool isProfileSidebarVisible;
@@ -44,7 +60,18 @@ class SimulatorHeader extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        if (currentProfileId != null)
+        // Live connection state machine pill (idle → running → failed …).
+        // Reads MqttController.runState; only rebuilds when the state flips.
+        Builder(
+          builder: (context) {
+            final state = context.select<MqttController, SimulationRunState>(
+              (c) => c.runState,
+            );
+            return LabStatePill(state: _toLabState(state));
+          },
+        ),
+        if (currentProfileId != null) ...[
+          const SizedBox(width: 12),
           Chip(
             label: FutureBuilder<String?>(
               future: _profileName(currentProfileId!),
@@ -56,6 +83,7 @@ class SimulatorHeader extends StatelessWidget {
             deleteIcon: const Icon(Icons.close, size: 16),
             visualDensity: VisualDensity.compact,
           ),
+        ],
       ],
     );
   }

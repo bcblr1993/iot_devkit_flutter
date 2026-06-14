@@ -346,6 +346,13 @@ class _SimulatorPanelState extends State<SimulatorPanel>
           children: [
             Padding(
               padding: const EdgeInsets.only(bottom: 16),
+              child: LabInlineAlert(
+                kind: LabStatus.info,
+                child: Text(l10n.simBasicHint),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
               child: LabSection(
                 title: l10n.deviceConfig,
                 trailing: LabPill(
@@ -443,10 +450,22 @@ class _SimulatorPanelState extends State<SimulatorPanel>
       child: Form(
         key: vm.formKeyAdvanced,
         autovalidateMode: AutovalidateMode.onUserInteraction,
-        child: GroupsManager(
-          groups: vm.groups,
-          isLocked: isRunning,
-          onGroupsChanged: vm.updateGroups,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: LabInlineAlert(
+                kind: LabStatus.warn,
+                child: Text(l10n.simAdvancedHint),
+              ),
+            ),
+            GroupsManager(
+              groups: vm.groups,
+              isLocked: isRunning,
+              onGroupsChanged: vm.updateGroups,
+            ),
+          ],
         ),
       ),
     );

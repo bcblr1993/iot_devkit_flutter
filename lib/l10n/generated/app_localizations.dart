@@ -194,6 +194,18 @@ abstract class AppLocalizations {
   /// **'Device Configuration'**
   String get deviceConfig;
 
+  /// No description provided for @simBasicHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic mode generates a batch of sequential devices from a single template.'**
+  String get simBasicHint;
+
+  /// No description provided for @simAdvancedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced groups override Basic settings — each group defines its own devices and payload.'**
+  String get simAdvancedHint;
+
   /// No description provided for @startIndex.
   ///
   /// In en, this message translates to:
@@ -355,6 +367,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ready'**
   String get ready;
+
+  /// No description provided for @logNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching logs'**
+  String get logNoMatch;
+
+  /// No description provided for @logClearFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get logClearFilter;
 
   /// No description provided for @groupManagement.
   ///
@@ -1340,6 +1364,30 @@ abstract class AppLocalizations {
   /// **'Mem'**
   String get memoryUsage;
 
+  /// No description provided for @perfSuccessRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Success Rate'**
+  String get perfSuccessRate;
+
+  /// No description provided for @perfResources.
+  ///
+  /// In en, this message translates to:
+  /// **'Resources'**
+  String get perfResources;
+
+  /// No description provided for @perfOnline.
+  ///
+  /// In en, this message translates to:
+  /// **'Online'**
+  String get perfOnline;
+
+  /// No description provided for @perfWaitingData.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for data…'**
+  String get perfWaitingData;
+
   /// No description provided for @profiles.
   ///
   /// In en, this message translates to:
@@ -1387,6 +1435,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No Profiles'**
   String get noProfiles;
+
+  /// No description provided for @profileActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get profileActive;
+
+  /// No description provided for @searchProfiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Search profiles'**
+  String get searchProfiles;
+
+  /// No description provided for @duplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate'**
+  String get duplicate;
 
   /// No description provided for @navCertificates.
   ///

@@ -14,3 +14,6 @@ export 'components/lab_panels.dart';
 export 'components/lab_feedback.dart';
 export 'components/lab_data.dart';
 export 'components/lab_dialog.dart';
+export 'components/lab_state.dart';
+export 'components/lab_charts.dart';
+export 'components/lab_verify.dart';

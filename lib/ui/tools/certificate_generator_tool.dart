@@ -513,104 +513,116 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
     AppLocalizations l10n,
     CertificateEndpointVerificationResult result,
   ) {
-    final theme = Theme.of(context);
+    final tokens = LabTokens.of(context);
+    final scheme = Theme.of(context).colorScheme;
     final status = _endpointStatusText(l10n, result.status);
-    final statusColor = switch (result.status) {
-      CertificateEndpointStatus.readyTrusted ||
-      CertificateEndpointStatus.readyUntrusted =>
-        theme.colorScheme.primary,
-      CertificateEndpointStatus.hostMismatch ||
-      CertificateEndpointStatus.plainHttpOnly =>
-        theme.colorScheme.tertiary,
-      CertificateEndpointStatus.unreachable => theme.colorScheme.error,
-    };
     final cert = result.certificate;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.65),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: statusColor.withValues(alpha: 0.35),
+    // Map the endpoint verdict onto a banner severity.
+    final bannerKind = switch (result.status) {
+      CertificateEndpointStatus.readyTrusted => LabStatus.ok,
+      CertificateEndpointStatus.readyUntrusted => LabStatus.warn,
+      CertificateEndpointStatus.hostMismatch => LabStatus.error,
+      CertificateEndpointStatus.plainHttpOnly => LabStatus.warn,
+      CertificateEndpointStatus.unreachable => LabStatus.error,
+    };
+
+    bool? validNow;
+    if (cert != null) {
+      final now = DateTime.now();
+      validNow =
+          now.isAfter(cert.startValidity) && now.isBefore(cert.endValidity);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Big conclusion banner (ok / warn / error).
+        LabInlineAlert(
+          kind: bannerKind,
+          child: Text('${result.host}:${result.port} · $status'),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.verified_outlined, size: 18, color: statusColor),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  status,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: statusColor,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
+        SizedBox(height: tokens.sLg),
+        // Individual probe results. OCSP is intentionally absent — the
+        // verifier service does not perform a revocation check.
+        DecoratedBox(
+          decoration: BoxDecoration(
+            border: Border.all(color: scheme.outline),
+            borderRadius: BorderRadius.circular(tokens.rLg),
           ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+          child: Column(
             children: [
-              _ResultChip(
+              LabCheckRow(
+                status: result.tlsAvailable ? LabStatus.ok : LabStatus.error,
                 label: l10n.certEndpointTlsAvailable,
                 value: _yesNo(l10n, result.tlsAvailable),
+                detail: !result.tlsAvailable ? result.tlsError : null,
               ),
-              _ResultChip(
+              LabCheckRow(
+                status:
+                    result.systemTrusted ? LabStatus.ok : LabStatus.warn,
+                label: l10n.certEndpointSystemTrust,
+                value: _yesNo(l10n, result.systemTrusted),
+              ),
+              LabCheckRow(
+                status: result.hostMatchesCertificate
+                    ? LabStatus.ok
+                    : LabStatus.error,
+                label: l10n.certEndpointHostMatch,
+                value: _yesNo(l10n, result.hostMatchesCertificate),
+              ),
+              if (cert != null)
+                LabCheckRow(
+                  status: validNow! ? LabStatus.ok : LabStatus.error,
+                  label: l10n.certEndpointValidity,
+                  value:
+                      '${_formatDateTime(cert.startValidity)} - ${_formatDateTime(cert.endValidity)}',
+                ),
+              LabCheckRow(
+                status:
+                    result.plainHttpAvailable ? LabStatus.info : LabStatus.ok,
                 label: l10n.certEndpointPlainHttpAvailable,
                 value: result.httpStatusCode == null
                     ? _yesNo(l10n, result.plainHttpAvailable)
                     : '${_yesNo(l10n, result.plainHttpAvailable)} / ${result.httpStatusCode}',
               ),
-              _ResultChip(
-                label: l10n.certEndpointSystemTrust,
-                value: _yesNo(l10n, result.systemTrusted),
-              ),
-              _ResultChip(
-                label: l10n.certEndpointHostMatch,
-                value: _yesNo(l10n, result.hostMatchesCertificate),
-              ),
             ],
           ),
-          const SizedBox(height: 12),
-          if (cert == null)
-            _ResultLine(
-              label: l10n.certEndpointCertificate,
-              value: l10n.certEndpointNoCertificate,
-            )
-          else ...[
-            _ResultLine(label: l10n.certEndpointSubject, value: cert.subject),
-            _ResultLine(label: l10n.certEndpointIssuer, value: cert.issuer),
-            _ResultLine(
-              label: l10n.certEndpointValidity,
-              value:
-                  '${_formatDateTime(cert.startValidity)} - ${_formatDateTime(cert.endValidity)}',
-            ),
-            _ResultLine(
-              label: l10n.certEndpointSan,
-              value: result.subjectAltNames.isEmpty
-                  ? '-'
-                  : result.subjectAltNames.join(', '),
-            ),
-          ],
-          if (result.tlsError != null && !result.tlsAvailable) ...[
-            const SizedBox(height: 8),
-            _ResultLine(
-              label: l10n.certEndpointError,
-              value: result.tlsError!,
-              danger: true,
-            ),
-          ],
+        ),
+        SizedBox(height: tokens.sLg),
+        // Certificate chain (leaf only — dart:io exposes the peer cert, not
+        // the full chain) plus the leaf detail table.
+        if (cert == null)
+          _ResultLine(
+            label: l10n.certEndpointCertificate,
+            value: l10n.certEndpointNoCertificate,
+          )
+        else ...[
+          LabChainNode(
+            depth: 0,
+            role: LabCertRole.leaf,
+            commonName: _commonNameOf(cert.subject),
+            issuer: _commonNameOf(cert.issuer),
+            isLast: true,
+          ),
+          _ResultLine(label: l10n.certEndpointSubject, value: cert.subject),
+          _ResultLine(label: l10n.certEndpointIssuer, value: cert.issuer),
+          _ResultLine(
+            label: l10n.certEndpointSan,
+            value: result.subjectAltNames.isEmpty
+                ? '-'
+                : result.subjectAltNames.join(', '),
+          ),
         ],
-      ),
+      ],
     );
+  }
+
+  /// Pull the CN out of an X.509 DN string, falling back to the whole DN.
+  String _commonNameOf(String dn) {
+    final m = RegExp(r'CN\s*=\s*([^,/]+)').firstMatch(dn);
+    final cn = m?.group(1)?.trim();
+    return (cn != null && cn.isNotEmpty) ? cn : dn;
   }
 
   Widget _buildGeneratedPath(
@@ -855,64 +867,19 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
   }
 }
 
-class _ResultChip extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _ResultChip({
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.6),
-        ),
-      ),
-      child: RichText(
-        text: TextSpan(
-          style: theme.textTheme.labelMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          children: [
-            TextSpan(text: '$label: '),
-            TextSpan(
-              text: value,
-              style: TextStyle(
-                color: theme.colorScheme.onSurface,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _ResultLine extends StatelessWidget {
   final String label;
   final String value;
-  final bool danger;
 
   const _ResultLine({
     required this.label,
     required this.value,
-    this.danger = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color =
-        danger ? theme.colorScheme.error : theme.colorScheme.onSurfaceVariant;
+    final color = theme.colorScheme.onSurfaceVariant;
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
@@ -932,7 +899,6 @@ class _ResultLine extends StatelessWidget {
             child: SelectableText(
               value,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: danger ? theme.colorScheme.error : null,
                 fontFamily: 'monospace',
                 height: 1.3,
               ),

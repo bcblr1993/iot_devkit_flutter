@@ -57,6 +57,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deviceConfig => '设备配置';
 
   @override
+  String get simBasicHint => '基础模式按单一模板批量生成一组连续编号的设备。';
+
+  @override
+  String get simAdvancedHint => '高级分组会覆盖基础设置——每个分组独立定义设备与负载。';
+
+  @override
   String get startIndex => '起始索引';
 
   @override
@@ -136,6 +142,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get ready => '就绪';
+
+  @override
+  String get logNoMatch => '没有匹配日志';
+
+  @override
+  String get logClearFilter => '清除筛选';
 
   @override
   String get groupManagement => '模拟分组管理';
@@ -630,6 +642,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get memoryUsage => '内存';
 
   @override
+  String get perfSuccessRate => '成功率';
+
+  @override
+  String get perfResources => '资源占用';
+
+  @override
+  String get perfOnline => '在线';
+
+  @override
+  String get perfWaitingData => '等待数据…';
+
+  @override
   String get profiles => '配置列表';
 
   @override
@@ -652,6 +676,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get noProfiles => '暂无配置';
+
+  @override
+  String get profileActive => '使用中';
+
+  @override
+  String get searchProfiles => '搜索配置';
+
+  @override
+  String get duplicate => '复制';
 
   @override
   String get navCertificates => '证书生成';

@@ -57,6 +57,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deviceConfig => 'Device Configuration';
 
   @override
+  String get simBasicHint =>
+      'Basic mode generates a batch of sequential devices from a single template.';
+
+  @override
+  String get simAdvancedHint =>
+      'Advanced groups override Basic settings — each group defines its own devices and payload.';
+
+  @override
   String get startIndex => 'Start Index';
 
   @override
@@ -136,6 +144,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ready => 'Ready';
+
+  @override
+  String get logNoMatch => 'No matching logs';
+
+  @override
+  String get logClearFilter => 'Clear filters';
 
   @override
   String get groupManagement => 'Simulation Groups';
@@ -634,6 +648,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get memoryUsage => 'Mem';
 
   @override
+  String get perfSuccessRate => 'Success Rate';
+
+  @override
+  String get perfResources => 'Resources';
+
+  @override
+  String get perfOnline => 'Online';
+
+  @override
+  String get perfWaitingData => 'Waiting for data…';
+
+  @override
   String get profiles => 'Profiles';
 
   @override
@@ -656,6 +682,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noProfiles => 'No Profiles';
+
+  @override
+  String get profileActive => 'Active';
+
+  @override
+  String get searchProfiles => 'Search profiles';
+
+  @override
+  String get duplicate => 'Duplicate';
 
   @override
   String get navCertificates => 'Certificates';

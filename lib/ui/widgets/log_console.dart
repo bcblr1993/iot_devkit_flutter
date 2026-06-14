@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../components/app_empty_state.dart';
 
 class LogEntry {
   final String message;
@@ -451,29 +452,25 @@ class _LogConsoleState extends State<LogConsole> {
     final colors = theme.colorScheme;
 
     if (visibleLogs.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              _searchQuery.isEmpty && _activeType == _allTypes
-                  ? Icons.receipt_long_outlined
-                  : Icons.filter_alt_off_outlined,
-              color: colors.onSurfaceVariant.withValues(alpha: 0.72),
-              size: 34,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              _searchQuery.isEmpty && _activeType == _allTypes
-                  ? (l10n?.ready ?? 'Ready')
-                  : _localized(context, zh: '没有匹配日志', en: 'No matching logs'),
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colors.onSurfaceVariant,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
+      // Two real states: idle/empty (no logs yet) and filtered-no-results.
+      // The filtered state offers a one-tap "clear filters" action.
+      final isUnfiltered = _searchQuery.isEmpty && _activeType == _allTypes;
+      return AppEmptyState(
+        icon: isUnfiltered
+            ? Icons.receipt_long_outlined
+            : Icons.filter_alt_off_outlined,
+        message: isUnfiltered
+            ? (l10n?.ready ?? 'Ready')
+            : (l10n?.logNoMatch ?? 'No matching logs'),
+        actionLabel:
+            isUnfiltered ? null : (l10n?.logClearFilter ?? 'Clear filters'),
+        onAction: isUnfiltered
+            ? null
+            : () => setState(() {
+                  _searchQuery = '';
+                  _searchController.clear();
+                  _activeType = _allTypes;
+                }),
       );
     }
 

@@ -81,11 +81,22 @@ class SubscriptionsSection extends StatelessWidget {
       ],
     );
 
+    final hasRpcFilter = subscriptions.any((s) => s.isThingsBoardRpcFilter);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         toolbar,
         SizedBox(height: tokens.sMd),
+        // Explain auto-ack once at the section level when an RPC filter is
+        // present (rather than only via the per-row tooltip).
+        if (hasRpcFilter) ...[
+          LabInlineAlert(
+            kind: LabStatus.info,
+            child: Text(l10n.subscriptionAutoAckHint),
+          ),
+          SizedBox(height: tokens.sMd),
+        ],
         if (subscriptions.isEmpty)
           Padding(
             padding: EdgeInsets.symmetric(vertical: tokens.sMd),
@@ -183,6 +194,9 @@ class _SubscriptionRowState extends State<_SubscriptionRow> {
           runSpacing: tokens.sSm,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
+            // 'RPC' is a protocol token, not localized copy.
+            if (sub.isThingsBoardRpcFilter)
+              LabPill(label: 'RPC', color: tokens.info, small: true),
             LabSegmented<int>(
               value: sub.qos,
               segments: const [
