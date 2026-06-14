@@ -128,9 +128,12 @@ write_section() {
 
 : > "$OUT"
 
-write_section "新增" "${features[@]}"
-write_section "修复" "${fixes[@]}"
-write_section "优化" "${optimizations[@]}" "${changes[@]}"
+# Use the ${arr[@]+"${arr[@]}"} idiom so empty arrays expand to nothing under
+# `set -u` — macOS runners ship bash 3.2, which otherwise errors with
+# "unbound variable" when a release has no commits in a given category.
+write_section "新增" ${features[@]+"${features[@]}"}
+write_section "修复" ${fixes[@]+"${fixes[@]}"}
+write_section "优化" ${optimizations[@]+"${optimizations[@]}"} ${changes[@]+"${changes[@]}"}
 
 {
   printf '## 验证\n\n'
