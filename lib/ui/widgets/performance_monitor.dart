@@ -85,20 +85,12 @@ class PerformanceMonitor extends StatelessWidget {
                           Expanded(
                             child: LabSection(
                               title: l10n.statistics,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  LabDonut(
-                                    pct: successRate,
-                                    color: tokens.ok,
-                                    label: l10n.perfSuccessRate,
-                                  ),
-                                  LabDonut(
-                                    pct: stats.cpuUsage,
-                                    color: Theme.of(context).colorScheme.primary,
-                                    label: l10n.cpuUsage,
-                                  ),
-                                ],
+                              child: Center(
+                                child: LabDonut(
+                                  pct: successRate,
+                                  color: tokens.ok,
+                                  label: l10n.perfSuccessRate,
+                                ),
                               ),
                             ),
                           ),
@@ -108,13 +100,6 @@ class PerformanceMonitor extends StatelessWidget {
                               title: l10n.perfResources,
                               child: Column(
                                 children: [
-                                  LabMeter(
-                                    label: l10n.cpuUsage,
-                                    value:
-                                        '${stats.cpuUsage.toStringAsFixed(0)}%',
-                                    fraction: stats.cpuUsage / 100,
-                                  ),
-                                  SizedBox(height: tokens.sMd),
                                   LabMeter(
                                     label: l10n.memoryUsage,
                                     value:

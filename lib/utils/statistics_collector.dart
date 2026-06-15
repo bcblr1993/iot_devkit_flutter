@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 class StatisticsCollector extends ChangeNotifier {
@@ -57,18 +58,25 @@ class StatisticsCollector extends ChangeNotifier {
       _calculateRates();
     });
 
-    // 2. Resource Monitoring (CPU, Memory)
-    // CRITICAL: Disabled by default on Windows due to 'wmic' causing crashes/hangs on some systems.
-    // The user reported specific crashes when this timer fires.
-    // _resourceStartupDelayTimer = Timer(const Duration(minutes: 1), () {
-    //     if (_resourceTimer != null && _resourceTimer!.isActive) return;
-    //
-    //     _resourceTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-    //        if (!_isUpdatingResources) {
-    //          _updateResources();
-    //        }
-    //     });
-    // });
+    // 2. Resource Monitoring — memory only.
+    // The old CPU/memory collector shelled out to `wmic` on Windows, which
+    // hung/crashed on some machines, so it was disabled. ProcessInfo.currentRss
+    // is a pure in-process API (no subprocess), so it is safe on every
+    // platform. CPU% has no safe cross-platform source and is left unreported.
+    _resourceTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      _updateMemory();
+    });
+    _updateMemory(); // seed immediately so the meter isn't blank on open
+  }
+
+  void _updateMemory() {
+    try {
+      memoryUsage = ProcessInfo.currentRss;
+      _needsUpdate = true;
+      _flushToUI();
+    } catch (_) {
+      // currentRss may be unsupported on some platforms — fail silently.
+    }
   }
 
   void _calculateRates() {
