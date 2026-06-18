@@ -1,15 +1,12 @@
 # Screenshots
 
-把 app 实际运行截图放到这里，文件名按 README 引用的路径命名即可：
+这里保存 README 使用的真实运行截图。当前截图来自 macOS Release 构建：
 
 | 文件名 | 用途 | 推荐尺寸 |
 |---|---|---|
-| `01-mqtt-simulator.png` | 主屏：MQTT 模拟器配置 + 日志 | 1600×1000 |
-| `02-json-formatter.png` | JSON 格式化工具页 | 1600×1000 |
-| `03-timestamp-converter.png` | 时间戳转换工具页 | 1600×1000 |
-| `04-cert-generator.png` | 证书生成工具页 | 1600×1000 |
-| `05-timesheet.png` | 工时记录页 | 1600×1000 |
-| `06-themes-grid.png` | 8 套主题对比拼图（横向 4×2 或 2×4） | 2000×1200 |
+| `01-mqtt-simulator.png` | 主屏：MQTT 模拟器配置、订阅、指标、日志 | 1600×1000 |
+| `02-timestamp-converter.png` | 时间戳转换工具页 | 1600×1000 |
+| `03-cert-generator.png` | 证书生成工具页 | 1600×1000 |
 
 ## 怎么截
 
@@ -29,4 +26,4 @@ flutter run -d macos
   pngquant --quality 70-90 *.png --ext .png --force
   ```
 
-README 已经预留对应 `<img>` 引用，文件名一致时自动显示。
+README 引用上述 3 张图片。替换截图时请保持文件名一致，并避免嵌入真实 broker、证书、账号或客户信息。

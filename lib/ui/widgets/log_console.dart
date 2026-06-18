@@ -233,9 +233,13 @@ class _LogConsoleState extends State<LogConsole> {
                         : _LastLogPreview(log: lastLog)),
               ),
               const SizedBox(width: 8),
-              Flexible(
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: widget.isExpanded ? 184 : 172,
+                ),
                 child: Align(
                   alignment: Alignment.centerRight,
+                  widthFactor: 1,
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     reverse: true,

@@ -25,6 +25,7 @@ MQTT 设备模拟器 · JSON 格式化 · 时间戳转换 · X.509 证书生成 
 
 - [核心亮点](#-核心亮点)
 - [应用截图](#-应用截图)
+- [项目架构](#-项目架构)
 - [设计系统](#-设计系统)
 - [技术栈](#-技术栈)
 - [快速开始](#-快速开始)
@@ -41,7 +42,7 @@ MQTT 设备模拟器 · JSON 格式化 · 时间戳转换 · X.509 证书生成 
 
 | | 功能 | 说明 |
 |---|---|---|
-| 📡 | **MQTT 模拟器** | 单设备或上千虚拟设备；随机/递增/静态/翻转 payload；profile 导入导出；低延迟发送调度（含 drop-vs-catch-up） |
+| 📡 | **MQTT 模拟器** | 单设备或上千虚拟设备；发布遥测、主题订阅、RPC 自动确认、profile 导入导出；低延迟发送调度（含 drop-vs-catch-up） |
 | 🔐 | **证书生成器** | 一键生成 IoT broker（ThingsBoard / EMQX）所需的 X.509 包：CA + 设备证书 + key + 可部署 zip |
 | 🧾 | **JSON 格式化** | 校验/压缩/格式化；可折叠交互式树视图；树内 key/value 搜索；自动持久化输入 |
 | ⏱ | **时间戳转换** | 毫秒级实时时钟；Unix ↔ ISO 双向；完整 IANA 时区；一键复制 |
@@ -54,30 +55,52 @@ MQTT 设备模拟器 · JSON 格式化 · 时间戳转换 · X.509 证书生成 
 
 ## 📸 应用截图
 
-> 下列截图从 [`docs/screenshots/`](docs/screenshots/) 加载。请把你的 PNG 按文件名放进去（约定见 [docs/screenshots/README.md](docs/screenshots/README.md)）。
+下列截图来自当前 macOS Release 构建，统一保存在 [`docs/screenshots/`](docs/screenshots/)。
 
 <table>
 <tr>
-<td width="50%" align="center">
+<td colspan="2" align="center">
 <img src="docs/screenshots/01-mqtt-simulator.png" alt="MQTT 模拟器" />
-<br/><sub><b>MQTT 模拟器</b> · 配置 + 日志面板</sub>
-</td>
-<td width="50%" align="center">
-<img src="docs/screenshots/02-json-formatter.png" alt="JSON 格式化" />
-<br/><sub><b>JSON 格式化</b> · 交互式树视图</sub>
+<br/><sub><b>MQTT 模拟器</b> · Broker 配置、TLS、订阅、设备范围、指标与日志面板</sub>
 </td>
 </tr>
 <tr>
 <td width="50%" align="center">
-<img src="docs/screenshots/03-timestamp-converter.png" alt="时间戳转换" />
+<img src="docs/screenshots/02-timestamp-converter.png" alt="时间戳转换" />
 <br/><sub><b>时间戳转换</b> · 双向 + 时区</sub>
 </td>
 <td width="50%" align="center">
-<img src="docs/screenshots/04-cert-generator.png" alt="证书生成器" />
-<br/><sub><b>证书生成器</b> · X.509 一键打包</sub>
+<img src="docs/screenshots/03-cert-generator.png" alt="证书生成器" />
+<br/><sub><b>证书生成器</b> · ThingsBoard HTTPS/MQTTS X.509 证书包预览</sub>
 </td>
 </tr>
 </table>
+
+---
+
+## 🧭 项目架构
+
+IoT DevKit 按桌面产品组织：稳定应用壳、独立功能模块、清晰 service 边界，以及可复现的质量检查和发布流水线。
+
+```mermaid
+flowchart LR
+  Shell["应用壳\nNavigationRail · Settings · Status"] --> Screens["功能页面\nSimulator · Tools · Timesheet"]
+  Screens --> ViewModels["ViewModels\nChangeNotifier 状态"]
+  ViewModels --> Services["Services\nMQTT · Certificates · Profiles · Storage"]
+  Services --> Runtime["桌面运行时\nmacOS · Windows · Linux"]
+  Design["Lab Console 设计系统\nTokens · Themes · Components"] --> Shell
+  Design --> Screens
+  Tests["质量门禁\nanalyze · custom_lint · widget smoke · golden"] --> Design
+  Tests --> Services
+```
+
+| 领域 | 职责 |
+|---|---|
+| 应用壳 | 导航、快捷键、设置、主题/语言切换、状态横幅 |
+| 模拟器 | MQTT 连接生命周期、遥测 payload、主题订阅、RPC 自动确认、指标、日志控制台 |
+| 工具页 | 时间戳转换、JSON 工具、证书包生成与端点检查 |
+| 服务层 | Broker 客户端、发送调度、profile 导入导出、证书生成、本地存储 |
+| 设计系统 | Lab tokens、8 套主题、原子组件、自研 lint、golden 基线 |
 
 ---
 

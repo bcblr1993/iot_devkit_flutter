@@ -25,6 +25,7 @@ MQTT device simulator · JSON formatter · Timestamp converter · X.509 certific
 
 - [Highlights](#-highlights)
 - [Screenshots](#-screenshots)
+- [Architecture](#-architecture)
 - [Design System](#-design-system)
 - [Tech Stack](#-tech-stack)
 - [Getting Started](#-getting-started)
@@ -41,7 +42,7 @@ MQTT device simulator · JSON formatter · Timestamp converter · X.509 certific
 
 | | Feature | Description |
 |---|---|---|
-| 📡 | **MQTT Simulator** | Single or thousands of virtual devices; random / increment / static / toggle payload schema; profile import/export; low-latency send scheduler with drop-vs-catch-up control |
+| 📡 | **MQTT Simulator** | Single or thousands of virtual devices; publish telemetry, enable topic subscriptions, auto-ack RPC requests, import/export profiles, and run low-latency schedules with drop-vs-catch-up control |
 | 🔐 | **Certificate Generator** | One-click X.509 bundle for IoT brokers (ThingsBoard / EMQX). CA + device cert + key + ready-to-deploy zip |
 | 🧾 | **JSON Formatter** | Validate / minify / format; interactive collapsible tree; in-tree key/value search; auto-persists last input |
 | ⏱ | **Timestamp Converter** | ms-precision live clock; bi-directional Unix ↔ ISO; full IANA timezone list; one-click copy |
@@ -54,30 +55,52 @@ MQTT device simulator · JSON formatter · Timestamp converter · X.509 certific
 
 ## 📸 Screenshots
 
-> The screenshots below are loaded from [`docs/screenshots/`](docs/screenshots/). Drop your own PNGs there (see [docs/screenshots/README.md](docs/screenshots/README.md) for the exact filenames).
+Screenshots are captured from the current macOS release build and kept under [`docs/screenshots/`](docs/screenshots/).
 
 <table>
 <tr>
-<td width="50%" align="center">
+<td colspan="2" align="center">
 <img src="docs/screenshots/01-mqtt-simulator.png" alt="MQTT Simulator" />
-<br/><sub><b>MQTT Simulator</b> — config + log dock</sub>
-</td>
-<td width="50%" align="center">
-<img src="docs/screenshots/02-json-formatter.png" alt="JSON Formatter" />
-<br/><sub><b>JSON Formatter</b> — interactive tree view</sub>
+<br/><sub><b>MQTT Simulator</b> — broker config, TLS, subscriptions, device range, metrics, and log dock</sub>
 </td>
 </tr>
 <tr>
 <td width="50%" align="center">
-<img src="docs/screenshots/03-timestamp-converter.png" alt="Timestamp Converter" />
+<img src="docs/screenshots/02-timestamp-converter.png" alt="Timestamp Converter" />
 <br/><sub><b>Timestamp Converter</b> — bi-directional + timezone</sub>
 </td>
 <td width="50%" align="center">
-<img src="docs/screenshots/04-cert-generator.png" alt="Certificate Generator" />
-<br/><sub><b>Certificate Generator</b> — X.509 bundle</sub>
+<img src="docs/screenshots/03-cert-generator.png" alt="Certificate Generator" />
+<br/><sub><b>Certificate Generator</b> — ThingsBoard HTTPS/MQTTS X.509 bundle preview</sub>
 </td>
 </tr>
 </table>
+
+---
+
+## 🧭 Architecture
+
+IoT DevKit is organized as a desktop product with a stable app shell, feature modules, service boundaries, and repeatable release automation.
+
+```mermaid
+flowchart LR
+  Shell["App Shell\nNavigationRail · Settings · Status"] --> Screens["Feature Screens\nSimulator · Tools · Timesheet"]
+  Screens --> ViewModels["ViewModels\nChangeNotifier state"]
+  ViewModels --> Services["Services\nMQTT · Certificates · Profiles · Storage"]
+  Services --> Runtime["Desktop Runtime\nmacOS · Windows · Linux"]
+  Design["Lab Console Design System\nTokens · Themes · Components"] --> Shell
+  Design --> Screens
+  Tests["Quality Gates\nanalyze · custom_lint · widget smoke · golden"] --> Design
+  Tests --> Services
+```
+
+| Area | What it owns |
+|---|---|
+| App shell | Navigation, keyboard shortcuts, settings, theme/language switching, status banner |
+| Simulator | MQTT connection lifecycle, telemetry payloads, subscriptions, RPC auto-ack, metrics, log console |
+| Tool pages | Timestamp conversion, JSON tooling, certificate package generation and endpoint checks |
+| Services | Broker clients, scheduler, profile import/export, certificate generation, local storage |
+| Design system | Lab tokens, 8 themes, atomic components, custom lint rules, golden baselines |
 
 ---
 
