@@ -5,6 +5,8 @@ import 'dart:io'; // NEW: For Platform.numberOfProcessors
 import 'dart:isolate';
 import 'dart:math';
 
+import '../models/payload_format.dart';
+
 /// Input Data for the Worker
 class WorkerInput {
   final int count;
@@ -13,12 +15,17 @@ class WorkerInput {
   final int key1Value;
   final Map<String, dynamic> customKeyValues; // Pre-calculated custom keys
 
+  /// Target ThingsBoard payload shape (see [PayloadFormat]). Defaults to the
+  /// timestamped object form for backward compatibility.
+  final String format;
+
   WorkerInput({
     required this.count,
     required this.timestamp,
     required this.key1Value,
     required this.customKeyValues,
     this.clientId,
+    this.format = PayloadFormat.timestamped,
   });
 }
 
@@ -233,11 +240,9 @@ String generatePayloadJson(WorkerInput input) {
     }
   }
 
-  // 4. Wrap & Encoded
-  final Map<String, dynamic> payload = {
-    'ts': input.timestamp,
-    'values': data,
-  };
+  // 4. Shape into the selected ThingsBoard payload format & encode.
+  final Object payload =
+      PayloadFormat.buildStandard(data, input.timestamp, input.format);
 
   return jsonEncode(payload);
 }

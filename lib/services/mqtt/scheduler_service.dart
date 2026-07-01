@@ -7,6 +7,7 @@ import '../../services/data_generator.dart';
 import '../../utils/statistics_collector.dart';
 import '../../models/group_config.dart';
 import '../../models/custom_key_config.dart';
+import '../../models/payload_format.dart';
 import '../../utils/isolate_worker.dart';
 import '../../models/simulation_context.dart';
 
@@ -122,12 +123,9 @@ class SchedulerService {
     int intervalMs = _intervalMsFromSeconds(context.intervalSeconds);
 
     // STAGGER LOGIC:
-    // Distribute load across the interval to prevent "Thundering Herd" (CPU spikes).
-    // Use hashCode for deterministic distribution.
-    int phaseOffset = 0;
-    if (intervalMs > 0) {
-      phaseOffset = clientId.hashCode % intervalMs;
-    }
+    // Distribute load across a bounded window to prevent "Thundering Herd"
+    // (CPU spikes) while keeping devices reporting near-simultaneously.
+    int phaseOffset = _staggerOffset(clientId, intervalMs);
 
     // Initial Delay
     int now = DateTime.now().millisecondsSinceEpoch;
@@ -178,20 +176,22 @@ class SchedulerService {
     // Timestamp aligned with the staggered time
     int payloadTimestamp =
         _alignedStartTime + phaseOffset + (sendCount * intervalMs);
-    Map<String, dynamic> data;
+    Object payloadObj;
 
-    if (format == 'tn') {
-      data = DataGenerator.generateTnPayload(dataPointCount,
+    if (format == PayloadFormat.tieNiu) {
+      payloadObj = DataGenerator.generateTnPayload(dataPointCount,
           timestamp: payloadTimestamp);
-    } else if (format == 'tn-empty') {
-      data = DataGenerator.generateTnEmptyPayload(timestamp: payloadTimestamp);
+    } else if (format == PayloadFormat.tieNiuEmpty) {
+      payloadObj =
+          DataGenerator.generateTnEmptyPayload(timestamp: payloadTimestamp);
     } else {
-      data = DataGenerator.generateBatteryStatus(dataPointCount,
+      final values = DataGenerator.generateBatteryStatus(dataPointCount,
           clientId: clientId, customKeys: customKeys);
-      data = DataGenerator.wrapWithTimestamp(data, payloadTimestamp);
+      payloadObj =
+          PayloadFormat.buildStandard(values, payloadTimestamp, format);
     }
 
-    String payload = jsonEncode(data);
+    String payload = jsonEncode(payloadObj);
     _publish(client, topic, payload, clientId, 'success',
         'Sent message #$sendCount', clientId, _intToQos(context.qos));
 
@@ -213,61 +213,70 @@ class SchedulerService {
 
     int now = DateTime.now().millisecondsSinceEpoch;
 
+    // A full interval of 0 disables the full report entirely; only change
+    // reports are emitted (if a change ratio is configured).
+    final bool fullEnabled = group.fullIntervalSeconds > 0;
+
     // OPTIMIZATION:
     // If ChangeRatio is 100% (or more), then "Change Report" is identical to "Full Report".
     // If the Change Frequency is higher (interval smaller) than Full Frequency,
     // we should just run the Full Report at that higher frequency and disable the redundant slower timer.
-    bool runFullAtChangeSpeed = (group.changeRatio >= 1.0) &&
+    // Only meaningful when full reporting is enabled.
+    bool runFullAtChangeSpeed = fullEnabled &&
+        (group.changeRatio >= 1.0) &&
         (group.changeIntervalSeconds < group.fullIntervalSeconds);
 
-    // 1. Full Report Setup
-    // If optimization active, use change interval. Else use full interval.
-    int effectiveFullIntervalMs = runFullAtChangeSpeed
-        ? _intervalMsFromSeconds(group.changeIntervalSeconds)
-        : _intervalMsFromSeconds(group.fullIntervalSeconds);
+    // 1. Full Report Setup (skipped when full reporting is disabled).
+    if (fullEnabled) {
+      // If optimization active, use change interval. Else use full interval.
+      int effectiveFullIntervalMs = runFullAtChangeSpeed
+          ? _intervalMsFromSeconds(group.changeIntervalSeconds)
+          : _intervalMsFromSeconds(group.fullIntervalSeconds);
 
-    int fullPhaseOffset = 0;
-    if (effectiveFullIntervalMs > 0) {
-      fullPhaseOffset = clientId.hashCode % effectiveFullIntervalMs;
+      int fullPhaseOffset = _staggerOffset(clientId, effectiveFullIntervalMs);
+
+      int fullBaseTarget = _alignedStartTime + fullPhaseOffset;
+      int fullDelay = fullBaseTarget - now;
+      int fullSendCount = 0;
+
+      if (fullDelay < 0) {
+        int elapsed = now - fullBaseTarget;
+        fullSendCount = (elapsed ~/ effectiveFullIntervalMs) + 1;
+        fullDelay =
+            (fullBaseTarget + (fullSendCount * effectiveFullIntervalMs)) - now;
+      }
+
+      Timer fullTimer = Timer(Duration(milliseconds: fullDelay), () {
+        _scheduleFullReport(
+            client,
+            clientId,
+            topic,
+            group,
+            effectiveFullIntervalMs,
+            fullSendCount,
+            version,
+            context.qos,
+            fullPhaseOffset);
+      });
+      _addTimer(clientId, fullTimer);
     }
-
-    int fullBaseTarget = _alignedStartTime + fullPhaseOffset;
-    int fullDelay = fullBaseTarget - now;
-    int fullSendCount = 0;
-
-    if (fullDelay < 0) {
-      int elapsed = now - fullBaseTarget;
-      fullSendCount = (elapsed ~/ effectiveFullIntervalMs) + 1;
-      fullDelay =
-          (fullBaseTarget + (fullSendCount * effectiveFullIntervalMs)) - now;
-    }
-
-    Timer fullTimer = Timer(Duration(milliseconds: fullDelay), () {
-      _scheduleFullReport(
-          client,
-          clientId,
-          topic,
-          group,
-          effectiveFullIntervalMs,
-          fullSendCount,
-          version,
-          context.qos,
-          fullPhaseOffset);
-    });
-    _addTimer(clientId, fullTimer);
 
     // 2. Change Report Setup
-    // Only schedule if NOT 100% change (mixed mode) AND valid interval.
-    // If runFullAtChangeSpeed is true, we have already "promoted" the change report to be the main Full Report above, so we skip this.
-    if (!runFullAtChangeSpeed &&
+    // Emit change reports when a change ratio is configured and we haven't
+    // already promoted them to the full report above. When full reporting is
+    // enabled, only run change reports if they are FASTER than the full cadence
+    // (otherwise the full report already covers them). When full is disabled,
+    // change reports run on their own cadence, unaffected by the full setting.
+    final bool changeEnabled = !runFullAtChangeSpeed &&
         group.changeRatio > 0 &&
-        group.changeIntervalSeconds < group.fullIntervalSeconds) {
+        (!fullEnabled ||
+            group.changeIntervalSeconds < group.fullIntervalSeconds);
+
+    if (changeEnabled) {
       int changeIntervalMs =
           _intervalMsFromSeconds(group.changeIntervalSeconds);
-      int changePhaseOffset = 0;
-      if (changeIntervalMs > 0) {
-        changePhaseOffset = (clientId.hashCode + 12345) % changeIntervalMs;
-      }
+      int changePhaseOffset =
+          _staggerOffset(clientId, changeIntervalMs, salt: 12345);
 
       int changeBaseTarget = _alignedStartTime + changePhaseOffset;
       int changeDelay = changeBaseTarget - now;
@@ -324,6 +333,7 @@ class SchedulerService {
         timestamp: payloadTimestamp,
         key1Value: key1,
         customKeyValues: customValues,
+        format: PayloadFormat.normalize(group.format),
       ));
     } catch (e) {
       onLog('Isolate Error: $e', 'error', tag: clientId);
@@ -365,10 +375,12 @@ class SchedulerService {
     // CRITICAL FIX: Conflict Resolution
     // If the current time aligns exactly with a Full Report interval, SKIP the Change Report.
     // Full Reports (Whole Data) include the Changed Data, so sending both is duplicative.
-    int fullIntervalMs = _intervalMsFromSeconds(group.fullIntervalSeconds);
-    if (fullIntervalMs > 0) {
-      // 1. Re-calculate the Full Report Phase Offset (same hashCode logic)
-      int fullPhaseOffset = clientId.hashCode % fullIntervalMs;
+    // Only relevant when full reporting is enabled (fullIntervalSeconds > 0);
+    // when disabled there is no full report to collide with.
+    if (group.fullIntervalSeconds > 0) {
+      int fullIntervalMs = _intervalMsFromSeconds(group.fullIntervalSeconds);
+      // 1. Re-calculate the Full Report Phase Offset (same stagger logic)
+      int fullPhaseOffset = _staggerOffset(clientId, fullIntervalMs);
 
       // 2. Check if the current timestamp falls exactly on a Full Report target
       // Target_Full = Start + FullOffset + (N * FullInterval)
@@ -426,6 +438,7 @@ class SchedulerService {
             timestamp: payloadTimestamp,
             key1Value: key1,
             customKeyValues: customValues,
+            format: PayloadFormat.normalize(group.format),
           ));
         } catch (e) {
           onLog('Isolate Error (Change): $e', 'error', tag: clientId);
@@ -670,6 +683,23 @@ class SchedulerService {
 
   int _intervalMsFromSeconds(int seconds) {
     return seconds < 1 ? 1000 : seconds * 1000;
+  }
+
+  /// Upper bound (ms) of the stagger window. Sends are spread deterministically
+  /// across at most this window so that, even for very large intervals (e.g. a
+  /// 300s full report), devices report near-simultaneously instead of
+  /// trickling across the whole interval — while still avoiding a single-instant
+  /// thundering-herd CPU spike.
+  static const int _maxStaggerMs = 2000;
+
+  /// Deterministic per-client stagger offset within a bounded window.
+  /// Returns a value in `[0, min(intervalMs, _maxStaggerMs))`, or 0 when the
+  /// interval is non-positive. [salt] lets independent streams (e.g. change vs.
+  /// full) use distinct offsets while staying stable per client.
+  int _staggerOffset(String clientId, int intervalMs, {int salt = 0}) {
+    if (intervalMs <= 0) return 0;
+    final int window = intervalMs < _maxStaggerMs ? intervalMs : _maxStaggerMs;
+    return (clientId.hashCode + salt) % window;
   }
 
   MqttQos _intToQos(int v) {

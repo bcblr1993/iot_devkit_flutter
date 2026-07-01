@@ -1,6 +1,8 @@
 // ignore_for_file: avoid_raw_edge_insets, prefer_lab_tokens
 import 'package:flutter/material.dart';
 import '../../models/group_config.dart';
+import '../../models/payload_format.dart';
+import '../components/payload_format_help.dart';
 import 'custom_keys_manager.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../lab/lab.dart';
@@ -217,12 +219,6 @@ class _GroupsManagerState extends State<GroupsManager> {
                       isNumber: true,
                       enabled: !widget.isLocked),
                   _buildTextField(
-                      l10n.deviceName,
-                      group.devicePrefix,
-                      (v) =>
-                          _updateGroup(index, group.copyWith(devicePrefix: v)),
-                      enabled: !widget.isLocked),
-                  _buildTextField(
                       l10n.clientId,
                       group.clientIdPrefix,
                       (v) => _updateGroup(
@@ -244,9 +240,13 @@ class _GroupsManagerState extends State<GroupsManager> {
                     label: l10n.format,
                     value: group.format,
                     items: [
-                      LabSelectItem('default', l10n.formatDefault),
-                      LabSelectItem('tn', l10n.formatTieNiu),
-                      LabSelectItem('tn-empty', l10n.formatTieNiuEmpty),
+                      LabSelectItem(PayloadFormat.simpleKv, l10n.formatSimpleKv),
+                      LabSelectItem(
+                          PayloadFormat.timestamped, l10n.formatTbTimestamp),
+                      LabSelectItem(PayloadFormat.array, l10n.formatTbArray),
+                      LabSelectItem(PayloadFormat.tieNiu, l10n.formatTieNiu),
+                      LabSelectItem(
+                          PayloadFormat.tieNiuEmpty, l10n.formatTieNiuEmpty),
                     ],
                     onChanged: widget.isLocked
                         ? null
@@ -254,6 +254,15 @@ class _GroupsManagerState extends State<GroupsManager> {
                             _updateGroup(index, group.copyWith(format: v!)),
                   ),
                 ],
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 6, left: 2),
+                child: Text(
+                  payloadFormatDescription(l10n, group.format),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
               ),
               const SizedBox(height: 10),
               FormGrid(

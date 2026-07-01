@@ -212,14 +212,32 @@ class SimulationConfigValidator {
         zhLabel: '$groupNameZh 变化频率',
         enLabel: '$groupNameEn change interval',
       );
-      _validatePositiveInt(
-        issues,
-        field: 'groups[$i].fullIntervalSeconds',
-        value: group.fullIntervalSeconds,
-        max: SimulationConfigLimits.maxIntervalSeconds,
-        zhLabel: '$groupNameZh 全量频率',
-        enLabel: '$groupNameEn full interval',
-      );
+      // Full interval of 0 means "no full report"; change reports still run.
+      // Allow 0, reject negatives / over-limit, and forbid the degenerate case
+      // where nothing at all would be sent (full disabled AND no change ratio).
+      final fullInterval = group.fullIntervalSeconds;
+      if (fullInterval < 0) {
+        issues.add(SimulationConfigIssue(
+          field: 'groups[$i].fullIntervalSeconds',
+          zhMessage: '$groupNameZh 全量频率不能为负数。',
+          enMessage: '$groupNameEn full interval cannot be negative.',
+        ));
+      } else if (fullInterval > SimulationConfigLimits.maxIntervalSeconds) {
+        issues.add(SimulationConfigIssue(
+          field: 'groups[$i].fullIntervalSeconds',
+          zhMessage:
+              '$groupNameZh 全量频率不能超过 ${SimulationConfigLimits.maxIntervalSeconds}。',
+          enMessage:
+              '$groupNameEn full interval cannot exceed ${SimulationConfigLimits.maxIntervalSeconds}.',
+        ));
+      } else if (fullInterval == 0 && group.changeRatio <= 0) {
+        issues.add(SimulationConfigIssue(
+          field: 'groups[$i].fullIntervalSeconds',
+          zhMessage: '$groupNameZh 全量频率为 0（关闭）时，变化百分比必须大于 0，否则不会发送任何数据。',
+          enMessage:
+              '$groupNameEn requires a change ratio greater than 0 when the full interval is 0 (disabled); otherwise no data is sent.',
+        ));
+      }
       if (group.changeRatio < 0 || group.changeRatio > 1) {
         issues.add(SimulationConfigIssue(
           field: 'groups[$i].changeRatio',

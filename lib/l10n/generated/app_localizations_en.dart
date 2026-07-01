@@ -266,7 +266,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get changeInterval => 'Change Interval (s)';
 
   @override
-  String get fullInterval => 'Full Interval (s)';
+  String get fullInterval => 'Full Interval (s, 0=off)';
 
   @override
   String get delete => 'Delete';
@@ -350,10 +350,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get formatDefault => 'Default Format';
 
   @override
+  String get formatSimpleKv => 'Simple key-value';
+
+  @override
+  String get formatTbTimestamp => 'Client-side timestamp';
+
+  @override
+  String get formatTbArray => 'Array (timestamped)';
+
+  @override
   String get formatTieNiu => 'Tie Niu Format';
 
   @override
   String get formatTieNiuEmpty => 'Tie Niu Empty Format';
+
+  @override
+  String get formatSimpleKvDesc =>
+      'Server receive time is used as the data timestamp.';
+
+  @override
+  String get formatTbTimestampDesc =>
+      'Uses the simulator\'s current time as the timestamp.';
+
+  @override
+  String get formatTbArrayDesc =>
+      'Uses the simulator\'s current time, sent as an array.';
+
+  @override
+  String get formatTieNiuDesc => 'Tie Niu device data format.';
+
+  @override
+  String get formatTieNiuEmptyDesc => 'Tie Niu empty-data format.';
 
   @override
   String get importFailed => 'Import Failed';

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:iot_devkit/l10n/generated/app_localizations.dart';
+import 'package:iot_devkit/models/payload_format.dart';
 import 'package:iot_devkit/models/subscription_config.dart';
 import 'package:iot_devkit/viewmodels/mqtt_view_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -34,10 +35,26 @@ void main() {
       expect(vm.enableSsl, true);
     });
 
-    test('generatePreviewData returns data for basic mode', () {
+    test('generatePreviewData returns timestamped payload for basic mode', () {
+      // Default format is the ThingsBoard timestamped object: {ts, values}.
       final data = vm.generatePreviewData(isBasic: true);
-      expect(data, isNotNull);
-      expect(data!.containsKey('key_1'), true);
+      expect(data, isA<Map<String, dynamic>>());
+      final map = data as Map<String, dynamic>;
+      expect(map.containsKey('ts'), true);
+      expect((map['values'] as Map).containsKey('key_1'), true);
+    });
+
+    test('generatePreviewData respects the selected format', () {
+      vm.setFormat(PayloadFormat.simpleKv);
+      final simple = vm.generatePreviewData(isBasic: true);
+      expect(simple, isA<Map<String, dynamic>>());
+      expect((simple as Map).containsKey('key_1'), true);
+      expect(simple.containsKey('ts'), false);
+
+      vm.setFormat(PayloadFormat.array);
+      final arr = vm.generatePreviewData(isBasic: true);
+      expect(arr, isA<List>());
+      expect(((arr as List).first as Map).containsKey('ts'), true);
     });
 
     test('getCompleteConfig returns valid map', () {

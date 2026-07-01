@@ -264,7 +264,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get changeInterval => '变化频率 (秒)';
 
   @override
-  String get fullInterval => '全量频率 (秒)';
+  String get fullInterval => '全量频率 (秒, 0=关闭)';
 
   @override
   String get delete => '删除';
@@ -348,10 +348,34 @@ class AppLocalizationsZh extends AppLocalizations {
   String get formatDefault => '默认格式';
 
   @override
+  String get formatSimpleKv => '简单键值';
+
+  @override
+  String get formatTbTimestamp => '带时间戳';
+
+  @override
+  String get formatTbArray => '时间戳数组';
+
+  @override
   String get formatTieNiu => '铁牛格式';
 
   @override
   String get formatTieNiuEmpty => '铁牛空数据格式';
+
+  @override
+  String get formatSimpleKvDesc => '使用服务器接收时间作为数据时间戳。';
+
+  @override
+  String get formatTbTimestampDesc => '使用当前模拟器时间作为时间戳。';
+
+  @override
+  String get formatTbArrayDesc => '使用当前模拟器时间，以数组形式上送。';
+
+  @override
+  String get formatTieNiuDesc => '铁牛设备数据格式。';
+
+  @override
+  String get formatTieNiuEmptyDesc => '铁牛空数据格式。';
 
   @override
   String get importFailed => '导入失败';

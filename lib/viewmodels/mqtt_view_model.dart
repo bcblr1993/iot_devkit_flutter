@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:iot_devkit/models/group_config.dart';
 import 'package:iot_devkit/models/custom_key_config.dart';
+import 'package:iot_devkit/models/payload_format.dart';
 import 'package:iot_devkit/models/subscription_config.dart';
 import 'package:iot_devkit/services/config_service.dart';
 import 'package:iot_devkit/services/data_generator.dart';
@@ -61,7 +62,7 @@ class MqttViewModel extends ChangeNotifier {
   bool _subscriptionsEnabled = false;
   bool get subscriptionsEnabled => _subscriptionsEnabled;
 
-  String _format = 'default';
+  String _format = PayloadFormat.timestamped;
   String get format => _format;
 
   void setFormat(String val) {
@@ -241,7 +242,7 @@ class MqttViewModel extends ChangeNotifier {
     startIdxController.text = (config['device_start_number'] ?? 1).toString();
     endIdxController.text = (config['device_end_number'] ?? 10).toString();
     intervalController.text = (config['send_interval'] ?? 1).toString();
-    _format = config['data']?['format'] ?? 'default';
+    _format = PayloadFormat.normalize(config['data']?['format'] as String?);
     dataPointController.text =
         (config['data']?['data_point_count'] ?? 10).toString();
 
@@ -304,36 +305,42 @@ class MqttViewModel extends ChangeNotifier {
     };
   }
 
-  Map<String, dynamic>? generatePreviewData({required bool isBasic}) {
+  /// Build a preview of the payload as it will actually be published, shaped
+  /// into the selected [PayloadFormat] (simple key-value / timestamped object /
+  /// timestamped array). TieNiu formats keep their own shape. Returns a Map or
+  /// a List depending on the format, or null when nothing can be generated.
+  Object? generatePreviewData({required bool isBasic}) {
     try {
+      final int previewTs = DateTime.now().millisecondsSinceEpoch;
       if (isBasic) {
         final count = int.tryParse(dataPointController.text) ?? 10;
-        if (_format == 'tn') {
-          return DataGenerator.generateTnPayload(count);
-        } else if (_format == 'tn-empty') {
-          return DataGenerator.generateTnEmptyPayload();
-        } else {
-          return DataGenerator.generateBatteryStatus(
-            count,
-            customKeys: _basicCustomKeys,
-            clientId: 'preview_client',
-          );
+        if (_format == PayloadFormat.tieNiu) {
+          return DataGenerator.generateTnPayload(count, timestamp: previewTs);
+        } else if (_format == PayloadFormat.tieNiuEmpty) {
+          return DataGenerator.generateTnEmptyPayload(timestamp: previewTs);
         }
+        final values = DataGenerator.generateBatteryStatus(
+          count,
+          customKeys: _basicCustomKeys,
+          clientId: 'preview_client',
+        );
+        return PayloadFormat.buildStandard(values, previewTs, _format);
       } else {
         // Advanced Mode
         if (_groups.isEmpty) return null;
         final group = _groups.first;
-        if (group.format == 'tn') {
-          return DataGenerator.generateTnPayload(group.totalKeyCount);
-        } else if (group.format == 'tn-empty') {
-          return DataGenerator.generateTnEmptyPayload();
-        } else {
-          return DataGenerator.generateBatteryStatus(
-            group.totalKeyCount,
-            customKeys: group.customKeys,
-            clientId: '${group.clientIdPrefix}preview',
-          );
+        if (group.format == PayloadFormat.tieNiu) {
+          return DataGenerator.generateTnPayload(group.totalKeyCount,
+              timestamp: previewTs);
+        } else if (group.format == PayloadFormat.tieNiuEmpty) {
+          return DataGenerator.generateTnEmptyPayload(timestamp: previewTs);
         }
+        final values = DataGenerator.generateBatteryStatus(
+          group.totalKeyCount,
+          customKeys: group.customKeys,
+          clientId: '${group.clientIdPrefix}preview',
+        );
+        return PayloadFormat.buildStandard(values, previewTs, group.format);
       }
     } catch (e) {
       debugPrint('Error generating preview: $e');

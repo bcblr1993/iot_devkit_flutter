@@ -6,6 +6,7 @@ import 'package:mqtt_client/mqtt_server_client.dart';
 import '../utils/statistics_collector.dart';
 import '../models/group_config.dart';
 import '../models/custom_key_config.dart';
+import '../models/payload_format.dart';
 import '../models/simulation_context.dart';
 import '../models/subscription_config.dart';
 import 'data_generator.dart';
@@ -358,7 +359,7 @@ class MqttController extends ChangeNotifier {
     // We'll store this in the context map.
 
     int sendInterval = config['send_interval'] ?? 1;
-    String format = config['data']['format'] ?? 'default';
+    String format = PayloadFormat.normalize(config['data']['format'] as String?);
     int dataPointCount = config['data']['data_point_count'] ?? 10;
     List<CustomKeyConfig> customKeys = [];
     if (config['custom_keys'] != null && config['custom_keys'] is List) {
@@ -367,46 +368,72 @@ class MqttController extends ChangeNotifier {
           .toList();
     }
 
-    // Connect in batches to avoid overwhelming the system while staying fast
-    const int batchSize = 10;
-    for (int i = startIdx; i <= endIdx; i += batchSize) {
-      if (!isRunning || isStopping) break;
+    // Connect with a bounded concurrency pool (see [_connectWithPool]).
+    final tasks = <Future<void> Function()>[];
+    for (int j = startIdx; j <= endIdx; j++) {
+      String idxStr = j.toString();
+      String clientId = '$clientIdPrefix$idxStr';
+      String username = '$userPrefix$idxStr';
+      String password = '$passPrefix$idxStr';
 
-      List<Future<void>> batch = [];
-      for (int j = i; j < i + batchSize && j <= endIdx; j++) {
-        String idxStr = j.toString();
-        String clientId = '$clientIdPrefix$idxStr';
-        String username = '$userPrefix$idxStr';
-        String password = '$passPrefix$idxStr';
-
-        final context = BasicSimulationContext(
-            topic: topic,
-            qos: qos,
-            intervalSeconds: sendInterval,
-            format: format,
-            dataPointCount: dataPointCount,
-            customKeys: customKeys);
-
-        batch.add(_clientManager.createClient(
-          host: host,
-          port: port,
-          clientId: clientId,
-          username: username,
-          password: password,
+      final context = BasicSimulationContext(
           topic: topic,
-          context: context,
-          enableSsl: enableSsl,
-          caPath: caPath,
-          certPath: certPath,
-          keyPath: keyPath,
-          protocolVersion: protocolVersion,
-        ));
-      }
+          qos: qos,
+          intervalSeconds: sendInterval,
+          format: format,
+          dataPointCount: dataPointCount,
+          customKeys: customKeys);
 
-      await Future.wait(batch);
-      // Small pause between batches
-      await Future.delayed(const Duration(milliseconds: 100));
+      tasks.add(() => _clientManager.createClient(
+            host: host,
+            port: port,
+            clientId: clientId,
+            username: username,
+            password: password,
+            topic: topic,
+            context: context,
+            enableSsl: enableSsl,
+            caPath: caPath,
+            certPath: certPath,
+            keyPath: keyPath,
+            protocolVersion: protocolVersion,
+          ));
     }
+
+    await _connectWithPool(tasks);
+  }
+
+  /// Max number of MQTT connect attempts kept in flight at once during startup.
+  /// High enough to saturate a fast broker, capped so we don't exhaust sockets
+  /// or overrun the broker's accept queue.
+  static const int _connectConcurrency = 100;
+
+  /// Drain [tasks] with at most [_connectConcurrency] connects running at once.
+  ///
+  /// Each worker pulls the next task the instant it finishes, so a single slow
+  /// or timing-out connect (up to the 3s connect timeout) only occupies its own
+  /// slot instead of stalling a whole batch — this removes the multi-second
+  /// "head-of-line" gaps seen with the old `Future.wait(batch)` + fixed-delay
+  /// loop, and needs no artificial inter-batch sleep. Stops pulling new work as
+  /// soon as the run is stopping/aborted.
+  Future<void> _connectWithPool(List<Future<void> Function()> tasks) async {
+    if (tasks.isEmpty) return;
+    int next = 0;
+
+    Future<void> worker() async {
+      while (isRunning && !isStopping) {
+        // Single-threaded event loop: read-then-increment is atomic (no await
+        // in between), so each index is handed to exactly one worker.
+        final int i = next++;
+        if (i >= tasks.length) break;
+        await tasks[i]();
+      }
+    }
+
+    final int workerCount = tasks.length < _connectConcurrency
+        ? tasks.length
+        : _connectConcurrency;
+    await Future.wait([for (int w = 0; w < workerCount; w++) worker()]);
   }
 
   Future<void> _startAdvancedMode(Map<String, dynamic> config) async {
@@ -447,46 +474,39 @@ class MqttController extends ChangeNotifier {
     String? certPath = config['mqtt']['cert_path'];
     String? keyPath = config['mqtt']['key_path'];
 
-    const int batchSize = 5; // Smaller batch for advanced mode groups
     for (var group in groups) {
       if (!isRunning || isStopping) break;
 
       log('Starting Group: ${group.name}', 'info');
 
-      for (int i = group.startDeviceNumber;
-          i <= group.endDeviceNumber;
-          i += batchSize) {
-        if (!isRunning || isStopping) break;
+      // Connect this group's devices with the shared bounded concurrency pool.
+      final tasks = <Future<void> Function()>[];
+      for (int j = group.startDeviceNumber; j <= group.endDeviceNumber; j++) {
+        String idxStr = j.toString();
+        String clientId = '${group.clientIdPrefix}$idxStr';
+        String username = '${group.usernamePrefix}$idxStr';
+        String password = '${group.passwordPrefix}$idxStr';
 
-        List<Future<void>> batch = [];
-        for (int j = i; j < i + batchSize && j <= group.endDeviceNumber; j++) {
-          String idxStr = j.toString();
-          String clientId = '${group.clientIdPrefix}$idxStr';
-          String username = '${group.usernamePrefix}$idxStr';
-          String password = '${group.passwordPrefix}$idxStr';
+        final context =
+            AdvancedSimulationContext(topic: topic, qos: qos, group: group);
 
-          final context =
-              AdvancedSimulationContext(topic: topic, qos: qos, group: group);
-
-          batch.add(_clientManager.createClient(
-            host: host,
-            port: port,
-            clientId: clientId,
-            username: username,
-            password: password,
-            topic: topic,
-            context: context,
-            enableSsl: enableSsl,
-            caPath: caPath,
-            certPath: certPath,
-            keyPath: keyPath,
-            protocolVersion: protocolVersion,
-          ));
-        }
-
-        await Future.wait(batch);
-        await Future.delayed(const Duration(milliseconds: 100));
+        tasks.add(() => _clientManager.createClient(
+              host: host,
+              port: port,
+              clientId: clientId,
+              username: username,
+              password: password,
+              topic: topic,
+              context: context,
+              enableSsl: enableSsl,
+              caPath: caPath,
+              certPath: certPath,
+              keyPath: keyPath,
+              protocolVersion: protocolVersion,
+            ));
       }
+
+      await _connectWithPool(tasks);
     }
   }
 

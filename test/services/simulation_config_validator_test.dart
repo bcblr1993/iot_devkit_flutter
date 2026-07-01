@@ -83,7 +83,7 @@ void main() {
             endDeviceNumber: 3,
             totalKeyCount: 0,
             changeIntervalSeconds: 0,
-            fullIntervalSeconds: 0,
+            fullIntervalSeconds: -1,
             changeRatio: 1.5,
             customKeys: [
               CustomKeyConfig(
@@ -114,6 +114,50 @@ void main() {
           'groups[0].changeRatio',
           'custom_keys[0].static_value',
         ]),
+      );
+    });
+
+    test('accepts full interval 0 (disabled) with a change ratio', () {
+      final config = _basicConfig()
+        ..['groups'] = [
+          GroupConfig(
+            name: 'Group A',
+            fullIntervalSeconds: 0,
+            changeIntervalSeconds: 1,
+            changeRatio: 0.3,
+          ).toJson(),
+        ]
+        ..['mode'] = 'advanced';
+
+      final result = validator.validate(
+        config,
+        mode: SimulationMode.advanced,
+      );
+
+      expect(result.isValid, isTrue);
+    });
+
+    test('rejects full interval 0 when change ratio is also 0', () {
+      final config = _basicConfig()
+        ..['groups'] = [
+          GroupConfig(
+            name: 'Group A',
+            fullIntervalSeconds: 0,
+            changeIntervalSeconds: 1,
+            changeRatio: 0,
+          ).toJson(),
+        ]
+        ..['mode'] = 'advanced';
+
+      final result = validator.validate(
+        config,
+        mode: SimulationMode.advanced,
+      );
+
+      expect(result.isValid, isFalse);
+      expect(
+        result.issues.map((issue) => issue.field),
+        contains('groups[0].fullIntervalSeconds'),
       );
     });
   });

@@ -1,5 +1,6 @@
 import 'package:uuid/uuid.dart';
 import 'custom_key_config.dart';
+import 'payload_format.dart';
 
 class GroupConfig {
   final String id;
@@ -40,7 +41,7 @@ class GroupConfig {
     this.fullIntervalSeconds = 300,
     this.changeIntervalSeconds = 1,
     this.changeRatio = 0.3,
-    this.format = 'default',
+    this.format = PayloadFormat.timestamped,
     this.customKeys = const [],
   }) : id = id ?? const Uuid().v4();
 
@@ -114,7 +115,7 @@ class GroupConfig {
       fullIntervalSeconds: json['fullIntervalSeconds'] ?? 300,
       changeIntervalSeconds: json['changeIntervalSeconds'] ?? 1,
       changeRatio: (json['changeRatio'] ?? 0.3).toDouble(),
-      format: json['format'] ?? 'default',
+      format: PayloadFormat.normalize(json['format'] as String?),
       customKeys: (json['customKeys'] as List? ?? [])
           .map((e) => CustomKeyConfig.fromJson(e))
           .toList(),

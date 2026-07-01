@@ -611,7 +611,7 @@ abstract class AppLocalizations {
   /// No description provided for @fullInterval.
   ///
   /// In en, this message translates to:
-  /// **'Full Interval (s)'**
+  /// **'Full Interval (s, 0=off)'**
   String get fullInterval;
 
   /// No description provided for @delete.
@@ -776,6 +776,24 @@ abstract class AppLocalizations {
   /// **'Default Format'**
   String get formatDefault;
 
+  /// No description provided for @formatSimpleKv.
+  ///
+  /// In en, this message translates to:
+  /// **'Simple key-value'**
+  String get formatSimpleKv;
+
+  /// No description provided for @formatTbTimestamp.
+  ///
+  /// In en, this message translates to:
+  /// **'Client-side timestamp'**
+  String get formatTbTimestamp;
+
+  /// No description provided for @formatTbArray.
+  ///
+  /// In en, this message translates to:
+  /// **'Array (timestamped)'**
+  String get formatTbArray;
+
   /// No description provided for @formatTieNiu.
   ///
   /// In en, this message translates to:
@@ -787,6 +805,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tie Niu Empty Format'**
   String get formatTieNiuEmpty;
+
+  /// No description provided for @formatSimpleKvDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Server receive time is used as the data timestamp.'**
+  String get formatSimpleKvDesc;
+
+  /// No description provided for @formatTbTimestampDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Uses the simulator\'s current time as the timestamp.'**
+  String get formatTbTimestampDesc;
+
+  /// No description provided for @formatTbArrayDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Uses the simulator\'s current time, sent as an array.'**
+  String get formatTbArrayDesc;
+
+  /// No description provided for @formatTieNiuDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Tie Niu device data format.'**
+  String get formatTieNiuDesc;
+
+  /// No description provided for @formatTieNiuEmptyDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Tie Niu empty-data format.'**
+  String get formatTieNiuEmptyDesc;
 
   /// No description provided for @importFailed.
   ///

@@ -20,6 +20,8 @@ import '../simulator/keep_alive_wrapper.dart';
 import '../simulator/simulator_header.dart';
 import '../simulator/simulator_log_dock.dart';
 import '../../viewmodels/mqtt_view_model.dart';
+import '../../models/payload_format.dart';
+import '../components/payload_format_help.dart';
 
 class SimulatorPanel extends StatefulWidget {
   final List<LogEntry> logs;
@@ -82,8 +84,8 @@ class _SimulatorPanelState extends State<SimulatorPanel>
 
   // --- Dialogs ---
 
-  void _showUnifiedPreviewDialog(BuildContext context,
-      Map<String, dynamic> data, VoidCallback? onConfirm) async {
+  void _showUnifiedPreviewDialog(
+      BuildContext context, Object data, VoidCallback? onConfirm) async {
     final l10n = AppLocalizations.of(context)!;
     final jsonStr = const JsonEncoder.withIndent('  ').convert(data);
     final isConfirmMode = onConfirm != null;
@@ -378,11 +380,6 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                           onChanged: (_) => setState(() {}),
                         ),
                         _buildTextField(
-                          l10n.deviceName,
-                          vm.devicePrefixController,
-                          isRunning,
-                        ),
-                        _buildTextField(
                           l10n.clientId,
                           vm.clientIdPrefixController,
                           isRunning,
@@ -412,19 +409,33 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                       ],
                     ),
                     const SizedBox(height: 10),
-                    LabSelect<String>(
+    LabSelect<String>(
                       label: l10n.dataFormat,
                       value: vm.format,
                       items: [
-                        LabSelectItem('default', l10n.formatDefault),
-                        LabSelectItem('tn', l10n.formatTieNiu),
-                        LabSelectItem('tn-empty', l10n.formatTieNiuEmpty),
+                        LabSelectItem(
+                            PayloadFormat.simpleKv, l10n.formatSimpleKv),
+                        LabSelectItem(
+                            PayloadFormat.timestamped, l10n.formatTbTimestamp),
+                        LabSelectItem(PayloadFormat.array, l10n.formatTbArray),
+                        LabSelectItem(PayloadFormat.tieNiu, l10n.formatTieNiu),
+                        LabSelectItem(
+                            PayloadFormat.tieNiuEmpty, l10n.formatTieNiuEmpty),
                       ],
                       onChanged: isRunning
                           ? null
                           : (v) {
                               if (v != null) vm.setFormat(v);
                             },
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6, left: 2),
+                      child: Text(
+                        payloadFormatDescription(l10n, vm.format),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -514,11 +525,9 @@ class _SimulatorPanelState extends State<SimulatorPanel>
       MqttController controller, AppLocalizations l10n, AppThemeEffect effect) {
     final theme = Theme.of(context);
     final isBusy = controller.isBusy;
-    final isStarting = controller.isStarting;
     final isStopping = controller.isStopping;
     final isRunning = controller.isRunning;
     final isBasic = _tabController.index == 0;
-    final showProgress = isStarting || isStopping;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -526,15 +535,19 @@ class _SimulatorPanelState extends State<SimulatorPanel>
         final startButton = SizedBox(
           height: 44,
           child: LabButton(
-            label: showProgress
-                ? (isStopping ? l10n.stopping : l10n.starting)
+            // Stop stays clickable while starting/connecting so the user can
+            // abort a large or stuck run at any time. Only the stopping phase
+            // shows a non-interactive spinner. Connection progress is surfaced
+            // via the run-state chip / online counter in the status bar.
+            label: isStopping
+                ? l10n.stopping
                 : (isRunning ? l10n.stopSimulation : l10n.startSimulation),
             icon: isRunning ? Icons.stop : Icons.play_arrow,
             variant:
                 isRunning ? LabButtonVariant.danger : LabButtonVariant.primary,
             size: LabButtonSize.lg,
             fullWidth: true,
-            loading: showProgress,
+            loading: isStopping,
             onPressed: isStopping
                 ? null
                 : (isRunning
@@ -763,10 +776,6 @@ class _SimulatorPanelState extends State<SimulatorPanel>
             label: l10n.statFailed,
             value: '${stats.failureCount}',
             valueColor: stats.failureCount > 0 ? colors.error : null,
-          ),
-          _StatSegment(
-            label: l10n.cpuUsage,
-            value: '${stats.cpuUsage.toStringAsFixed(1)}%',
           ),
           _StatSegment(
             label: l10n.memoryUsage,
