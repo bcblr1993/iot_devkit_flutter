@@ -363,19 +363,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get formatTieNiuEmpty => '铁牛空数据格式';
 
   @override
-  String get formatSimpleKvDesc => '使用服务器接收时间作为数据时间戳。';
+  String get formatSimpleKvDesc => '服务器接收时间为时间戳';
 
   @override
-  String get formatTbTimestampDesc => '使用当前模拟器时间作为时间戳。';
+  String get formatTbTimestampDesc => '当前模拟器时间为时间戳';
 
   @override
-  String get formatTbArrayDesc => '使用当前模拟器时间，以数组形式上送。';
+  String get formatTbArrayDesc => '当前模拟器时间，数组形式上送';
 
   @override
-  String get formatTieNiuDesc => '铁牛设备数据格式。';
+  String get formatTieNiuDesc => '铁牛设备数据格式';
 
   @override
-  String get formatTieNiuEmptyDesc => '铁牛空数据格式。';
+  String get formatTieNiuEmptyDesc => '铁牛空数据格式';
 
   @override
   String get importFailed => '导入失败';

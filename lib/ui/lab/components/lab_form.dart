@@ -133,6 +133,10 @@ class LabSelect<T> extends StatelessWidget {
   final ValueChanged<T?>? onChanged;
   final String? helperText;
 
+  /// Max lines the [helperText] may wrap to before ellipsizing. Defaults to 2
+  /// so a short sentence fits inside a narrow grid column without truncation.
+  final int helperMaxLines;
+
   const LabSelect({
     super.key,
     required this.value,
@@ -140,6 +144,7 @@ class LabSelect<T> extends StatelessWidget {
     this.label,
     this.onChanged,
     this.helperText,
+    this.helperMaxLines = 2,
   });
 
   @override
@@ -165,7 +170,10 @@ class LabSelect<T> extends StatelessWidget {
           icon: Icon(Icons.expand_more, size: 16, color: tokens.faint),
           dropdownColor: scheme.surfaceContainerLowest,
           style: text.bodySmall?.copyWith(color: scheme.onSurface),
-          decoration: InputDecoration(helperText: helperText),
+          decoration: InputDecoration(
+            helperText: helperText,
+            helperMaxLines: helperMaxLines,
+          ),
           onChanged: onChanged,
           items: items
               .map((i) =>

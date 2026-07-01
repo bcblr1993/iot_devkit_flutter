@@ -809,31 +809,31 @@ abstract class AppLocalizations {
   /// No description provided for @formatSimpleKvDesc.
   ///
   /// In en, this message translates to:
-  /// **'Server receive time is used as the data timestamp.'**
+  /// **'Server receive time as timestamp'**
   String get formatSimpleKvDesc;
 
   /// No description provided for @formatTbTimestampDesc.
   ///
   /// In en, this message translates to:
-  /// **'Uses the simulator\'s current time as the timestamp.'**
+  /// **'Simulator\'s current time as timestamp'**
   String get formatTbTimestampDesc;
 
   /// No description provided for @formatTbArrayDesc.
   ///
   /// In en, this message translates to:
-  /// **'Uses the simulator\'s current time, sent as an array.'**
+  /// **'Simulator\'s current time, sent as an array'**
   String get formatTbArrayDesc;
 
   /// No description provided for @formatTieNiuDesc.
   ///
   /// In en, this message translates to:
-  /// **'Tie Niu device data format.'**
+  /// **'Tie Niu device data format'**
   String get formatTieNiuDesc;
 
   /// No description provided for @formatTieNiuEmptyDesc.
   ///
   /// In en, this message translates to:
-  /// **'Tie Niu empty-data format.'**
+  /// **'Tie Niu empty-data format'**
   String get formatTieNiuEmptyDesc;
 
   /// No description provided for @importFailed.

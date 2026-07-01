@@ -365,22 +365,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get formatTieNiuEmpty => 'Tie Niu Empty Format';
 
   @override
-  String get formatSimpleKvDesc =>
-      'Server receive time is used as the data timestamp.';
+  String get formatSimpleKvDesc => 'Server receive time as timestamp';
 
   @override
-  String get formatTbTimestampDesc =>
-      'Uses the simulator\'s current time as the timestamp.';
+  String get formatTbTimestampDesc => 'Simulator\'s current time as timestamp';
 
   @override
-  String get formatTbArrayDesc =>
-      'Uses the simulator\'s current time, sent as an array.';
+  String get formatTbArrayDesc => 'Simulator\'s current time, sent as an array';
 
   @override
-  String get formatTieNiuDesc => 'Tie Niu device data format.';
+  String get formatTieNiuDesc => 'Tie Niu device data format';
 
   @override
-  String get formatTieNiuEmptyDesc => 'Tie Niu empty-data format.';
+  String get formatTieNiuEmptyDesc => 'Tie Niu empty-data format';
 
   @override
   String get importFailed => 'Import Failed';
