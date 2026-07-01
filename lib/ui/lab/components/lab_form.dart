@@ -131,6 +131,7 @@ class LabSelect<T> extends StatelessWidget {
   final T value;
   final List<LabSelectItem<T>> items;
   final ValueChanged<T?>? onChanged;
+  final String? helperText;
 
   const LabSelect({
     super.key,
@@ -138,6 +139,7 @@ class LabSelect<T> extends StatelessWidget {
     required this.items,
     this.label,
     this.onChanged,
+    this.helperText,
   });
 
   @override
@@ -163,6 +165,7 @@ class LabSelect<T> extends StatelessWidget {
           icon: Icon(Icons.expand_more, size: 16, color: tokens.faint),
           dropdownColor: scheme.surfaceContainerLowest,
           style: text.bodySmall?.copyWith(color: scheme.onSurface),
+          decoration: InputDecoration(helperText: helperText),
           onChanged: onChanged,
           items: items
               .map((i) =>

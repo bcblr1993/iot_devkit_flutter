@@ -412,6 +412,7 @@ class _SimulatorPanelState extends State<SimulatorPanel>
     LabSelect<String>(
                       label: l10n.dataFormat,
                       value: vm.format,
+                      helperText: payloadFormatDescription(l10n, vm.format),
                       items: [
                         LabSelectItem(
                             PayloadFormat.simpleKv, l10n.formatSimpleKv),
@@ -427,15 +428,6 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                           : (v) {
                               if (v != null) vm.setFormat(v);
                             },
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6, left: 2),
-                      child: Text(
-                        payloadFormatDescription(l10n, vm.format),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
                     ),
                   ],
                 ),

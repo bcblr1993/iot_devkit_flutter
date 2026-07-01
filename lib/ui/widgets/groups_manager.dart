@@ -239,6 +239,7 @@ class _GroupsManagerState extends State<GroupsManager> {
                   LabSelect<String>(
                     label: l10n.format,
                     value: group.format,
+                    helperText: payloadFormatDescription(l10n, group.format),
                     items: [
                       LabSelectItem(PayloadFormat.simpleKv, l10n.formatSimpleKv),
                       LabSelectItem(
@@ -254,15 +255,6 @@ class _GroupsManagerState extends State<GroupsManager> {
                             _updateGroup(index, group.copyWith(format: v!)),
                   ),
                 ],
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 6, left: 2),
-                child: Text(
-                  payloadFormatDescription(l10n, group.format),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
               ),
               const SizedBox(height: 10),
               FormGrid(
