@@ -602,6 +602,18 @@ abstract class AppLocalizations {
   /// **'Change Ratio (0-1)'**
   String get changeRatio;
 
+  /// No description provided for @randomChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Random change'**
+  String get randomChange;
+
+  /// No description provided for @randomChangeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Report a random subset of keys (still sized by the change ratio) instead of always the first N.'**
+  String get randomChangeDesc;
+
   /// No description provided for @changeInterval.
   ///
   /// In en, this message translates to:

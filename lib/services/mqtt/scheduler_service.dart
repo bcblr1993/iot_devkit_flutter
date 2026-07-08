@@ -439,6 +439,8 @@ class SchedulerService {
             key1Value: key1,
             customKeyValues: customValues,
             format: PayloadFormat.normalize(group.format),
+            totalKeyCount: group.totalKeyCount,
+            randomKeys: group.randomChange,
           ));
         } catch (e) {
           onLog('Isolate Error (Change): $e', 'error', tag: clientId);

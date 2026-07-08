@@ -297,6 +297,32 @@ class _GroupsManagerState extends State<GroupsManager> {
                 ],
               ),
               const SizedBox(height: 12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  LabCheckbox(
+                    value: group.randomChange,
+                    label: l10n.randomChange,
+                    onChanged: widget.isLocked
+                        ? null
+                        : (v) => _updateGroup(
+                            index, group.copyWith(randomChange: v ?? false)),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 1),
+                      child: Text(
+                        l10n.randomChangeDesc,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               const Divider(),
               CustomKeysManager(
                 keys: group.customKeys,

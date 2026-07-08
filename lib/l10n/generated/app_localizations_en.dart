@@ -263,6 +263,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get changeRatio => 'Change Ratio (0-1)';
 
   @override
+  String get randomChange => 'Random change';
+
+  @override
+  String get randomChangeDesc =>
+      'Report a random subset of keys (still sized by the change ratio) instead of always the first N.';
+
+  @override
   String get changeInterval => 'Change Interval (s)';
 
   @override

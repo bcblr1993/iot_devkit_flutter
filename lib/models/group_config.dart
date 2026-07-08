@@ -22,6 +22,11 @@ class GroupConfig {
   int fullIntervalSeconds;
   int changeIntervalSeconds;
   double changeRatio;
+
+  /// When true, each change report sends a RANDOM subset of keys (still sized
+  /// by [changeRatio]) drawn from all [totalKeyCount] keys, instead of always
+  /// the first N keys.
+  bool randomChange;
   String format;
 
   // Custom Keys
@@ -41,6 +46,7 @@ class GroupConfig {
     this.fullIntervalSeconds = 300,
     this.changeIntervalSeconds = 1,
     this.changeRatio = 0.3,
+    this.randomChange = false,
     this.format = PayloadFormat.timestamped,
     this.customKeys = const [],
   }) : id = id ?? const Uuid().v4();
@@ -59,6 +65,7 @@ class GroupConfig {
     int? fullIntervalSeconds,
     int? changeIntervalSeconds,
     double? changeRatio,
+    bool? randomChange,
     String? format,
     List<CustomKeyConfig>? customKeys,
   }) {
@@ -77,6 +84,7 @@ class GroupConfig {
       changeIntervalSeconds:
           changeIntervalSeconds ?? this.changeIntervalSeconds,
       changeRatio: changeRatio ?? this.changeRatio,
+      randomChange: randomChange ?? this.randomChange,
       format: format ?? this.format,
       customKeys: customKeys ?? this.customKeys,
     );
@@ -96,6 +104,7 @@ class GroupConfig {
       'fullIntervalSeconds': fullIntervalSeconds,
       'changeIntervalSeconds': changeIntervalSeconds,
       'changeRatio': changeRatio,
+      'randomChange': randomChange,
       'format': format,
       'customKeys': customKeys.map((e) => e.toJson()).toList(),
     };
@@ -115,6 +124,7 @@ class GroupConfig {
       fullIntervalSeconds: json['fullIntervalSeconds'] ?? 300,
       changeIntervalSeconds: json['changeIntervalSeconds'] ?? 1,
       changeRatio: (json['changeRatio'] ?? 0.3).toDouble(),
+      randomChange: json['randomChange'] ?? false,
       format: PayloadFormat.normalize(json['format'] as String?),
       customKeys: (json['customKeys'] as List? ?? [])
           .map((e) => CustomKeyConfig.fromJson(e))

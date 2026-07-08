@@ -65,4 +65,58 @@ void main() {
       expect(decoded.first['values']['key_1'], 7);
     });
   });
+
+  group('random change report', () {
+    Map<String, dynamic> valuesOf(WorkerInput i) =>
+        (jsonDecode(generatePayloadJson(i)) as Map)['values']
+            as Map<String, dynamic>;
+
+    test('emits exactly `count` keys drawn from the full namespace', () {
+      final out = valuesOf(WorkerInput(
+        count: 150,
+        timestamp: 1,
+        key1Value: 1,
+        customKeyValues: const {},
+        totalKeyCount: 500,
+        randomKeys: true,
+      ));
+      expect(out.length, 150);
+      // Every emitted key must belong to the 500-key namespace (key_1..key_500).
+      for (final k in out.keys) {
+        final n = int.parse(k.substring('key_'.length));
+        expect(n >= 1 && n <= 500, isTrue, reason: '$k out of range');
+      }
+    });
+
+    test('selection varies between ticks (not the fixed first N)', () {
+      WorkerInput mk() => WorkerInput(
+            count: 150,
+            timestamp: 1,
+            key1Value: 1,
+            customKeyValues: const {},
+            totalKeyCount: 500,
+            randomKeys: true,
+          );
+      final a = valuesOf(mk()).keys.toSet();
+      final b = valuesOf(mk()).keys.toSet();
+      // Two independent random draws of 150/500 are practically never identical.
+      expect(a.difference(b).isNotEmpty, isTrue);
+      // And it is NOT just the deterministic first-150 prefix.
+      final firstN =
+          List.generate(150, (i) => i == 0 ? 'key_1' : 'key_${i + 1}').toSet();
+      expect(a == firstN, isFalse);
+    });
+
+    test('disabled → deterministic first-N prefix', () {
+      final out = valuesOf(WorkerInput(
+        count: 3,
+        timestamp: 1,
+        key1Value: 9,
+        customKeyValues: const {},
+        totalKeyCount: 500,
+        randomKeys: false,
+      ));
+      expect(out.keys.toList(), ['key_1', 'key_2', 'key_3']);
+    });
+  });
 }

@@ -85,6 +85,8 @@
   "configImported": "Configuration imported",
   "configExportFailed": "Export failed",
   "changeRatio": "Change Ratio (0-1)",
+  "randomChange": "Random change",
+  "randomChangeDesc": "Report a random subset of keys (still sized by the change ratio) instead of always the first N.",
   "changeInterval": "Change Interval (s)",
   "fullInterval": "Full Interval (s, 0=off)",
   "delete": "Delete",

@@ -19,6 +19,14 @@ class WorkerInput {
   /// timestamped object form for backward compatibility.
   final String format;
 
+  /// Size of the full key namespace this payload is a subset of. Only used
+  /// (together with [randomKeys]) for random change reports; 0 disables it.
+  final int totalKeyCount;
+
+  /// When true and [totalKeyCount] > [count], emit a RANDOM subset of [count]
+  /// keys drawn from the full namespace instead of the first [count] keys.
+  final bool randomKeys;
+
   WorkerInput({
     required this.count,
     required this.timestamp,
@@ -26,6 +34,8 @@ class WorkerInput {
     required this.customKeyValues,
     this.clientId,
     this.format = PayloadFormat.timestamped,
+    this.totalKeyCount = 0,
+    this.randomKeys = false,
   });
 }
 
@@ -201,46 +211,80 @@ class _IsolateWorkerContainer {
   }
 }
 
-/// Logic function (Same as before)
+/// Deterministic value for auto-generated key `key_$keyIndex`, matching the
+/// legacy type rotation (float / int / string / bool by `keyIndex % 4`).
+dynamic _autoKeyValue(int keyIndex, Random random) {
+  switch (keyIndex % 4) {
+    case 1:
+      return double.parse((random.nextDouble() * 100).toStringAsFixed(2));
+    case 2:
+      return random.nextInt(1001);
+    case 3:
+      return 'str_val_${random.nextInt(101)}';
+    default: // case 0
+      return random.nextInt(2) == 1;
+  }
+}
+
+/// Write the key occupying [slot] of the full namespace into [data]:
+///   slot 0            → key_1 (the increment counter)
+///   slot 1..custom    → custom key at that position
+///   slot > custom     → auto key `key_(slot - custom + 1)` (auto keys from 2)
+void _writeKeyAtSlot(
+  Map<String, dynamic> data,
+  int slot,
+  WorkerInput input,
+  List<MapEntry<String, dynamic>> customEntries,
+  Random random,
+) {
+  final int customCount = customEntries.length;
+  if (slot == 0) {
+    data['key_1'] = input.key1Value;
+  } else if (slot <= customCount) {
+    final e = customEntries[slot - 1];
+    data[e.key] = e.value;
+  } else {
+    final keyIndex = slot - customCount + 1;
+    data['key_$keyIndex'] = _autoKeyValue(keyIndex, random);
+  }
+}
+
+/// Logic function.
 String generatePayloadJson(WorkerInput input) {
   final Random random = Random();
   final Map<String, dynamic> data = {};
 
-  // 1. Add key_1
-  data['key_1'] = input.key1Value;
+  final int customCount = input.customKeyValues.length;
+  final bool useRandom = input.randomKeys &&
+      input.count > 0 &&
+      input.totalKeyCount > input.count;
 
-  // 2. Add Custom Keys
-  data.addAll(input.customKeyValues);
-
-  // 3. Generate Random Keys
-  int customCount = input.customKeyValues.length;
-  int filledCount = 1 + customCount;
-  int remaining = input.count - filledCount;
-
-  if (remaining > 0) {
+  if (useRandom) {
+    // Random change report: pick `count` distinct slots out of the full
+    // `totalKeyCount` namespace via a partial Fisher-Yates shuffle, so a
+    // random — not fixed-prefix — subset of keys is reported each tick.
+    final customEntries = input.customKeyValues.entries.toList();
+    final int total = input.totalKeyCount;
+    final pool = List<int>.generate(total, (i) => i);
+    for (int i = 0; i < input.count; i++) {
+      final j = i + random.nextInt(total - i);
+      final tmp = pool[i];
+      pool[i] = pool[j];
+      pool[j] = tmp;
+      _writeKeyAtSlot(data, pool[i], input, customEntries, random);
+    }
+  } else {
+    // Deterministic fill: key_1, then all custom keys, then key_2.. to fill.
+    data['key_1'] = input.key1Value;
+    data.addAll(input.customKeyValues);
+    final int remaining = input.count - (1 + customCount);
     for (int i = 0; i < remaining; i++) {
-      int keyIndex = i + 2;
-      int typeIndex = keyIndex % 4;
-      dynamic value;
-      switch (typeIndex) {
-        case 1:
-          value = double.parse((random.nextDouble() * 100).toStringAsFixed(2));
-          break;
-        case 2:
-          value = random.nextInt(1001);
-          break;
-        case 3:
-          value = 'str_val_${random.nextInt(101)}';
-          break;
-        case 0:
-          value = random.nextInt(2) == 1;
-          break;
-      }
-      data['key_$keyIndex'] = value;
+      final int keyIndex = i + 2;
+      data['key_$keyIndex'] = _autoKeyValue(keyIndex, random);
     }
   }
 
-  // 4. Shape into the selected ThingsBoard payload format & encode.
+  // Shape into the selected ThingsBoard payload format & encode.
   final Object payload =
       PayloadFormat.buildStandard(data, input.timestamp, input.format);
 

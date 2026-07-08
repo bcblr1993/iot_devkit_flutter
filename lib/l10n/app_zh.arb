@@ -103,6 +103,8 @@
   "configImported": "配置已导入",
   "configExportFailed": "导出失败",
   "changeRatio": "变化百分比 (0-1)",
+  "randomChange": "随机变化",
+  "randomChangeDesc": "每次从全部键中随机选取上送（数量仍按变化百分比），而非固定前 N 个。",
   "changeInterval": "变化频率 (秒)",
   "fullInterval": "全量频率 (秒, 0=关闭)",
   "delete": "删除",

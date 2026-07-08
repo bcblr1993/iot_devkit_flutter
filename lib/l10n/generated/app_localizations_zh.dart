@@ -261,6 +261,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get changeRatio => '变化百分比 (0-1)';
 
   @override
+  String get randomChange => '随机变化';
+
+  @override
+  String get randomChangeDesc => '每次从全部键中随机选取上送（数量仍按变化百分比），而非固定前 N 个。';
+
+  @override
   String get changeInterval => '变化频率 (秒)';
 
   @override
