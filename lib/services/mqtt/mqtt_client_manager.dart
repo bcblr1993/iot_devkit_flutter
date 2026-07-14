@@ -75,6 +75,13 @@ class MqttClientManager {
   int get activeClientCount => _clients.length;
   int get trackedClientCount => _clientConfigs.length;
 
+  /// Disable mqtt_client's global payload formatter as well as visible logs.
+  /// The package defaults [logPayloads] to true even when [on] is false.
+  @visibleForTesting
+  static void disableLibraryLogging(MqttServerClient client) {
+    client.logging(on: false, logPayloads: false);
+  }
+
   /// Snapshot of the active subscription list (for diagnostics / tests).
   List<SubscriptionConfig> get subscriptions =>
       List.unmodifiable(_subscriptions);
@@ -161,7 +168,11 @@ class MqttClientManager {
     client.port = port;
     client.connectTimeoutPeriod = 3000;
     client.keepAlivePeriod = 60;
-    client.logging(on: false);
+    // mqtt_client keeps payload formatting enabled by default even when log
+    // output itself is disabled. That still calls toString() over every byte
+    // of every publish message, which is especially expensive during full
+    // report bursts. Disable both parts explicitly.
+    disableLibraryLogging(client);
     client.autoReconnect = false; // Manual handling
 
     if (enableSsl) {
@@ -303,7 +314,8 @@ class MqttClientManager {
     );
     final ackTopic = action.autoAckTopic;
     if (ackTopic != null) {
-      _publishAutoAck(clientId, client, ackTopic, _toMqttQos(action.autoAckQos));
+      _publishAutoAck(
+          clientId, client, ackTopic, _toMqttQos(action.autoAckQos));
     }
   }
 

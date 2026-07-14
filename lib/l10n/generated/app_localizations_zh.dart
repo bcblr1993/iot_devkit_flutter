@@ -543,6 +543,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get statFailed => '失败数';
 
   @override
+  String get statPublishFailed => '发布失败';
+
+  @override
+  String get statLateDropped => '调度丢弃';
+
+  @override
+  String get statGenerationErrors => '生成错误';
+
+  @override
+  String get statPointsPerSecond => '点每秒';
+
+  @override
   String get enableSsl => '启用 SSL/TLS';
 
   @override
@@ -574,6 +586,63 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get performanceMode => '高性能模式 (关闭日志)';
+
+  @override
+  String get performanceModeDescription => '关闭逐条发送明细日志，以获得最大吞吐量';
+
+  @override
+  String autoProcessPlanSingle(String steady, String peak, String limit) {
+    return '预计常态 $steady 点/秒，峰值 $peak 点/秒；按每个发送进程 $limit 点/秒的上限，单进程即可完成。';
+  }
+
+  @override
+  String autoProcessPlanMultiple(
+      String steady, String peak, String limit, int count) {
+    return '预计常态 $steady 点/秒，峰值 $peak 点/秒；按每个发送进程 $limit 点/秒的上限，将自动启动 $count 个发送进程。';
+  }
+
+  @override
+  String get autoProcessPlanUnsatisfied =>
+      '至少有一个设备自身已超过单进程点数上限，按设备分片无法保证每个进程都低于设定值。';
+
+  @override
+  String get autoProcessPlanSingleDeviceUnsatisfied =>
+      '单个设备的峰值负载已超过单进程点数上限，增加本机进程也无法拆分该设备的负载。';
+
+  @override
+  String get autoProcessPlanShardDistributionUnsatisfied =>
+      '设备分片后仍有进程超过点数上限，当前设备范围无法均匀分配到满足上限。';
+
+  @override
+  String autoProcessSafetyLimitExceeded(int required, int limit) {
+    return '该负载至少需要 $required 个发送进程，超过当前机器自动启动安全上限 $limit 个。请降低模拟负载，或拆分到多台机器运行。';
+  }
+
+  @override
+  String startProcessCount(int count) {
+    return '启动 $count 个进程';
+  }
+
+  @override
+  String autoProcessesStarting(int count) {
+    return '正在启动 $count 个发送进程……';
+  }
+
+  @override
+  String autoProcessesReady(int ready, int count) {
+    return '$ready/$count 个发送进程已就绪，正在连接设备。';
+  }
+
+  @override
+  String autoProcessLaunchFailed(String error) {
+    return '发送进程启动失败：$error';
+  }
+
+  @override
+  String get statProcesses => '进程';
+
+  @override
+  String get unknownError => '未知错误';
 
   @override
   String get themePolarBlue => '极地冰蓝 (Ice Blue)';

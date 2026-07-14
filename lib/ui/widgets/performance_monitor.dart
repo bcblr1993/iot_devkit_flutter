@@ -38,14 +38,34 @@ class PerformanceMonitor extends StatelessWidget {
                 children: [
                   _kpi(context, l10n.dashboardTPS,
                       stats.currentTps.toStringAsFixed(1), '/s'),
+                  _kpi(context, l10n.statPointsPerSecond,
+                      stats.currentPointsPerSecond.toStringAsFixed(0), null),
                   _kpi(context, l10n.dashboardBandwidth,
                       stats.currentBandwidth.toStringAsFixed(1), 'KB/s'),
                   _kpi(context, l10n.dashboardLatency,
                       stats.currentLatency.toStringAsFixed(0), 'ms'),
-                  _kpi(context, l10n.statSuccess, '${stats.successCount}',
-                      null, tokens.ok),
-                  _kpi(context, l10n.statFailed, '${stats.failureCount}', null,
+                  _kpi(context, l10n.statSuccess, '${stats.successCount}', null,
+                      tokens.ok),
+                  _kpi(
+                      context,
+                      l10n.statPublishFailed,
+                      '${stats.failureCount}',
+                      null,
                       stats.failureCount > 0
+                          ? Theme.of(context).colorScheme.error
+                          : null),
+                  _kpi(
+                      context,
+                      l10n.statLateDropped,
+                      '${stats.lateDroppedCount}',
+                      null,
+                      stats.lateDroppedCount > 0 ? tokens.warn : null),
+                  _kpi(
+                      context,
+                      l10n.statGenerationErrors,
+                      '${stats.generationErrorCount}',
+                      null,
+                      stats.generationErrorCount > 0
                           ? Theme.of(context).colorScheme.error
                           : null),
                 ],
@@ -152,8 +172,8 @@ class PerformanceMonitor extends StatelessWidget {
     );
   }
 
-  Widget _bars(BuildContext context, List<Map<String, double>> history,
-      Color color) {
+  Widget _bars(
+      BuildContext context, List<Map<String, double>> history, Color color) {
     final values = history.map((e) => e['value'] ?? 0.0).toList();
     if (values.length < 2) {
       final l10n = AppLocalizations.of(context)!;

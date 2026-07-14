@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
+import 'package:typed_data/typed_buffers.dart';
 import '../../services/data_generator.dart';
 import '../../utils/statistics_collector.dart';
 import '../../models/group_config.dart';
@@ -25,6 +26,104 @@ class ScheduleDecision {
   bool get droppedLateTicks => skippedCount > 0;
 }
 
+/// Returns whether one change-report tick is the closest change target to a
+/// full-report target for the same device.
+///
+/// Each full target maps to exactly one non-negative change tick. Ties choose
+/// the earlier change tick. This works even when the full and change grids have
+/// different phase offsets or non-divisible intervals.
+@visibleForTesting
+bool shouldSkipChangeTickCoveredByFull({
+  required int alignedStartTime,
+  required int changePhaseOffset,
+  required int changeIntervalMs,
+  required int changeSendCount,
+  required int fullPhaseOffset,
+  required int fullIntervalMs,
+}) {
+  return fullTargetCoveredByChangeTick(
+        alignedStartTime: alignedStartTime,
+        changePhaseOffset: changePhaseOffset,
+        changeIntervalMs: changeIntervalMs,
+        changeSendCount: changeSendCount,
+        fullPhaseOffset: fullPhaseOffset,
+        fullIntervalMs: fullIntervalMs,
+      ) !=
+      null;
+}
+
+/// Returns the full-report target covered by this change tick, if any.
+/// Callers can use the target to verify that the full report actually
+/// published before suppressing a redundant change report.
+@visibleForTesting
+int? fullTargetCoveredByChangeTick({
+  required int alignedStartTime,
+  required int changePhaseOffset,
+  required int changeIntervalMs,
+  required int changeSendCount,
+  required int fullPhaseOffset,
+  required int fullIntervalMs,
+}) {
+  if (changeIntervalMs <= 0 || fullIntervalMs <= 0 || changeSendCount < 0) {
+    return null;
+  }
+
+  final changeBaseTarget = alignedStartTime + changePhaseOffset;
+  final fullBaseTarget = alignedStartTime + fullPhaseOffset;
+  final changeTarget = changeBaseTarget + (changeSendCount * changeIntervalMs);
+  final relativeToFullBase = changeTarget - fullBaseTarget;
+  final lowerFullIndex = _floorDivide(relativeToFullBase, fullIntervalMs);
+
+  int? coveredTargetForIndex(int fullIndex) {
+    final fullTarget = fullBaseTarget + (fullIndex * fullIntervalMs);
+    final nearestChangeIndex = _nearestNonNegativeTick(
+        fullTarget - changeBaseTarget, changeIntervalMs);
+    return nearestChangeIndex == changeSendCount ? fullTarget : null;
+  }
+
+  // Avoid allocating a Set for every device on every change tick. Usually the
+  // two adjacent non-negative full ticks are the only candidates; before the
+  // first full tick, the original behavior falls back to index 0.
+  if (lowerFullIndex >= 0) {
+    final target = coveredTargetForIndex(lowerFullIndex);
+    if (target != null) return target;
+  }
+  final upperFullIndex = lowerFullIndex + 1;
+  if (upperFullIndex >= 0) {
+    final target = coveredTargetForIndex(upperFullIndex);
+    if (target != null) return target;
+  }
+  if (upperFullIndex < 0) return coveredTargetForIndex(0);
+  return null;
+}
+
+@visibleForTesting
+bool shouldSuppressChangeAfterFull({
+  required int? coveredFullTarget,
+  required int changeTarget,
+  required int? lastSuccessfulFullTarget,
+}) {
+  return coveredFullTarget != null &&
+      coveredFullTarget <= changeTarget &&
+      lastSuccessfulFullTarget == coveredFullTarget;
+}
+
+int _floorDivide(int value, int positiveDivisor) {
+  final quotient = value ~/ positiveDivisor;
+  if (value < 0 && value % positiveDivisor != 0) {
+    return quotient - 1;
+  }
+  return quotient;
+}
+
+int _nearestNonNegativeTick(int distanceFromBase, int intervalMs) {
+  if (distanceFromBase <= 0) return 0;
+  final lower = distanceFromBase ~/ intervalMs;
+  final remainder = distanceFromBase % intervalMs;
+  // Strictly closer chooses the later tick; an exact tie stays on [lower].
+  return remainder > intervalMs - remainder ? lower + 1 : lower;
+}
+
 class SchedulerService {
   final StatisticsCollector statisticsCollector;
   final Function(String message, String type, {String? tag}) onLog;
@@ -32,6 +131,7 @@ class SchedulerService {
   int _alignedStartTime = 0;
   final Map<String, List<Timer>> _clientTimers = {};
   final Map<String, int> _clientVersions = {};
+  final Map<String, int> _lastSuccessfulFullTarget = {};
 
   // Performance Mode: Disable logs to save CPU
   bool enableLogs = true;
@@ -82,6 +182,7 @@ class SchedulerService {
       _cancelTimers(timers);
     }
     _clientTimers.clear();
+    _lastSuccessfulFullTarget.clear();
   }
 
   void stopPublishing(String clientId) {
@@ -89,6 +190,7 @@ class SchedulerService {
     if (timers != null) {
       _cancelTimers(timers);
     }
+    _lastSuccessfulFullTarget.remove(clientId);
   }
 
   void startPublishing(
@@ -105,6 +207,7 @@ class SchedulerService {
     // STRICT FIX: Initialize list BEFORE starting.
     // _addTimer now requires this list to exist.
     _clientTimers[clientId] = [];
+    _lastSuccessfulFullTarget.remove(clientId);
 
     // VERSIONING: Increment session version. Zombies from old sessions will fail the version check.
     int currentVersion = (_clientVersions[clientId] ?? 0) + 1;
@@ -192,8 +295,17 @@ class SchedulerService {
     }
 
     String payload = jsonEncode(payloadObj);
-    _publish(client, topic, payload, clientId, 'success',
-        'Sent message #$sendCount', clientId, _intToQos(context.qos));
+    _publish(
+      client,
+      topic,
+      payload,
+      clientId,
+      'success',
+      'Sent message #$sendCount',
+      pointCount: format == PayloadFormat.tieNiuEmpty ? 0 : dataPointCount,
+      logTagOverride: clientId,
+      qos: _intToQos(context.qos),
+    );
 
     // 2. Schedule Next
     sendCount++;
@@ -313,7 +425,7 @@ class SchedulerService {
 
     int payloadTimestamp =
         _alignedStartTime + phaseOffset + (sendCount * intervalMs);
-    String payload;
+    Uint8Buffer payload;
 
     // Standard Format
     // OPTIMIZATION: Always use Persistent Isolate Worker to offload serialization.
@@ -327,7 +439,8 @@ class SchedulerService {
 
     // 2. Offload work to Persistent Isolate
     try {
-      payload = await PersistentIsolateManager.instance.computeTask(WorkerInput(
+      payload =
+          await PersistentIsolateManager.instance.computeBytesTask(WorkerInput(
         count: group.totalKeyCount,
         clientId: clientId,
         timestamp: payloadTimestamp,
@@ -336,16 +449,37 @@ class SchedulerService {
         format: PayloadFormat.normalize(group.format),
       ));
     } catch (e) {
+      statisticsCollector.incrementGenerationError();
       onLog('Isolate Error: $e', 'error', tag: clientId);
-      return; // Skip on error
+      final nextSendCount = sendCount + 1;
+      _scheduleNext(clientId, intervalMs, nextSendCount, version, phaseOffset,
+          (actualCount) {
+        _scheduleFullReport(client, clientId, topic, group, intervalMs,
+            actualCount, version, qos, phaseOffset);
+      });
+      return;
     }
 
     // Check cancellation again after await
     if (!_clientTimers.containsKey(clientId)) return;
     if (_clientVersions[clientId] != version) return;
 
-    _publish(client, topic, payload, group.name, 'success',
-        '[$clientId] Full Report #$sendCount', null, _intToQos(qos));
+    final published = _publishBytes(
+      client,
+      topic,
+      payload,
+      group.name,
+      'success',
+      enableLogs ? '[$clientId] Full Report #$sendCount' : '',
+      pointCount:
+          PayloadFormat.normalize(group.format) == PayloadFormat.tieNiuEmpty
+              ? 0
+              : group.totalKeyCount,
+      qos: _intToQos(qos),
+    );
+    if (published) {
+      _lastSuccessfulFullTarget[clientId] = payloadTimestamp;
+    }
 
     sendCount++;
     _scheduleNext(clientId, intervalMs, sendCount, version, phaseOffset,
@@ -372,29 +506,29 @@ class SchedulerService {
     int payloadTimestamp =
         _alignedStartTime + phaseOffset + (sendCount * intervalMs);
 
-    // CRITICAL FIX: Conflict Resolution
-    // If the current time aligns exactly with a Full Report interval, SKIP the Change Report.
-    // Full Reports (Whole Data) include the Changed Data, so sending both is duplicative.
-    // Only relevant when full reporting is enabled (fullIntervalSeconds > 0);
-    // when disabled there is no full report to collide with.
+    // A full report covers one nearby change tick. The full and change streams
+    // intentionally use different stagger grids, so exact timestamp equality
+    // cannot be used here. Map each full target to its nearest change target
+    // instead. Suppression happens only when that full report has already
+    // published successfully; otherwise the change report remains a fallback.
     if (group.fullIntervalSeconds > 0) {
-      int fullIntervalMs = _intervalMsFromSeconds(group.fullIntervalSeconds);
-      // 1. Re-calculate the Full Report Phase Offset (same stagger logic)
-      int fullPhaseOffset = _staggerOffset(clientId, fullIntervalMs);
-
-      // 2. Check if the current timestamp falls exactly on a Full Report target
-      // Target_Full = Start + FullOffset + (N * FullInterval)
-      // Check: (Current - Start - FullOffset) % FullInterval == 0
-      int relativeToFullGrid =
-          payloadTimestamp - _alignedStartTime - fullPhaseOffset;
-
-      if (relativeToFullGrid % fullIntervalMs == 0) {
-        // Collision! This timeslot is already covered by _scheduleFullReport.
-        // Skip sending data, but CONTINUE scheduling the next change report.
-        if (enableLogs) {
-          // onLog('[$clientId] Skipped Change Report (Coincides with Full Report)', 'info', tag: group.name);
-        }
-
+      final fullIntervalMs = _intervalMsFromSeconds(group.fullIntervalSeconds);
+      final fullPhaseOffset = _staggerOffset(clientId, fullIntervalMs);
+      final coveredFullTarget = fullTargetCoveredByChangeTick(
+        alignedStartTime: _alignedStartTime,
+        changePhaseOffset: phaseOffset,
+        changeIntervalMs: intervalMs,
+        changeSendCount: sendCount,
+        fullPhaseOffset: fullPhaseOffset,
+        fullIntervalMs: fullIntervalMs,
+      );
+      if (shouldSuppressChangeAfterFull(
+        coveredFullTarget: coveredFullTarget,
+        changeTarget: payloadTimestamp,
+        lastSuccessfulFullTarget: _lastSuccessfulFullTarget[clientId],
+      )) {
+        // Suppress only after the corresponding full report really published.
+        // If it is still in flight or failed, send this change report instead.
         sendCount++;
         _scheduleNext(clientId, intervalMs, sendCount, version, phaseOffset,
             (actualCount) {
@@ -408,7 +542,9 @@ class SchedulerService {
     // OPTIMIZATION: Use Persistent Isolate
     int totalChangeCount = (group.totalKeyCount * group.changeRatio).floor();
 
-    String payload;
+    String? payload;
+    Uint8Buffer? payloadBytes;
+    int publishedPointCount;
 
     // TN Formats (Usually tiny, keep main thread for now, or TODO migrate)
     if (group.format == 'tn') {
@@ -416,11 +552,14 @@ class SchedulerService {
           group.totalKeyCount,
           timestamp: payloadTimestamp);
       payload = jsonEncode(data);
+      publishedPointCount = group.totalKeyCount;
     } else if (group.format == 'tn-empty') {
       Map<String, dynamic> data =
           DataGenerator.generateTnEmptyPayload(timestamp: payloadTimestamp);
       payload = jsonEncode(data);
+      publishedPointCount = 0;
     } else {
+      publishedPointCount = totalChangeCount;
       // Standard Format
       // Standard Format
       // OPTIMIZATION: Always use Persistent Isolate Worker
@@ -431,8 +570,8 @@ class SchedulerService {
             DataGenerator.generateCustomKeys(group.customKeys);
 
         try {
-          payload =
-              await PersistentIsolateManager.instance.computeTask(WorkerInput(
+          payloadBytes = await PersistentIsolateManager.instance
+              .computeBytesTask(WorkerInput(
             count: totalChangeCount,
             clientId: clientId,
             timestamp: payloadTimestamp,
@@ -443,7 +582,15 @@ class SchedulerService {
             randomKeys: group.randomChange,
           ));
         } catch (e) {
+          statisticsCollector.incrementGenerationError();
           onLog('Isolate Error (Change): $e', 'error', tag: clientId);
+          final nextSendCount = sendCount + 1;
+          _scheduleNext(
+              clientId, intervalMs, nextSendCount, version, phaseOffset,
+              (actualCount) {
+            _scheduleChangeReport(client, clientId, topic, group, intervalMs,
+                actualCount, version, qos, phaseOffset);
+          });
           return;
         }
       }
@@ -456,11 +603,33 @@ class SchedulerService {
     // Use info type for change reports
     // Calculate length logic: if using isolate, payload is string.
     // We can't easy get keys count without parsing, so we just say "Change Report"
-    String msg =
-        '[$clientId] Change Report #$sendCount (~$totalChangeCount keys)';
+    final msg = enableLogs
+        ? '[$clientId] Change Report #$sendCount (~$totalChangeCount keys)'
+        : '';
 
-    _publish(
-        client, topic, payload, group.name, 'info', msg, null, _intToQos(qos));
+    if (payloadBytes != null) {
+      _publishBytes(
+        client,
+        topic,
+        payloadBytes,
+        group.name,
+        'info',
+        msg,
+        pointCount: publishedPointCount,
+        qos: _intToQos(qos),
+      );
+    } else {
+      _publish(
+        client,
+        topic,
+        payload!,
+        group.name,
+        'info',
+        msg,
+        pointCount: publishedPointCount,
+        qos: _intToQos(qos),
+      );
+    }
 
     sendCount++;
     _scheduleNext(clientId, intervalMs, sendCount, version, phaseOffset,
@@ -505,9 +674,10 @@ class SchedulerService {
     // NOTE: 'sendCount' counts 0, 1, 2...
     // At count 0 (t=0), elapsed=0 => isFullReportTime = true. Correct.
 
-    String payload;
+    Uint8Buffer payload;
     String typeTag = isFullReportTime ? 'success' : 'info';
     String logMsg;
+    int pointCount;
 
     if (isFullReportTime) {
       // --- GENERATE FULL REPORT ---
@@ -516,8 +686,8 @@ class SchedulerService {
           DataGenerator.generateCustomKeys(group.customKeys);
 
       try {
-        payload =
-            await PersistentIsolateManager.instance.computeTask(WorkerInput(
+        payload = await PersistentIsolateManager.instance
+            .computeBytesTask(WorkerInput(
           count: group.totalKeyCount,
           clientId: clientId,
           timestamp: payloadTimestamp,
@@ -525,10 +695,18 @@ class SchedulerService {
           customKeyValues: customValues,
         ));
       } catch (e) {
+        statisticsCollector.incrementGenerationError();
         onLog('Isolate Error (Unified Full): $e', 'error', tag: clientId);
+        final nextSendCount = sendCount + 1;
+        _scheduleNext(clientId, intervalMs, nextSendCount, version, phaseOffset,
+            (actualCount) {
+          _scheduleUnifiedReport(client, clientId, topic, group, intervalMs,
+              fullIntervalMs, actualCount, version, qos, phaseOffset);
+        });
         return;
       }
       logMsg = '[$clientId] Full Report #$sendCount';
+      pointCount = group.totalKeyCount;
     } else {
       // --- GENERATE CHANGE REPORT ---
       int totalChangeCount = (group.totalKeyCount * group.changeRatio).floor();
@@ -539,8 +717,8 @@ class SchedulerService {
           DataGenerator.generateCustomKeys(group.customKeys);
 
       try {
-        payload =
-            await PersistentIsolateManager.instance.computeTask(WorkerInput(
+        payload = await PersistentIsolateManager.instance
+            .computeBytesTask(WorkerInput(
           count: totalChangeCount,
           clientId: clientId,
           timestamp: payloadTimestamp,
@@ -548,18 +726,34 @@ class SchedulerService {
           customKeyValues: customValues,
         ));
       } catch (e) {
+        statisticsCollector.incrementGenerationError();
         onLog('Isolate Error (Unified Change): $e', 'error', tag: clientId);
+        final nextSendCount = sendCount + 1;
+        _scheduleNext(clientId, intervalMs, nextSendCount, version, phaseOffset,
+            (actualCount) {
+          _scheduleUnifiedReport(client, clientId, topic, group, intervalMs,
+              fullIntervalMs, actualCount, version, qos, phaseOffset);
+        });
         return;
       }
       logMsg =
           '[$clientId] Change Report #$sendCount (~$totalChangeCount keys)';
+      pointCount = totalChangeCount;
     }
 
     if (!_clientTimers.containsKey(clientId)) return;
     if (_clientVersions[clientId] != version) return;
 
-    _publish(client, topic, payload, group.name, typeTag, logMsg, null,
-        _intToQos(qos));
+    _publishBytes(
+      client,
+      topic,
+      payload,
+      group.name,
+      typeTag,
+      logMsg,
+      pointCount: pointCount,
+      qos: _intToQos(qos),
+    );
 
     sendCount++;
     _scheduleNext(clientId, intervalMs, sendCount, version, phaseOffset,
@@ -571,30 +765,87 @@ class SchedulerService {
 
   // --- Helper Methods ---
 
-  void _publish(MqttServerClient client, String topic, String payload,
-      String tag, String successType, String successMsg,
-      [String? logTagOverride, MqttQos qos = MqttQos.atMostOnce]) {
+  bool _publish(
+    MqttServerClient client,
+    String topic,
+    String payload,
+    String tag,
+    String successType,
+    String successMsg, {
+    required int pointCount,
+    String? logTagOverride,
+    MqttQos qos = MqttQos.atMostOnce,
+  }) {
     final builder = MqttClientPayloadBuilder();
-    builder.addString(payload);
+    // MQTT payloads are bytes. addString uses the package's UTF-16-oriented
+    // legacy behavior and corrupts non-ASCII JSON; use explicit UTF-8 here.
+    builder.addUTF8String(payload);
 
+    return _publishBuffer(
+      client,
+      topic,
+      builder.payload!,
+      tag,
+      successType,
+      successMsg,
+      pointCount: pointCount,
+      logTagOverride: logTagOverride,
+      qos: qos,
+    );
+  }
+
+  bool _publishBytes(
+    MqttServerClient client,
+    String topic,
+    Uint8Buffer payload,
+    String tag,
+    String successType,
+    String successMsg, {
+    required int pointCount,
+    String? logTagOverride,
+    MqttQos qos = MqttQos.atMostOnce,
+  }) {
+    return _publishBuffer(
+      client,
+      topic,
+      payload,
+      tag,
+      successType,
+      successMsg,
+      pointCount: pointCount,
+      logTagOverride: logTagOverride,
+      qos: qos,
+    );
+  }
+
+  bool _publishBuffer(
+    MqttServerClient client,
+    String topic,
+    Uint8Buffer payload,
+    String tag,
+    String successType,
+    String successMsg, {
+    required int pointCount,
+    String? logTagOverride,
+    required MqttQos qos,
+  }) {
     try {
-      client.publishMessage(topic, qos, builder.payload!);
-      statisticsCollector.incrementSuccess();
+      client.publishMessage(topic, qos, payload);
+      statisticsCollector.incrementSuccess(points: pointCount);
       statisticsCollector.setMessageSize(payload.length);
 
-      // OPTIMIZATION: Only calculate bytes and log if logging is enabled
+      // Per-message log formatting is skipped entirely in performance mode.
       if (enableLogs) {
-        // Use string length as approximation to avoid utf8.encode overhead (which allocates a new list)
-        // For logging purposes, exact byte count isn't critical, but performance is.
-        int charCount = payload.length;
-        onLog('$successMsg (~$charCount chars)', successType,
+        onLog('$successMsg (~${payload.length} bytes)', successType,
             tag: logTagOverride ?? tag);
       }
+      return true;
     } catch (e) {
       if (enableLogs) {
         onLog('Publish error: $e', 'error', tag: logTagOverride ?? tag);
       }
       statisticsCollector.incrementFailure();
+      return false;
     }
   }
 
@@ -618,7 +869,7 @@ class SchedulerService {
             '[$clientId] Late by real-time schedule. Dropping ${decision.skippedCount} stale ticks to keep latency low.',
             'warning');
       }
-      statisticsCollector.incrementFailure(count: decision.skippedCount);
+      statisticsCollector.incrementLateDropped(count: decision.skippedCount);
     }
 
     Timer t = Timer(

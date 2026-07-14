@@ -548,6 +548,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statFailed => 'Failed';
 
   @override
+  String get statPublishFailed => 'Publish Failures';
+
+  @override
+  String get statLateDropped => 'Schedule Drops';
+
+  @override
+  String get statGenerationErrors => 'Generation Errors';
+
+  @override
+  String get statPointsPerSecond => 'Points/s';
+
+  @override
   String get enableSsl => 'Enable SSL/TLS';
 
   @override
@@ -580,6 +592,64 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get performanceMode => 'Performance Mode (Disable Logs)';
+
+  @override
+  String get performanceModeDescription =>
+      'Disables detailed per-message logs for maximum throughput';
+
+  @override
+  String autoProcessPlanSingle(String steady, String peak, String limit) {
+    return 'Estimated steady load: $steady points/s; peak load: $peak points/s. One sending process is sufficient under the $limit points/s limit.';
+  }
+
+  @override
+  String autoProcessPlanMultiple(
+      String steady, String peak, String limit, int count) {
+    return 'Estimated steady load: $steady points/s; peak load: $peak points/s. With a $limit points/s limit per sending process, $count sending processes will start automatically.';
+  }
+
+  @override
+  String get autoProcessPlanUnsatisfied =>
+      'At least one device exceeds the per-process point limit by itself. Device sharding cannot keep every process below the configured limit.';
+
+  @override
+  String get autoProcessPlanSingleDeviceUnsatisfied =>
+      'One device\'s peak load exceeds the per-process point limit. Starting more local processes cannot split that device\'s load.';
+
+  @override
+  String get autoProcessPlanShardDistributionUnsatisfied =>
+      'At least one process still exceeds the point limit after device sharding. The current device ranges cannot be distributed evenly enough to satisfy the limit.';
+
+  @override
+  String autoProcessSafetyLimitExceeded(int required, int limit) {
+    return 'This load requires at least $required sending processes, exceeding this machine\'s automatic startup safety limit of $limit. Reduce the simulated load or split it across multiple machines.';
+  }
+
+  @override
+  String startProcessCount(int count) {
+    return 'Start $count Processes';
+  }
+
+  @override
+  String autoProcessesStarting(int count) {
+    return 'Starting $count sending processes...';
+  }
+
+  @override
+  String autoProcessesReady(int ready, int count) {
+    return '$ready/$count sending processes are ready and connecting devices.';
+  }
+
+  @override
+  String autoProcessLaunchFailed(String error) {
+    return 'Unable to start sending processes: $error';
+  }
+
+  @override
+  String get statProcesses => 'Processes';
+
+  @override
+  String get unknownError => 'Unknown error';
 
   @override
   String get themePolarBlue => 'Polar Blue';

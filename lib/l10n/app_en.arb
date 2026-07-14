@@ -182,6 +182,10 @@
   "statSent": "Sent",
   "statSuccess": "Success",
   "statFailed": "Failed",
+  "statPublishFailed": "Publish Failures",
+  "statLateDropped": "Schedule Drops",
+  "statGenerationErrors": "Generation Errors",
+  "statPointsPerSecond": "Points/s",
   "enableSsl": "Enable SSL/TLS",
   "caCertificate": "CA Certificate",
   "clientCertificate": "Client Certificate",
@@ -193,6 +197,55 @@
   "startNow": "Start Simulation",
   "confirmStartHint": "Click Confirm to start simulation with this payload structure.",
   "performanceMode": "Performance Mode (Disable Logs)",
+  "performanceModeDescription": "Disables detailed per-message logs for maximum throughput",
+  "autoProcessPlanSingle": "Estimated steady load: {steady} points/s; peak load: {peak} points/s. One sending process is sufficient under the {limit} points/s limit.",
+  "@autoProcessPlanSingle": {
+    "placeholders": {
+      "steady": {"type": "String"},
+      "peak": {"type": "String"},
+      "limit": {"type": "String"}
+    }
+  },
+  "autoProcessPlanMultiple": "Estimated steady load: {steady} points/s; peak load: {peak} points/s. With a {limit} points/s limit per sending process, {count} sending processes will start automatically.",
+  "@autoProcessPlanMultiple": {
+    "placeholders": {
+      "steady": {"type": "String"},
+      "peak": {"type": "String"},
+      "limit": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "autoProcessPlanUnsatisfied": "At least one device exceeds the per-process point limit by itself. Device sharding cannot keep every process below the configured limit.",
+  "autoProcessPlanSingleDeviceUnsatisfied": "One device's peak load exceeds the per-process point limit. Starting more local processes cannot split that device's load.",
+  "autoProcessPlanShardDistributionUnsatisfied": "At least one process still exceeds the point limit after device sharding. The current device ranges cannot be distributed evenly enough to satisfy the limit.",
+  "autoProcessSafetyLimitExceeded": "This load requires at least {required} sending processes, exceeding this machine's automatic startup safety limit of {limit}. Reduce the simulated load or split it across multiple machines.",
+  "@autoProcessSafetyLimitExceeded": {
+    "placeholders": {
+      "required": {"type": "int"},
+      "limit": {"type": "int"}
+    }
+  },
+  "startProcessCount": "Start {count} Processes",
+  "@startProcessCount": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "autoProcessesStarting": "Starting {count} sending processes...",
+  "@autoProcessesStarting": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "autoProcessesReady": "{ready}/{count} sending processes are ready and connecting devices.",
+  "@autoProcessesReady": {
+    "placeholders": {
+      "ready": {"type": "int"},
+      "count": {"type": "int"}
+    }
+  },
+  "autoProcessLaunchFailed": "Unable to start sending processes: {error}",
+  "@autoProcessLaunchFailed": {
+    "placeholders": {"error": {"type": "String"}}
+  },
+  "statProcesses": "Processes",
+  "unknownError": "Unknown error",
   "themePolarBlue": "Polar Blue",
   "themePorcelainRed": "Porcelain Red",
   "themeWisteriaWhite": "Wisteria White",

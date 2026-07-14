@@ -236,6 +236,10 @@ class AppDialogHelper {
     String? confirmText,
     String? cancelText,
     bool showConfirmButton = false,
+
+    /// Keeps the confirm action visible but disabled when the caller needs to
+    /// explain why the current input cannot proceed.
+    bool confirmEnabled = true,
     Widget? extraWidget, // For custom content below code
   }) {
     final theme = Theme.of(context);
@@ -428,7 +432,8 @@ class AppDialogHelper {
         ),
         if (showConfirmButton)
           ElevatedButton.icon(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed:
+                confirmEnabled ? () => Navigator.of(context).pop(true) : null,
             icon: const Icon(Icons.play_arrow, size: 18),
             label: Text(confirmText ?? (l10n ? '开始' : 'Start')),
             style: ElevatedButton.styleFrom(

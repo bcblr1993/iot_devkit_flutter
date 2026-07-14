@@ -14,8 +14,10 @@ class LogStorageService {
   // Configuration
   static const int _maxFileSize = 30 * 1024 * 1024; // 30 MB
   static const Duration _retentionPeriod = Duration(days: 7);
-  static const String _currentLogFileName = 'IoT DevKit.log';
+  static const String _baseLogFileName = 'IoT DevKit';
   static const String _logFolderName = 'IoT DevKit';
+
+  String _currentLogFileName = '$_baseLogFileName.log';
 
   Directory? _logDirectory;
   File? _currentLogFile;
@@ -25,8 +27,14 @@ class LogStorageService {
   final DateFormat _fileFormatter = DateFormat('yyyy-MM-dd_HH-mm-ss');
   final DateFormat _logFormatter = DateFormat('yyyy-MM-dd HH:mm:ss.SSS');
 
-  Future<void> init() async {
+  Future<void> init({String? instanceLabel}) async {
     try {
+      final safeLabel =
+          instanceLabel?.trim().replaceAll(RegExp(r'[^A-Za-z0-9_.-]+'), '-');
+      _currentLogFileName = safeLabel == null || safeLabel.isEmpty
+          ? '$_baseLogFileName.log'
+          : '${_baseLogFileName}_$safeLabel.log';
+
       final Directory appDocDir = await getApplicationDocumentsDirectory();
       _logDirectory = Directory(p.join(appDocDir.path, _logFolderName, 'logs'));
 
@@ -119,7 +127,9 @@ class LogStorageService {
       // 2. Rename current file to timestamped archive
       if (await targetFile.exists()) {
         final String timestamp = _fileFormatter.format(DateTime.now());
-        final String archiveName = 'IoT DevKit_$timestamp.log';
+        final String archiveStem =
+            p.basenameWithoutExtension(_currentLogFileName);
+        final String archiveName = '${archiveStem}_$timestamp.log';
         final String archivePath = p.join(_logDirectory!.path, archiveName);
 
         await targetFile.rename(archivePath);

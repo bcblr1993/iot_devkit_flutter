@@ -1166,6 +1166,30 @@ abstract class AppLocalizations {
   /// **'Failed'**
   String get statFailed;
 
+  /// No description provided for @statPublishFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Publish Failures'**
+  String get statPublishFailed;
+
+  /// No description provided for @statLateDropped.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule Drops'**
+  String get statLateDropped;
+
+  /// No description provided for @statGenerationErrors.
+  ///
+  /// In en, this message translates to:
+  /// **'Generation Errors'**
+  String get statGenerationErrors;
+
+  /// No description provided for @statPointsPerSecond.
+  ///
+  /// In en, this message translates to:
+  /// **'Points/s'**
+  String get statPointsPerSecond;
+
   /// No description provided for @enableSsl.
   ///
   /// In en, this message translates to:
@@ -1231,6 +1255,85 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Performance Mode (Disable Logs)'**
   String get performanceMode;
+
+  /// No description provided for @performanceModeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Disables detailed per-message logs for maximum throughput'**
+  String get performanceModeDescription;
+
+  /// No description provided for @autoProcessPlanSingle.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated steady load: {steady} points/s; peak load: {peak} points/s. One sending process is sufficient under the {limit} points/s limit.'**
+  String autoProcessPlanSingle(String steady, String peak, String limit);
+
+  /// No description provided for @autoProcessPlanMultiple.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated steady load: {steady} points/s; peak load: {peak} points/s. With a {limit} points/s limit per sending process, {count} sending processes will start automatically.'**
+  String autoProcessPlanMultiple(
+      String steady, String peak, String limit, int count);
+
+  /// No description provided for @autoProcessPlanUnsatisfied.
+  ///
+  /// In en, this message translates to:
+  /// **'At least one device exceeds the per-process point limit by itself. Device sharding cannot keep every process below the configured limit.'**
+  String get autoProcessPlanUnsatisfied;
+
+  /// No description provided for @autoProcessPlanSingleDeviceUnsatisfied.
+  ///
+  /// In en, this message translates to:
+  /// **'One device\'s peak load exceeds the per-process point limit. Starting more local processes cannot split that device\'s load.'**
+  String get autoProcessPlanSingleDeviceUnsatisfied;
+
+  /// No description provided for @autoProcessPlanShardDistributionUnsatisfied.
+  ///
+  /// In en, this message translates to:
+  /// **'At least one process still exceeds the point limit after device sharding. The current device ranges cannot be distributed evenly enough to satisfy the limit.'**
+  String get autoProcessPlanShardDistributionUnsatisfied;
+
+  /// No description provided for @autoProcessSafetyLimitExceeded.
+  ///
+  /// In en, this message translates to:
+  /// **'This load requires at least {required} sending processes, exceeding this machine\'s automatic startup safety limit of {limit}. Reduce the simulated load or split it across multiple machines.'**
+  String autoProcessSafetyLimitExceeded(int required, int limit);
+
+  /// No description provided for @startProcessCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Start {count} Processes'**
+  String startProcessCount(int count);
+
+  /// No description provided for @autoProcessesStarting.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting {count} sending processes...'**
+  String autoProcessesStarting(int count);
+
+  /// No description provided for @autoProcessesReady.
+  ///
+  /// In en, this message translates to:
+  /// **'{ready}/{count} sending processes are ready and connecting devices.'**
+  String autoProcessesReady(int ready, int count);
+
+  /// No description provided for @autoProcessLaunchFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to start sending processes: {error}'**
+  String autoProcessLaunchFailed(String error);
+
+  /// No description provided for @statProcesses.
+  ///
+  /// In en, this message translates to:
+  /// **'Processes'**
+  String get statProcesses;
+
+  /// No description provided for @unknownError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown error'**
+  String get unknownError;
 
   /// No description provided for @themePolarBlue.
   ///

@@ -5,7 +5,7 @@ import '../l10n/generated/app_localizations.dart';
 import 'version_helper.dart';
 
 class AboutDialogHelper {
-  static const String _releaseDate = '2026-04-30';
+  static const String _releaseDate = '2026-07-14';
 
   static Future<void> showAboutDialog(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;

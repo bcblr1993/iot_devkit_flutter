@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../services/mqtt_controller.dart';
+import '../../services/status_registry.dart';
 import '../../utils/app_dialog_helper.dart';
 import '../lab/lab.dart';
 import 'groups_manager.dart';
@@ -21,6 +23,7 @@ import '../simulator/simulator_header.dart';
 import '../simulator/simulator_log_dock.dart';
 import '../../viewmodels/mqtt_view_model.dart';
 import '../../models/payload_format.dart';
+import '../../models/auto_process_plan.dart';
 import '../components/payload_format_help.dart';
 
 class SimulatorPanel extends StatefulWidget {
@@ -84,12 +87,24 @@ class _SimulatorPanelState extends State<SimulatorPanel>
 
   // --- Dialogs ---
 
-  void _showUnifiedPreviewDialog(
-      BuildContext context, Object data, VoidCallback? onConfirm) async {
+  Future<void> _showUnifiedPreviewDialog(
+    BuildContext context,
+    Object data, {
+    AutoProcessPlan? processPlan,
+    Future<void> Function()? onConfirm,
+  }) async {
     final l10n = AppLocalizations.of(context)!;
     final jsonStr = const JsonEncoder.withIndent('  ').convert(data);
     final isConfirmMode = onConfirm != null;
     final theme = Theme.of(context);
+    final controller = context.read<MqttController>();
+    final automaticProcessRequirement = processPlan == null
+        ? 1
+        : processPlan.processCount > processPlan.requiredProcessCount
+            ? processPlan.processCount
+            : processPlan.requiredProcessCount;
+    final blocksAutomaticLaunch =
+        processPlan != null && !controller.canAutoLaunchPlan(processPlan);
 
     final result = await AppDialogHelper.showCodePreview(
       context: context,
@@ -101,59 +116,182 @@ class _SimulatorPanelState extends State<SimulatorPanel>
         _setStatus(l10n.jsonCopied, Colors.green);
       },
       showConfirmButton: isConfirmMode,
-      confirmText: l10n.startNow,
+      confirmEnabled: !blocksAutomaticLaunch,
+      confirmText: automaticProcessRequirement > 1
+          ? l10n.startProcessCount(automaticProcessRequirement)
+          : l10n.startNow,
       cancelText: isConfirmMode ? l10n.cancel : l10n.close,
       extraWidget: isConfirmMode
-          ? StatefulBuilder(builder: (context, setState) {
-              final controller =
-                  Provider.of<MqttController>(context, listen: false);
-              bool isPerformanceMode = !controller.enableDetailedLogs;
-              return Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color:
-                      theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.2)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.speed_rounded, color: theme.colorScheme.primary),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(l10n.performanceMode,
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: theme.colorScheme.primary)),
-                          Text('Disables detailed logs for speed',
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  color: theme.colorScheme.onSurface
-                                      .withValues(alpha: 0.6))),
-                        ],
-                      ),
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (processPlan != null) ...[
+                  _buildProcessPlanAlert(context, l10n, processPlan),
+                  const SizedBox(height: 10),
+                ],
+                StatefulBuilder(builder: (context, setState) {
+                  final controller =
+                      Provider.of<MqttController>(context, listen: false);
+                  bool isPerformanceMode = !controller.enableDetailedLogs;
+                  return Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer
+                          .withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                          color:
+                              theme.colorScheme.primary.withValues(alpha: 0.2)),
                     ),
-                    Switch(
-                      value: isPerformanceMode,
-                      onChanged: (val) {
-                        setState(() {
-                          controller.toggleDetailedLogs(!val);
-                        });
-                      },
+                    child: Row(
+                      children: [
+                        Icon(Icons.speed_rounded,
+                            color: theme.colorScheme.primary),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(l10n.performanceMode,
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.colorScheme.primary)),
+                              Text(l10n.performanceModeDescription,
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: theme.colorScheme.onSurface
+                                          .withValues(alpha: 0.6))),
+                            ],
+                          ),
+                        ),
+                        Switch(
+                          value: isPerformanceMode,
+                          onChanged: (val) {
+                            setState(() {
+                              controller.toggleDetailedLogs(!val);
+                            });
+                          },
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              );
-            })
+                  );
+                }),
+              ],
+            )
           : null,
     );
 
     if (result == true) {
-      onConfirm?.call();
+      await onConfirm?.call();
+    }
+  }
+
+  Widget _buildProcessPlanAlert(
+    BuildContext context,
+    AppLocalizations l10n,
+    AutoProcessPlan plan,
+  ) {
+    final numberFormat = NumberFormat.decimalPattern(
+      Localizations.localeOf(context).toLanguageTag(),
+    );
+    final steady = numberFormat.format(plan.steadyPointsPerSecondForDisplay);
+    final peak = numberFormat.format(plan.peakPointsPerSecondForDisplay);
+    final limit = numberFormat.format(plan.pointLimitPerProcess);
+    final controller = context.read<MqttController>();
+    final automaticProcessRequirement =
+        plan.processCount > plan.requiredProcessCount
+            ? plan.processCount
+            : plan.requiredProcessCount;
+    final exceedsAutomaticProcessLimit =
+        plan.requiredProcessCount > controller.maxAutomaticProcessCount ||
+            plan.processCount > controller.maxAutomaticProcessCount;
+    final blocksAutomaticLaunch =
+        exceedsAutomaticProcessLimit || !plan.canSatisfyLimitByDeviceSharding;
+    final message = plan.requiresMultipleProcesses
+        ? l10n.autoProcessPlanMultiple(
+            steady,
+            peak,
+            limit,
+            plan.processCount,
+          )
+        : l10n.autoProcessPlanSingle(steady, peak, limit);
+    final warningMessage = switch (plan.warning) {
+      AutoProcessPlanWarning.singleDeviceLoadExceedsLimit =>
+        l10n.autoProcessPlanSingleDeviceUnsatisfied,
+      AutoProcessPlanWarning.shardDistributionExceedsLimit =>
+        l10n.autoProcessPlanShardDistributionUnsatisfied,
+      null => null,
+    };
+    final safetyMessage = exceedsAutomaticProcessLimit
+        ? l10n.autoProcessSafetyLimitExceeded(
+            automaticProcessRequirement,
+            controller.maxAutomaticProcessCount,
+          )
+        : null;
+    final details = [
+      message,
+      if (warningMessage != null) warningMessage,
+      if (safetyMessage != null) safetyMessage,
+    ].join('\n');
+
+    return LabInlineAlert(
+      kind: plan.hasWarning || blocksAutomaticLaunch
+          ? LabStatus.error
+          : plan.requiresMultipleProcesses
+              ? LabStatus.warn
+              : LabStatus.info,
+      child: Text(details),
+    );
+  }
+
+  Future<void> _startSimulation(
+    MqttController controller,
+    Map<String, dynamic> config,
+    AutoProcessPlan plan,
+    AppLocalizations l10n,
+  ) async {
+    final statusRegistry = context.read<StatusRegistry>();
+    statusRegistry.setStatus(
+      l10n.autoProcessesStarting(plan.processCount),
+      Theme.of(context).colorScheme.primary,
+      duration: const Duration(seconds: 30),
+    );
+
+    try {
+      final startFuture = controller.start(config, processPlan: plan);
+      widget.onSimulationStarted?.call();
+      await startFuture;
+      if (!mounted) return;
+
+      if (controller.runState == SimulationRunState.failed) {
+        statusRegistry.setStatus(
+          l10n.autoProcessLaunchFailed(
+            controller.runStateMessage ?? l10n.unknownError,
+          ),
+          Theme.of(context).colorScheme.error,
+        );
+      } else if (controller.readyProcessCount ==
+              controller.activeProcessCount &&
+          const {
+            SimulationRunState.connecting,
+            SimulationRunState.running,
+            SimulationRunState.reconnecting,
+            SimulationRunState.partialRunning,
+          }.contains(controller.runState)) {
+        statusRegistry.setStatus(
+          l10n.autoProcessesReady(
+            controller.readyProcessCount,
+            controller.activeProcessCount,
+          ),
+          LabTokens.of(context).ok,
+        );
+      }
+    } catch (error) {
+      if (!mounted) return;
+      statusRegistry.setStatus(
+        l10n.autoProcessLaunchFailed(error.toString()),
+        Theme.of(context).colorScheme.error,
+      );
     }
   }
 
@@ -409,7 +547,7 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                       ],
                     ),
                     const SizedBox(height: 10),
-    LabSelect<String>(
+                    LabSelect<String>(
                       label: l10n.dataFormat,
                       value: vm.format,
                       helperText: payloadFormatDescription(l10n, vm.format),
@@ -551,13 +689,18 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                         if (isBasic) {
                           bool valid =
                               vm.startBasicSimulation(context, (config, basic) {
+                            final plan = controller.planProcesses(config);
                             _showUnifiedPreviewDialog(
-                                context, vm.generatePreviewData(isBasic: true)!,
-                                () {
-                              controller.start(config);
-                              // Auto-show disabled
-                              widget.onSimulationStarted?.call();
-                            });
+                              context,
+                              vm.generatePreviewData(isBasic: true)!,
+                              processPlan: plan,
+                              onConfirm: () => _startSimulation(
+                                controller,
+                                config,
+                                plan,
+                                l10n,
+                              ),
+                            );
                           });
                           if (!valid) {
                             _setStatus(
@@ -573,11 +716,18 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                               _setStatus('No groups configured', Colors.orange);
                               return;
                             }
-                            _showUnifiedPreviewDialog(context, data, () {
-                              controller.start(config);
-                              // Auto-show disabled
-                              widget.onSimulationStarted?.call();
-                            });
+                            final plan = controller.planProcesses(config);
+                            _showUnifiedPreviewDialog(
+                              context,
+                              data,
+                              processPlan: plan,
+                              onConfirm: () => _startSimulation(
+                                controller,
+                                config,
+                                plan,
+                                l10n,
+                              ),
+                            );
                           });
                           if (!valid) {
                             _setStatus(
@@ -609,7 +759,7 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                     : () {
                         final data = vm.generatePreviewData(isBasic: isBasic);
                         if (data != null) {
-                          _showUnifiedPreviewDialog(context, data, null);
+                          _showUnifiedPreviewDialog(context, data);
                         } else {
                           _setStatus('Cannot generate preview', Colors.orange);
                         }
@@ -708,8 +858,8 @@ class _SimulatorPanelState extends State<SimulatorPanel>
     );
   }
 
-  /// Live stats bar embedded in the log dock header (device/online/sent/
-  /// success/fail/CPU/mem). No outer box — it sits inside the dock's 54-px
+  /// Live stats bar embedded in the log dock header (device/online/publish/
+  /// scheduling/points/memory). No outer box — it sits inside the dock's 54-px
   /// header row, horizontally scrollable so the pills never overflow.
   Widget _buildSimulationStatusBar(
       BuildContext context, AppLocalizations l10n) {
@@ -736,7 +886,11 @@ class _SimulatorPanelState extends State<SimulatorPanel>
         // a horizontal scroller, so overflow scrolls instead of being clipped.
         if (isSmallScreen) {
           return Text(
-            '${showRunState ? '$stateLabel · ' : ''}D:${stats.onlineDevices}/${stats.totalDevices} S:${stats.successCount} F:${stats.failureCount}',
+            '${showRunState ? '$stateLabel · ' : ''}D:${stats.onlineDevices}/${stats.totalDevices} '
+            '${mqttController.activeProcessCount > 1 ? '${l10n.statProcesses}:${mqttController.readyProcessCount}/${mqttController.activeProcessCount} ' : ''}'
+            '${l10n.statPublishFailed}:${stats.failureCount} '
+            '${l10n.statLateDropped}:${stats.lateDroppedCount} '
+            '${l10n.statPointsPerSecond}:${stats.currentPointsPerSecond.toStringAsFixed(0)}',
             style: theme.textTheme.labelSmall?.copyWith(
               color: colors.onSurfaceVariant,
               fontWeight: FontWeight.w700,
@@ -752,7 +906,18 @@ class _SimulatorPanelState extends State<SimulatorPanel>
               value: stateLabel,
               valueColor: _runStateColor(theme, mqttController.runState),
             ),
-          _StatSegment(label: l10n.totalDevices, value: '${stats.totalDevices}'),
+          if (mqttController.activeProcessCount > 1)
+            _StatSegment(
+              label: l10n.statProcesses,
+              value: '${mqttController.readyProcessCount}/'
+                  '${mqttController.activeProcessCount}',
+              valueColor: mqttController.readyProcessCount ==
+                      mqttController.activeProcessCount
+                  ? tokens.ok
+                  : tokens.warn,
+            ),
+          _StatSegment(
+              label: l10n.totalDevices, value: '${stats.totalDevices}'),
           _StatSegment(
             label: l10n.online,
             value: '${stats.onlineDevices}',
@@ -765,14 +930,22 @@ class _SimulatorPanelState extends State<SimulatorPanel>
             valueColor: stats.successCount > 0 ? tokens.ok : null,
           ),
           _StatSegment(
-            label: l10n.statFailed,
+            label: l10n.statPublishFailed,
             value: '${stats.failureCount}',
             valueColor: stats.failureCount > 0 ? colors.error : null,
           ),
           _StatSegment(
+            label: l10n.statLateDropped,
+            value: '${stats.lateDroppedCount}',
+            valueColor: stats.lateDroppedCount > 0 ? tokens.warn : null,
+          ),
+          _StatSegment(
+            label: l10n.statPointsPerSecond,
+            value: stats.currentPointsPerSecond.toStringAsFixed(0),
+          ),
+          _StatSegment(
             label: l10n.memoryUsage,
-            value:
-                '${(stats.memoryUsage / 1024 / 1024).toStringAsFixed(0)} MB',
+            value: '${(stats.memoryUsage / 1024 / 1024).toStringAsFixed(0)} MB',
           ),
         ];
 

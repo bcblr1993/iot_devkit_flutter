@@ -83,6 +83,112 @@ void main() {
     });
   });
 
+  group('Advanced full/change coverage', () {
+    test('skips one nearest change tick for every staggered full period', () {
+      final skipped = <int>[];
+
+      for (var changeCount = 0; changeCount <= 900; changeCount++) {
+        if (shouldSkipChangeTickCoveredByFull(
+          alignedStartTime: 1700000000000,
+          changePhaseOffset: 468,
+          changeIntervalMs: 1000,
+          changeSendCount: changeCount,
+          fullPhaseOffset: 123,
+          fullIntervalMs: 300000,
+        )) {
+          skipped.add(changeCount);
+        }
+      }
+
+      // The old exact-equality check never matched these grids because their
+      // phase difference is 345 ms. Each full target now covers one tick.
+      expect(skipped, [0, 300, 600, 900]);
+      expect(statisticsCollector.failureCount, 0);
+      expect(statisticsCollector.lateDroppedCount, 0);
+    });
+
+    test('handles non-divisible intervals and resolves exact ties earlier', () {
+      final skipped = <int>[];
+
+      for (var changeCount = 0; changeCount <= 8; changeCount++) {
+        if (shouldSkipChangeTickCoveredByFull(
+          alignedStartTime: 0,
+          changePhaseOffset: 0,
+          changeIntervalMs: 1000,
+          changeSendCount: changeCount,
+          fullPhaseOffset: 500,
+          fullIntervalMs: 2500,
+        )) {
+          skipped.add(changeCount);
+        }
+      }
+
+      expect(skipped, [0, 3, 5, 8]);
+    });
+
+    test('suppresses only after the covered full target really succeeded', () {
+      final earlierFullTarget = fullTargetCoveredByChangeTick(
+        alignedStartTime: 0,
+        changePhaseOffset: 468,
+        changeIntervalMs: 1000,
+        changeSendCount: 0,
+        fullPhaseOffset: 123,
+        fullIntervalMs: 300000,
+      );
+      expect(earlierFullTarget, 123);
+      expect(
+        shouldSuppressChangeAfterFull(
+          coveredFullTarget: earlierFullTarget,
+          changeTarget: 468,
+          lastSuccessfulFullTarget: 123,
+        ),
+        isTrue,
+      );
+      expect(
+        shouldSuppressChangeAfterFull(
+          coveredFullTarget: earlierFullTarget,
+          changeTarget: 468,
+          lastSuccessfulFullTarget: null,
+        ),
+        isFalse,
+        reason: 'failed or in-flight full report must keep the change fallback',
+      );
+
+      final futureFullTarget = fullTargetCoveredByChangeTick(
+        alignedStartTime: 0,
+        changePhaseOffset: 0,
+        changeIntervalMs: 1000,
+        changeSendCount: 0,
+        fullPhaseOffset: 500,
+        fullIntervalMs: 2500,
+      );
+      expect(futureFullTarget, 500);
+      expect(
+        shouldSuppressChangeAfterFull(
+          coveredFullTarget: futureFullTarget,
+          changeTarget: 0,
+          lastSuccessfulFullTarget: 500,
+        ),
+        isFalse,
+        reason: 'a future full target cannot cover an earlier change publish',
+      );
+    });
+
+    test('does not cover change ticks when full reporting is disabled', () {
+      expect(
+        shouldSkipChangeTickCoveredByFull(
+          alignedStartTime: 0,
+          changePhaseOffset: 0,
+          changeIntervalMs: 1000,
+          changeSendCount: 0,
+          fullPhaseOffset: 0,
+          fullIntervalMs: 0,
+        ),
+        isFalse,
+      );
+    });
+  });
+
   group('SchedulerService lifecycle', () {
     test('prunes fired timers so long-running sessions stop quickly', () async {
       const clientId = 'device_timer_prune';

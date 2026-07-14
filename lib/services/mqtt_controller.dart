@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
@@ -9,9 +11,12 @@ import '../models/custom_key_config.dart';
 import '../models/payload_format.dart';
 import '../models/simulation_context.dart';
 import '../models/subscription_config.dart';
+import '../models/process_shard.dart';
+import '../models/auto_process_plan.dart';
 import 'data_generator.dart';
 import 'mqtt/mqtt_client_manager.dart';
 import 'mqtt/scheduler_service.dart';
+import 'simulation_process_supervisor.dart';
 import '../utils/isolate_worker.dart';
 
 enum SimulationRunState {
@@ -55,6 +60,28 @@ class MqttController extends ChangeNotifier {
   final _logger = Logger('MqttController');
   final Duration _stabilizationDelay;
   final Duration _stopTimeout;
+  final ProcessShard processShard;
+  final bool _initializeWorkers;
+  final bool allowAutoProcesses;
+  final int maxAutomaticProcessCount;
+  late final SimulationProcessSupervisor _processSupervisor;
+
+  bool _isSupervisedRun = false;
+  bool _failedClusterCleanupInProgress = false;
+  int _activeProcessCount = 1;
+  int _readyProcessCount = 0;
+  AutoProcessPlan? _activeProcessPlan;
+
+  bool get isMultiProcess => _isSupervisedRun;
+  int get activeProcessCount => _activeProcessCount;
+  int get readyProcessCount => _readyProcessCount;
+  AutoProcessPlan? get activeProcessPlan => _activeProcessPlan;
+  bool canAutoLaunchPlan(AutoProcessPlan plan) =>
+      plan.canSatisfyLimitByDeviceSharding &&
+      plan.processCount <= maxAutomaticProcessCount;
+
+  static int get defaultMaxAutomaticProcessCount =>
+      math.min(16, math.max(2, Platform.numberOfProcessors - 1));
 
   SimulationRunState _runState = SimulationRunState.idle;
   SimulationRunState get runState => _runState;
@@ -103,7 +130,7 @@ class MqttController extends ChangeNotifier {
       _runState == SimulationRunState.connecting;
   bool get isStopping => _runState == SimulationRunState.stopping;
 
-  bool _enableDetailedLogs = true;
+  late bool _enableDetailedLogs;
   bool get enableDetailedLogs => _enableDetailedLogs;
 
   void toggleDetailedLogs(bool value) {
@@ -118,11 +145,19 @@ class MqttController extends ChangeNotifier {
 
   MqttController({
     bool initializeWorkers = true,
+    bool enableDetailedLogs = true,
+    this.allowAutoProcesses = true,
+    int? maxAutomaticProcessCount,
+    this.processShard = ProcessShard.single,
     Duration stabilizationDelay = const Duration(seconds: 3),
     Duration stopTimeout = const Duration(seconds: 3),
     MqttClientManagerFactory? clientManagerFactory,
+    SimulationProcessSupervisor? processSupervisor,
   })  : _stabilizationDelay = stabilizationDelay,
-        _stopTimeout = stopTimeout {
+        _stopTimeout = stopTimeout,
+        _initializeWorkers = initializeWorkers,
+        maxAutomaticProcessCount =
+            maxAutomaticProcessCount ?? defaultMaxAutomaticProcessCount {
     final createClientManager =
         clientManagerFactory ?? _createDefaultMqttClientManager;
     _clientManager = createClientManager(
@@ -136,13 +171,17 @@ class MqttController extends ChangeNotifier {
       statisticsCollector: statisticsCollector,
       onLog: log,
     );
-    if (initializeWorkers) {
-      PersistentIsolateManager.instance.init();
-    }
+    _enableDetailedLogs = enableDetailedLogs;
+    _schedulerService.enableLogs = enableDetailedLogs;
+    _processSupervisor = processSupervisor ??
+        SimulationProcessSupervisor(
+          maxProcessCount: this.maxAutomaticProcessCount,
+        );
   }
 
   @override
   void dispose() {
+    _processSupervisor.dispose();
     _schedulerService.stopAll();
     unawaited(_clientManager.stopAll());
     PersistentIsolateManager.instance.dispose();
@@ -191,6 +230,10 @@ class MqttController extends ChangeNotifier {
     if (isStopping) {
       return _stopFuture ?? Future<void>.value();
     }
+    if (_isSupervisedRun || _processSupervisor.isActive) {
+      _stopFuture = _stopSupervisedRun();
+      return _stopFuture!;
+    }
     if (!isRunning && !isBusy) return;
 
     _stopFuture = _stopInternal();
@@ -225,10 +268,215 @@ class MqttController extends ChangeNotifier {
     }
   }
 
+  Future<void> _stopSupervisedRun() async {
+    _setRunState(
+      SimulationRunState.stopping,
+      message: 'Stopping all simulator processes...',
+    );
+    try {
+      await _processSupervisor.stop();
+    } catch (error) {
+      log('Error while stopping simulator processes: $error', 'error');
+    } finally {
+      _stopFuture = null;
+      _isSupervisedRun = false;
+      _activeProcessCount = 1;
+      _readyProcessCount = 0;
+      _activeProcessPlan = null;
+      statisticsCollector.endExternalAggregation();
+      statisticsCollector.reset();
+      _setRunState(SimulationRunState.idle);
+    }
+  }
+
   // State for delayed start
   bool _isInitializing = false;
 
-  Future<void> start(Map<String, dynamic> config) async {
+  AutoProcessPlan planProcesses(Map<String, dynamic> config) {
+    return AutoProcessPlan.fromConfig(config);
+  }
+
+  Future<void> start(
+    Map<String, dynamic> config, {
+    AutoProcessPlan? processPlan,
+  }) async {
+    if (isRunning || isBusy || _processSupervisor.isActive) {
+      log('Simulation already running.', 'error');
+      return;
+    }
+
+    final plan = processPlan ?? planProcesses(config);
+    if (!plan.canSatisfyLimitByDeviceSharding) {
+      _activeProcessPlan = plan;
+      _activeProcessCount = plan.processCount;
+      _readyProcessCount = 0;
+      _setRunState(
+        SimulationRunState.failed,
+        message: 'The requested load cannot be kept below '
+            '${plan.pointLimitPerProcess} points/s by device sharding.',
+      );
+      return;
+    }
+    final shouldUseWorkerProcesses = allowAutoProcesses &&
+        !processShard.isSharded &&
+        plan.requiresMultipleProcesses;
+    if (shouldUseWorkerProcesses) {
+      if (!canAutoLaunchPlan(plan)) {
+        _activeProcessPlan = plan;
+        _activeProcessCount = plan.processCount;
+        _readyProcessCount = 0;
+        _setRunState(
+          SimulationRunState.failed,
+          message: 'The plan requires ${plan.processCount} sending processes, '
+              'but this machine allows at most $maxAutomaticProcessCount '
+              'automatic workers.',
+        );
+        return;
+      }
+      await _startSupervisedRun(config, plan);
+      return;
+    }
+
+    _activeProcessPlan = plan;
+    _activeProcessCount = processShard.count;
+    _readyProcessCount = 1;
+    if (_initializeWorkers) {
+      await PersistentIsolateManager.instance.init(
+        processCount: processShard.count,
+      );
+    }
+    await _startLocal(config);
+  }
+
+  Future<void> _startSupervisedRun(
+    Map<String, dynamic> config,
+    AutoProcessPlan plan,
+  ) async {
+    _isSupervisedRun = true;
+    _activeProcessPlan = plan;
+    _activeProcessCount = plan.processCount;
+    _readyProcessCount = 0;
+    _isInitializing = true;
+    PersistentIsolateManager.instance.dispose();
+    statisticsCollector.beginExternalAggregation();
+    _setRunState(
+      SimulationRunState.starting,
+      message: 'Starting ${plan.processCount} simulator processes...',
+    );
+
+    try {
+      await _processSupervisor.start(
+        config: config,
+        processCount: plan.processCount,
+        onSnapshot: _applyWorkerClusterSnapshot,
+      );
+      if (_runState == SimulationRunState.starting) {
+        _setRunState(
+          SimulationRunState.connecting,
+          message: '${plan.processCount} simulator processes are connecting.',
+        );
+      }
+    } catch (error) {
+      if (error is SimulationProcessStartCancelled ||
+          isStopping ||
+          !_isSupervisedRun) {
+        return;
+      }
+      _isSupervisedRun = false;
+      _readyProcessCount = 0;
+      statisticsCollector.endExternalAggregation();
+      _setRunState(
+        SimulationRunState.failed,
+        message: 'Unable to start simulator processes: $error',
+      );
+      log('Unable to start simulator processes: $error', 'error');
+    } finally {
+      _isInitializing = false;
+    }
+  }
+
+  void _applyWorkerClusterSnapshot(WorkerClusterSnapshot snapshot) {
+    if (!_isSupervisedRun || isStopping) return;
+
+    _activeProcessCount = snapshot.expectedProcessCount;
+    _readyProcessCount = snapshot.readyProcessCount;
+    statisticsCollector.applyExternalAggregate(snapshot.statistics);
+
+    final states = snapshot.workers.values
+        .where((worker) => !worker.exited)
+        .map((worker) => worker.state)
+        .toList(growable: false);
+    final failedWorkers = snapshot.workers.values
+        .where((worker) =>
+            worker.error != null || worker.exited || worker.state == 'failed')
+        .length;
+
+    if (failedWorkers > 0 || snapshot.aliveProcessCount == 0) {
+      _readyProcessCount = 0;
+      _setRunState(
+        SimulationRunState.failed,
+        message: snapshot.error ??
+            '$failedWorkers/${snapshot.expectedProcessCount} '
+                'simulator processes failed.',
+      );
+      unawaited(_cleanupFailedWorkerCluster());
+      return;
+    }
+    if (snapshot.readyProcessCount < snapshot.expectedProcessCount) {
+      _setRunState(
+        SimulationRunState.starting,
+        message: 'Starting simulator processes '
+            '(${snapshot.readyProcessCount}/${snapshot.expectedProcessCount})...',
+      );
+      return;
+    }
+    if (states.isNotEmpty &&
+        states.every((state) => state == SimulationRunState.running.name)) {
+      _setRunState(
+        SimulationRunState.running,
+        message:
+            '${snapshot.expectedProcessCount} simulator processes running.',
+      );
+      return;
+    }
+    if (states.any((state) =>
+        state == SimulationRunState.reconnecting.name ||
+        state == SimulationRunState.partialRunning.name)) {
+      _setRunState(
+        SimulationRunState.partialRunning,
+        message: 'Some simulator processes are reconnecting.',
+      );
+      return;
+    }
+
+    _setRunState(
+      SimulationRunState.connecting,
+      message:
+          '${snapshot.expectedProcessCount} simulator processes connecting.',
+    );
+  }
+
+  Future<void> _cleanupFailedWorkerCluster() async {
+    if (_failedClusterCleanupInProgress) return;
+    _failedClusterCleanupInProgress = true;
+    try {
+      await _processSupervisor.stop(force: true);
+    } catch (error) {
+      log('Unable to clean up failed simulator processes: $error', 'error');
+    } finally {
+      _failedClusterCleanupInProgress = false;
+      if (_runState == SimulationRunState.failed) {
+        _isSupervisedRun = false;
+        _activeProcessCount = 1;
+        _readyProcessCount = 0;
+        _activeProcessPlan = null;
+        statisticsCollector.endExternalAggregation();
+        notifyListeners();
+      }
+    }
+  }
+
+  Future<void> _startLocal(Map<String, dynamic> config) async {
     if (isRunning || isBusy) {
       log('Simulation already running.', 'error');
       return;
@@ -328,11 +576,15 @@ class MqttController extends ChangeNotifier {
   Future<void> _startBasicMode(Map<String, dynamic> config) async {
     int startIdx = config['device_start_number'] ?? 1;
     int endIdx = config['device_end_number'] ?? 10;
-    int total = endIdx - startIdx + 1;
+    final shardRange = processShard.slice(startIdx, endIdx);
+    int total = shardRange.count;
 
     statisticsCollector.setTotalDevices(total);
-    log('Starting Basic Mode: Devices $startIdx - $endIdx ($total total)',
-        'info');
+    log(
+      'Starting Basic Mode${processShard.isSharded ? ' (shard ${processShard.label})' : ''}: '
+          'Devices ${shardRange.start} - ${shardRange.end} ($total total)',
+      'info',
+    );
 
     DataGenerator.resetKey1Counter();
     DataGenerator.resetCustomKeyCounters();
@@ -359,7 +611,8 @@ class MqttController extends ChangeNotifier {
     // We'll store this in the context map.
 
     int sendInterval = config['send_interval'] ?? 1;
-    String format = PayloadFormat.normalize(config['data']['format'] as String?);
+    String format =
+        PayloadFormat.normalize(config['data']['format'] as String?);
     int dataPointCount = config['data']['data_point_count'] ?? 10;
     List<CustomKeyConfig> customKeys = [];
     if (config['custom_keys'] != null && config['custom_keys'] is List) {
@@ -370,7 +623,7 @@ class MqttController extends ChangeNotifier {
 
     // Connect with a bounded concurrency pool (see [_connectWithPool]).
     final tasks = <Future<void> Function()>[];
-    for (int j = startIdx; j <= endIdx; j++) {
+    for (int j = shardRange.start; j <= shardRange.end; j++) {
       String idxStr = j.toString();
       String clientId = '$clientIdPrefix$idxStr';
       String username = '$userPrefix$idxStr';
@@ -430,9 +683,8 @@ class MqttController extends ChangeNotifier {
       }
     }
 
-    final int workerCount = tasks.length < _connectConcurrency
-        ? tasks.length
-        : _connectConcurrency;
+    final int workerCount =
+        tasks.length < _connectConcurrency ? tasks.length : _connectConcurrency;
     await Future.wait([for (int w = 0; w < workerCount; w++) worker()]);
   }
 
@@ -453,11 +705,18 @@ class MqttController extends ChangeNotifier {
       return;
     }
 
-    int total = groups.fold(
-        0, (sum, g) => sum + (g.endDeviceNumber - g.startDeviceNumber + 1));
+    int total = groups.fold(0, (sum, group) {
+      return sum +
+          processShard
+              .slice(group.startDeviceNumber, group.endDeviceNumber)
+              .count;
+    });
     statisticsCollector.setTotalDevices(total);
-    log('Starting Advanced Mode: ${groups.length} Groups, $total Devices total.',
-        'info');
+    log(
+      'Starting Advanced Mode${processShard.isSharded ? ' (shard ${processShard.label})' : ''}: '
+          '${groups.length} Groups, $total Devices total.',
+      'info',
+    );
 
     DataGenerator.resetKey1Counter();
     DataGenerator.resetCustomKeyCounters();
@@ -477,11 +736,21 @@ class MqttController extends ChangeNotifier {
     for (var group in groups) {
       if (!isRunning || isStopping) break;
 
-      log('Starting Group: ${group.name}', 'info');
+      final shardRange = processShard.slice(
+        group.startDeviceNumber,
+        group.endDeviceNumber,
+      );
+      if (shardRange.isEmpty) continue;
+
+      log(
+        'Starting Group: ${group.name} '
+            '(${shardRange.start}-${shardRange.end})',
+        'info',
+      );
 
       // Connect this group's devices with the shared bounded concurrency pool.
       final tasks = <Future<void> Function()>[];
-      for (int j = group.startDeviceNumber; j <= group.endDeviceNumber; j++) {
+      for (int j = shardRange.start; j <= shardRange.end; j++) {
         String idxStr = j.toString();
         String clientId = '${group.clientIdPrefix}$idxStr';
         String username = '${group.usernamePrefix}$idxStr';

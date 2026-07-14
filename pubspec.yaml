@@ -1,7 +1,7 @@
 name: iot_devkit
 description: A new Flutter project for IoT MQTT Device Simulation.
 publish_to: "none"
-version: 1.9.3
+version: 1.10.0
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -14,6 +14,7 @@ dependencies:
 
   # Core dependencies
   mqtt_client: ^10.0.1
+  typed_data: ^1.4.0
   provider: ^6.1.1
   shared_preferences: ^2.2.2
   path_provider: ^2.1.1

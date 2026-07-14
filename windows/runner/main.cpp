@@ -3,7 +3,9 @@
 #include <windows.h>
 #include <shlobj.h> // For SHGetFolderPath
 #include <fstream>
+#include <algorithm>
 #include <string>
+#include <vector>
 
 #include "flutter_window.h"
 #include "utils.h"
@@ -30,9 +32,17 @@ void WriteNativeCrashLog(const std::string& errorMsg) {
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
   try {
+      std::vector<std::string> command_line_arguments = GetCommandLineArguments();
+      const bool is_worker =
+          std::find(command_line_arguments.begin(), command_line_arguments.end(),
+                    "--worker") != command_line_arguments.end();
+
       // Attach to console when present (e.g., 'flutter run') or create a
       // new console when running with a debugger.
-      if (!::AttachConsole(ATTACH_PARENT_PROCESS) && ::IsDebuggerPresent()) {
+      // Hidden workers keep their inherited anonymous stdin/stdout pipes for
+      // the coordinator protocol; attaching a console would replace them.
+      if (!is_worker && !::AttachConsole(ATTACH_PARENT_PROCESS) &&
+          ::IsDebuggerPresent()) {
         CreateAndAttachConsole();
       }
 
@@ -48,11 +58,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
 
       flutter::DartProject project(L"data");
 
-      std::vector<std::string> command_line_arguments = GetCommandLineArguments();
-
       project.set_dart_entrypoint_arguments(std::move(command_line_arguments));
 
-      FlutterWindow window(project);
+      FlutterWindow window(project, !is_worker);
       Win32Window::Point origin(10, 10);
       Win32Window::Size size(1280, 720);
       if (!window.Create(L"iot_devkit", origin, size)) {
@@ -71,11 +79,19 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
       return EXIT_SUCCESS;
   } catch (const std::exception& e) {
       WriteNativeCrashLog(std::string("std::exception: ") + e.what());
-      MessageBoxA(NULL, e.what(), "IoT DevKit Native Crash", MB_OK | MB_ICONERROR);
+      const std::vector<std::string> arguments = GetCommandLineArguments();
+      if (std::find(arguments.begin(), arguments.end(), "--worker") ==
+          arguments.end()) {
+        MessageBoxA(NULL, e.what(), "IoT DevKit Native Crash", MB_OK | MB_ICONERROR);
+      }
       return EXIT_FAILURE;
   } catch (...) {
       WriteNativeCrashLog("Unknown C++ Exception (SEH or other)");
-      MessageBoxA(NULL, "Unknown Fatal Native Error", "IoT DevKit Native Crash", MB_OK | MB_ICONERROR);
+      const std::vector<std::string> arguments = GetCommandLineArguments();
+      if (std::find(arguments.begin(), arguments.end(), "--worker") ==
+          arguments.end()) {
+        MessageBoxA(NULL, "Unknown Fatal Native Error", "IoT DevKit Native Crash", MB_OK | MB_ICONERROR);
+      }
       return EXIT_FAILURE;
   }
 }

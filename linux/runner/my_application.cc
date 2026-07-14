@@ -10,13 +10,16 @@
 struct _MyApplication {
   GtkApplication parent_instance;
   char** dart_entrypoint_arguments;
+  gboolean is_worker;
 };
 
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
 
 // Called when first Flutter frame received.
 static void first_frame_cb(MyApplication* self, FlView* view) {
-  gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(view)));
+  if (!self->is_worker) {
+    gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(view)));
+  }
 }
 
 // Implements GApplication::activate.
@@ -83,6 +86,14 @@ static gboolean my_application_local_command_line(GApplication* application,
                                                   gchar*** arguments,
                                                   int* exit_status) {
   MyApplication* self = MY_APPLICATION(application);
+  self->is_worker = FALSE;
+  for (gchar** argument = *arguments + 1; *argument != nullptr; ++argument) {
+    if (g_strcmp0(*argument, "--worker") == 0) {
+      self->is_worker = TRUE;
+      break;
+    }
+  }
+
   // Strip out the first argument as it is the binary name.
   self->dart_entrypoint_arguments = g_strdupv(*arguments + 1);
 
@@ -133,7 +144,9 @@ static void my_application_class_init(MyApplicationClass* klass) {
   G_OBJECT_CLASS(klass)->dispose = my_application_dispose;
 }
 
-static void my_application_init(MyApplication* self) {}
+static void my_application_init(MyApplication* self) {
+  self->is_worker = FALSE;
+}
 
 MyApplication* my_application_new() {
   // Set the program name to the application ID, which helps various systems

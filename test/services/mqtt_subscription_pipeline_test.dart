@@ -13,6 +13,17 @@ void main() {
   const rpcResponse = 'v1/devices/me/rpc/response/42';
   const attributes = 'v1/devices/me/attributes';
 
+  test('performance logging disables hidden MQTT payload formatting', () {
+    final client = MqttServerClient('127.0.0.1', 'logging_regression');
+    client.logging(on: false); // mqtt_client defaults logPayloads back to true.
+    expect(MqttLogger.logPayloads, isTrue);
+
+    MqttClientManager.disableLibraryLogging(client);
+
+    expect(MqttLogger.loggingOn, isFalse);
+    expect(MqttLogger.logPayloads, isFalse);
+  });
+
   group('effectiveSubscriptions (what actually reaches the broker)', () {
     test('drops disabled rows', () {
       final result = MqttClientManager.effectiveSubscriptions([
@@ -68,7 +79,8 @@ void main() {
   });
 
   group('decideInbound (receive → log + auto-ack decision)', () {
-    SubscriptionConfig rpc({bool autoAck = true, bool enabled = true, int qos = 1}) =>
+    SubscriptionConfig rpc(
+            {bool autoAck = true, bool enabled = true, int qos = 1}) =>
         SubscriptionConfig(
           topic: 'v1/devices/me/rpc/request/+',
           autoAck: autoAck,
@@ -105,7 +117,8 @@ void main() {
       expect(action.autoAckTopic, isNull);
     });
 
-    test('non-RPC topic (attributes) never acks even with RPC auto-ack sub', () {
+    test('non-RPC topic (attributes) never acks even with RPC auto-ack sub',
+        () {
       final action = MqttClientManager.decideInbound(
         [
           rpc(),
@@ -193,8 +206,7 @@ void main() {
 
       // 1) inbound logged with the ← arrow + topic + payload
       expect(
-        logs.any((l) =>
-            l.contains('[← $rpcRequest]') && l.contains('reboot')),
+        logs.any((l) => l.contains('[← $rpcRequest]') && l.contains('reboot')),
         isTrue,
         reason: 'inbound message should be logged: $logs',
       );
@@ -203,7 +215,8 @@ void main() {
       expect(publishedQos, MqttQos.atLeastOnce);
       // 3) auto-ack logged with the → arrow
       expect(
-        logs.any((l) => l.contains('[→ $rpcResponse]') && l.contains('auto-ack')),
+        logs.any(
+            (l) => l.contains('[→ $rpcResponse]') && l.contains('auto-ack')),
         isTrue,
         reason: 'auto-ack publish should be logged: $logs',
       );

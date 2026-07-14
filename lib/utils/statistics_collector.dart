@@ -11,9 +11,17 @@ class StatisticsCollector extends ChangeNotifier {
 
   int totalMessages = 0;
   int successCount = 0;
+  // A publish call that threw before it could be handed to the local socket.
   int failureCount = 0;
+  // Scheduled reports deliberately discarded after missing their deadline.
+  int lateDroppedCount = 0;
+  // Payload generation failures. These never reached publishMessage.
+  int generationErrorCount = 0;
+  // Logical telemetry points accepted by the local MQTT client.
+  int totalPoints = 0;
   // Performance Metrics
   double currentTps = 0.0;
+  double currentPointsPerSecond = 0.0;
   double currentBandwidth = 0.0; // KB/s
   double currentLatency = 0.0;
 
@@ -27,8 +35,11 @@ class StatisticsCollector extends ChangeNotifier {
 
   // Internal tracking
   int _lastTotalMessages = 0;
+  int _lastTotalPoints = 0;
   int _lastTotalBytes = 0;
   int totalBytes = 0;
+  final Stopwatch _rateStopwatch = Stopwatch();
+  Duration _lastRateSample = Duration.zero;
 
   // Restored missing fields
   int totalLatency = 0;
@@ -43,8 +54,11 @@ class StatisticsCollector extends ChangeNotifier {
   Timer? _resourceStartupDelayTimer;
   Timer? _resourceTimer;
   bool _needsUpdate = false;
+  bool _usesExternalAggregate = false;
 
   StatisticsCollector() {
+    _rateStopwatch.start();
+    _lastRateSample = _rateStopwatch.elapsed;
     _startTimers();
   }
 
@@ -70,6 +84,7 @@ class StatisticsCollector extends ChangeNotifier {
   }
 
   void _updateMemory() {
+    if (_usesExternalAggregate) return;
     try {
       memoryUsage = ProcessInfo.currentRss;
       _needsUpdate = true;
@@ -79,20 +94,50 @@ class StatisticsCollector extends ChangeNotifier {
     }
   }
 
-  void _calculateRates() {
+  void _calculateRates({Duration? elapsedOverride}) {
+    if (_usesExternalAggregate) {
+      _appendRateHistory();
+      _needsUpdate = true;
+      _flushToUI();
+      return;
+    }
+
+    final sampleElapsed = _rateStopwatch.elapsed;
+    final elapsed = elapsedOverride ?? (sampleElapsed - _lastRateSample);
+    _lastRateSample = sampleElapsed;
+
     int deltaMessages = totalMessages - _lastTotalMessages;
+    int deltaPoints = totalPoints - _lastTotalPoints;
     int deltaBytes = totalBytes - _lastTotalBytes;
 
     _lastTotalMessages = totalMessages;
+    _lastTotalPoints = totalPoints;
     _lastTotalBytes = totalBytes;
 
-    currentTps = deltaMessages.toDouble();
-    currentBandwidth = deltaBytes / 1024.0;
+    final elapsedSeconds =
+        elapsed.inMicroseconds / Duration.microsecondsPerSecond;
+    if (elapsedSeconds > 0) {
+      currentTps = deltaMessages / elapsedSeconds;
+      currentPointsPerSecond = deltaPoints / elapsedSeconds;
+      currentBandwidth = deltaBytes / 1024.0 / elapsedSeconds;
+    } else {
+      currentTps = 0.0;
+      currentPointsPerSecond = 0.0;
+      currentBandwidth = 0.0;
+    }
     currentLatency = latencySamples > 0 ? (totalLatency / latencySamples) : 0.0;
 
-    // Update History
-    double now = DateTime.now().millisecondsSinceEpoch.toDouble();
+    _appendRateHistory();
 
+    // Force update every second if there is activity or history
+    if (currentTps > 0 || tpsHistory.isNotEmpty) {
+      _needsUpdate = true;
+      _flushToUI();
+    }
+  }
+
+  void _appendRateHistory() {
+    final now = DateTime.now().millisecondsSinceEpoch.toDouble();
     tpsHistory.add({'time': now, 'value': currentTps});
     if (tpsHistory.length > 60) {
       tpsHistory.removeAt(0);
@@ -102,12 +147,6 @@ class StatisticsCollector extends ChangeNotifier {
     if (latencyHistory.length > 60) {
       latencyHistory.removeAt(0);
     }
-
-    // Force update every second if there is activity or history
-    if (currentTps > 0 || tpsHistory.isNotEmpty) {
-      _needsUpdate = true;
-      _flushToUI();
-    }
   }
 
   void reset() {
@@ -116,6 +155,9 @@ class StatisticsCollector extends ChangeNotifier {
     totalMessages = 0;
     successCount = 0;
     failureCount = 0;
+    lateDroppedCount = 0;
+    generationErrorCount = 0;
+    totalPoints = 0;
     totalLatency = 0;
     latencySamples = 0;
     messageSize = 0;
@@ -124,12 +166,16 @@ class StatisticsCollector extends ChangeNotifier {
 
     // Reset performance metrics
     currentTps = 0.0;
+    currentPointsPerSecond = 0.0;
     currentBandwidth = 0.0;
     currentLatency = 0.0;
     tpsHistory.clear();
     latencyHistory.clear();
     _lastTotalMessages = 0;
+    _lastTotalPoints = 0;
     _lastTotalBytes = 0;
+    _rateStopwatch.reset();
+    _lastRateSample = _rateStopwatch.elapsed;
 
     _needsUpdate = false;
     _updateTimer?.cancel();
@@ -137,6 +183,56 @@ class StatisticsCollector extends ChangeNotifier {
     _startTimers();
 
     notifyListeners();
+  }
+
+  /// Switches this collector to statistics supplied by worker processes.
+  ///
+  /// The coordinator process does not publish telemetry itself during an
+  /// automatic multi-process run. Worker snapshots already contain their
+  /// one-second rates, so the local rate timer must not derive a second set of
+  /// rates from asynchronously arriving IPC snapshots.
+  void beginExternalAggregation() {
+    _usesExternalAggregate = true;
+    reset();
+    _usesExternalAggregate = true;
+  }
+
+  void endExternalAggregation() {
+    _usesExternalAggregate = false;
+  }
+
+  /// Replaces the visible counters with one coordinator-side aggregate.
+  ///
+  /// Only the GUI coordinator calls this. Normal simulator/worker processes
+  /// continue using the increment methods below, so their hot path is
+  /// unchanged.
+  void applyExternalAggregate(Map<String, dynamic> snapshot) {
+    if (!_usesExternalAggregate) return;
+
+    int readInt(String key) => (snapshot[key] as num?)?.toInt() ?? 0;
+    double readDouble(String key) => (snapshot[key] as num?)?.toDouble() ?? 0;
+
+    totalDevices = readInt('totalDevices');
+    onlineDevices = readInt('onlineDevices');
+    totalMessages = readInt('totalMessages');
+    successCount = readInt('successCount');
+    failureCount = readInt('failureCount');
+    lateDroppedCount = readInt('lateDroppedCount');
+    generationErrorCount = readInt('generationErrorCount');
+    totalPoints = readInt('totalPoints');
+    totalBytes = readInt('totalBytes');
+    totalLatency = readInt('totalLatency');
+    latencySamples = readInt('latencySamples');
+    messageSize = readInt('messageSize');
+    memoryUsage = readInt('memoryUsage');
+    currentTps = readDouble('currentTps');
+    currentPointsPerSecond = readDouble('currentPointsPerSecond');
+    currentBandwidth = readDouble('currentBandwidth');
+    currentLatency = readDouble('currentLatency');
+    _lastTotalMessages = totalMessages;
+    _lastTotalPoints = totalPoints;
+    _lastTotalBytes = totalBytes;
+    _scheduleUpdate();
   }
 
   void setTotalDevices(int count) {
@@ -160,9 +256,12 @@ class StatisticsCollector extends ChangeNotifier {
     _scheduleUpdate();
   }
 
-  void incrementSuccess({int latency = 0}) {
+  void incrementSuccess({int latency = 0, int points = 0}) {
     totalMessages++;
     successCount++;
+    if (points > 0) {
+      totalPoints += points;
+    }
 
     if (latency > 0 && successCount % 10 == 0) {
       totalLatency += latency;
@@ -172,9 +271,27 @@ class StatisticsCollector extends ChangeNotifier {
   }
 
   void incrementFailure({int count = 1}) {
+    if (count < 1) return;
     totalMessages += count;
     failureCount += count;
     _scheduleUpdate();
+  }
+
+  void incrementLateDropped({int count = 1}) {
+    if (count < 1) return;
+    lateDroppedCount += count;
+    _scheduleUpdate();
+  }
+
+  void incrementGenerationError({int count = 1}) {
+    if (count < 1) return;
+    generationErrorCount += count;
+    _scheduleUpdate();
+  }
+
+  @visibleForTesting
+  void calculateRatesForTest(Duration elapsed) {
+    _calculateRates(elapsedOverride: elapsed);
   }
 
   void _scheduleUpdate() {
@@ -202,6 +319,17 @@ class StatisticsCollector extends ChangeNotifier {
       'totalMessages': totalMessages,
       'successCount': successCount,
       'failureCount': failureCount,
+      'lateDroppedCount': lateDroppedCount,
+      'generationErrorCount': generationErrorCount,
+      'totalPoints': totalPoints,
+      'totalBytes': totalBytes,
+      'totalLatency': totalLatency,
+      'latencySamples': latencySamples,
+      'currentTps': currentTps,
+      'currentPointsPerSecond': currentPointsPerSecond,
+      'currentBandwidth': currentBandwidth,
+      'currentLatency': currentLatency,
+      'memoryUsage': memoryUsage,
       'successRate':
           total > 0 ? (successCount / total * 100).toStringAsFixed(1) : '0.0',
       'failureRate':
@@ -220,6 +348,7 @@ class StatisticsCollector extends ChangeNotifier {
     _rateTimer?.cancel();
     _resourceStartupDelayTimer?.cancel();
     _resourceTimer?.cancel();
+    _rateStopwatch.stop();
     super.dispose();
   }
 }

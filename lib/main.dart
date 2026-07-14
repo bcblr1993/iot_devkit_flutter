@@ -18,7 +18,9 @@ import 'utils/statistics_collector.dart';
 import 'ui/screens/home_screen.dart';
 import 'utils/about_dialog_helper.dart';
 import 'services/log_storage_service.dart';
+import 'services/simulation_worker_runtime.dart';
 import 'viewmodels/timesheet_provider.dart';
+import 'models/process_shard.dart';
 
 import 'package:window_manager/window_manager.dart';
 
@@ -46,13 +48,30 @@ Future<void> _writePanicLog(Object error, StackTrace stack) async {
   }
 }
 
-void main() async {
-  runZonedGuarded<Future<void>>(() async {
+void main(List<String> arguments) async {
+  late final ProcessShard processShard;
+  try {
+    processShard = ProcessShard.fromArguments(arguments);
+  } on FormatException catch (error) {
+    stderr.writeln('IoT DevKit: ${error.message}');
+    exitCode = 64;
+    return;
+  }
+  // High-volume simulation is the primary workload, so detailed per-message
+  // logs are opt-in. --performance remains accepted for explicit launch
+  // scripts; --detailed-logs restores the diagnostic mode when needed.
+  final performanceMode = arguments.contains('--performance') ||
+      !arguments.contains('--detailed-logs');
+  await runZonedGuarded<Future<void>>(() async {
     WidgetsFlutterBinding.ensureInitialized();
 
     try {
       // 1. Initialize File Logging Service
-      await LogStorageService.instance.init();
+      await LogStorageService.instance.init(
+        instanceLabel: processShard.isSharded
+            ? 'shard-${processShard.index + 1}-of-${processShard.count}'
+            : null,
+      );
     } catch (e, stack) {
       await _writePanicLog('LogStorageService init failed: $e', stack);
     }
@@ -70,6 +89,50 @@ void main() async {
       }
     });
 
+    if (arguments.contains('--worker')) {
+      if (!processShard.isSharded) {
+        stderr.writeln('IoT DevKit worker requires --shard=N/M with M > 1.');
+        await LogStorageService.instance.dispose();
+        exit(64);
+      }
+
+      // Windows workers are kept hidden by the native runner before the Dart
+      // entrypoint starts. Other desktop runners may create their window from a
+      // storyboard/template, so hide it defensively before entering the
+      // headless IPC loop.
+      if (!Platform.isWindows) {
+        await windowManager.ensureInitialized();
+      }
+
+      // A Flutter embedder may terminate after Dart main completes when no
+      // frame tree has ever been attached (macOS does this even with an active
+      // stdin subscription). A zero-size root keeps the engine/event loop
+      // alive; the Windows native runner still never shows its worker window.
+      runApp(const SizedBox.shrink());
+      if (!Platform.isWindows) {
+        await windowManager.hide();
+      }
+
+      final controller = MqttController(
+        processShard: processShard,
+        enableDetailedLogs: false,
+        allowAutoProcesses: false,
+      );
+      final runtime = SimulationWorkerRuntime(
+        controller: controller,
+        processShard: processShard,
+      );
+      final workerExitCode = await runtime.run();
+      controller.dispose();
+      await LogStorageService.instance.dispose();
+      // Close the anonymous protocol pipe before process termination. A final
+      // `stopped` frame can otherwise remain in the desktop embedder's stdout
+      // buffer even after IOSink.flush() completes.
+      await stdout.flush();
+      await stdout.close();
+      exit(workerExitCode);
+    }
+
     try {
       await windowManager.ensureInitialized();
 
@@ -77,13 +140,17 @@ void main() async {
       final themeManager = LabThemeManager();
       await themeManager.load();
 
-      WindowOptions windowOptions = const WindowOptions(
-        size: Size(1100, 750),
+      final windowTitle = processShard.isSharded
+          ? 'IoT DevKit [${processShard.label}]'
+          : 'IoT DevKit';
+      WindowOptions windowOptions = WindowOptions(
+        size: const Size(1100, 750),
         center: true,
         backgroundColor: Colors.white,
         skipTaskbar: false,
+        title: windowTitle,
         titleBarStyle: TitleBarStyle.normal,
-        minimumSize: Size(800, 600),
+        minimumSize: const Size(800, 600),
       );
 
       await windowManager.waitUntilReadyToShow(windowOptions, () async {
@@ -94,7 +161,11 @@ void main() async {
         await windowManager.setMaximizable(true);
       });
 
-      runApp(IoTDevKitApp(themeManager: themeManager));
+      runApp(IoTDevKitApp(
+        themeManager: themeManager,
+        processShard: processShard,
+        performanceMode: performanceMode,
+      ));
     } catch (e, stack) {
       await _writePanicLog('Initialization failed: $e', stack);
       rethrow;
@@ -110,7 +181,15 @@ void main() async {
 
 class IoTDevKitApp extends StatelessWidget {
   final LabThemeManager themeManager;
-  const IoTDevKitApp({super.key, required this.themeManager});
+  final ProcessShard processShard;
+  final bool performanceMode;
+
+  const IoTDevKitApp({
+    super.key,
+    required this.themeManager,
+    this.processShard = ProcessShard.single,
+    this.performanceMode = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -122,7 +201,12 @@ class IoTDevKitApp extends StatelessWidget {
         ChangeNotifierProvider<StatusRegistry>(create: (_) => StatusRegistry()),
         ChangeNotifierProvider<TimesheetProvider>(
             create: (_) => TimesheetProvider()), // Added TimesheetProvider
-        ChangeNotifierProvider<MqttController>(create: (_) => MqttController()),
+        ChangeNotifierProvider<MqttController>(
+          create: (_) => MqttController(
+            processShard: processShard,
+            enableDetailedLogs: !performanceMode,
+          ),
+        ),
         ChangeNotifierProxyProvider<MqttController, StatisticsCollector>(
           create: (_) => StatisticsCollector(),
           update: (_, controller, __) => controller.statisticsCollector,
@@ -147,7 +231,9 @@ class IoTDevKitApp extends StatelessWidget {
             ],
           );
           return MaterialApp(
-            title: 'IoT DevKit',
+            title: processShard.isSharded
+                ? 'IoT DevKit [${processShard.label}]'
+                : 'IoT DevKit',
             theme: themed,
             darkTheme: themed,
             themeMode: themeManager.theme.brightness == Brightness.dark

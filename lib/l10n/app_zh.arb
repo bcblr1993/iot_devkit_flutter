@@ -183,6 +183,10 @@
   "statSent": "已发送",
   "statSuccess": "成功数",
   "statFailed": "失败数",
+  "statPublishFailed": "发布失败",
+  "statLateDropped": "调度丢弃",
+  "statGenerationErrors": "生成错误",
+  "statPointsPerSecond": "点每秒",
   "enableSsl": "启用 SSL/TLS",
   "caCertificate": "CA 证书",
   "clientCertificate": "客户端证书",
@@ -195,6 +199,55 @@
   "startNow": "开始模拟",
   "confirmStartHint": "点击确认以使用此数据结构开始模拟。",
   "performanceMode": "高性能模式 (关闭日志)",
+  "performanceModeDescription": "关闭逐条发送明细日志，以获得最大吞吐量",
+  "autoProcessPlanSingle": "预计常态 {steady} 点/秒，峰值 {peak} 点/秒；按每个发送进程 {limit} 点/秒的上限，单进程即可完成。",
+  "@autoProcessPlanSingle": {
+    "placeholders": {
+      "steady": {"type": "String"},
+      "peak": {"type": "String"},
+      "limit": {"type": "String"}
+    }
+  },
+  "autoProcessPlanMultiple": "预计常态 {steady} 点/秒，峰值 {peak} 点/秒；按每个发送进程 {limit} 点/秒的上限，将自动启动 {count} 个发送进程。",
+  "@autoProcessPlanMultiple": {
+    "placeholders": {
+      "steady": {"type": "String"},
+      "peak": {"type": "String"},
+      "limit": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "autoProcessPlanUnsatisfied": "至少有一个设备自身已超过单进程点数上限，按设备分片无法保证每个进程都低于设定值。",
+  "autoProcessPlanSingleDeviceUnsatisfied": "单个设备的峰值负载已超过单进程点数上限，增加本机进程也无法拆分该设备的负载。",
+  "autoProcessPlanShardDistributionUnsatisfied": "设备分片后仍有进程超过点数上限，当前设备范围无法均匀分配到满足上限。",
+  "autoProcessSafetyLimitExceeded": "该负载至少需要 {required} 个发送进程，超过当前机器自动启动安全上限 {limit} 个。请降低模拟负载，或拆分到多台机器运行。",
+  "@autoProcessSafetyLimitExceeded": {
+    "placeholders": {
+      "required": {"type": "int"},
+      "limit": {"type": "int"}
+    }
+  },
+  "startProcessCount": "启动 {count} 个进程",
+  "@startProcessCount": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "autoProcessesStarting": "正在启动 {count} 个发送进程……",
+  "@autoProcessesStarting": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "autoProcessesReady": "{ready}/{count} 个发送进程已就绪，正在连接设备。",
+  "@autoProcessesReady": {
+    "placeholders": {
+      "ready": {"type": "int"},
+      "count": {"type": "int"}
+    }
+  },
+  "autoProcessLaunchFailed": "发送进程启动失败：{error}",
+  "@autoProcessLaunchFailed": {
+    "placeholders": {"error": {"type": "String"}}
+  },
+  "statProcesses": "进程",
+  "unknownError": "未知错误",
   "themePolarBlue": "极地冰蓝 (Ice Blue)",
   "themePorcelainRed": "绯红白瓷 (Porcelain)",
   "themeWisteriaWhite": "紫藤云烟 (Wisteria)",
