@@ -47,6 +47,9 @@ class MqttViewModel extends ChangeNotifier {
   List<CustomKeyConfig> _basicCustomKeys = [];
   List<CustomKeyConfig> get basicCustomKeys => _basicCustomKeys;
 
+  bool _basicCustomKeysEnabled = true;
+  bool get basicCustomKeysEnabled => _basicCustomKeysEnabled;
+
   List<GroupConfig> _groups = [];
   List<GroupConfig> get groups => _groups;
 
@@ -180,6 +183,14 @@ class MqttViewModel extends ChangeNotifier {
     scheduleAutoSave();
   }
 
+  void setBasicCustomKeysEnabled(bool val) {
+    if (_basicCustomKeysEnabled != val) {
+      _basicCustomKeysEnabled = val;
+      notifyListeners();
+      scheduleAutoSave();
+    }
+  }
+
   void updateGroups(List<GroupConfig> newGroups) {
     _groups = newGroups;
     notifyListeners();
@@ -251,6 +262,9 @@ class MqttViewModel extends ChangeNotifier {
     usernamePrefixController.text = config['username_prefix'] ?? 'user';
     passwordPrefixController.text = config['password_prefix'] ?? 'pass';
 
+    // Profiles created before the master switch keep custom keys enabled.
+    _basicCustomKeysEnabled = config['custom_keys_enabled'] != false;
+
     if (config['custom_keys'] != null) {
       _basicCustomKeys = (config['custom_keys'] as List)
           .map((e) => CustomKeyConfig.fromJson(e))
@@ -298,6 +312,7 @@ class MqttViewModel extends ChangeNotifier {
         'format': _format,
         'data_point_count': int.tryParse(dataPointController.text) ?? 10,
       },
+      'custom_keys_enabled': _basicCustomKeysEnabled,
       'custom_keys': _basicCustomKeys.map((e) => e.toJson()).toList(),
       'groups': _groups.map((e) => e.toJson()).toList(),
       'subscriptions': _subscriptions.map((e) => e.toJson()).toList(),
@@ -321,7 +336,9 @@ class MqttViewModel extends ChangeNotifier {
         }
         final values = DataGenerator.generateBatteryStatus(
           count,
-          customKeys: _basicCustomKeys,
+          customKeys: _basicCustomKeysEnabled
+              ? _basicCustomKeys
+              : const <CustomKeyConfig>[],
           clientId: 'preview_client',
         );
         return PayloadFormat.buildStandard(values, previewTs, _format);
@@ -337,7 +354,7 @@ class MqttViewModel extends ChangeNotifier {
         }
         final values = DataGenerator.generateBatteryStatus(
           group.totalKeyCount,
-          customKeys: group.customKeys,
+          customKeys: group.effectiveCustomKeys,
           clientId: '${group.clientIdPrefix}preview',
         );
         return PayloadFormat.buildStandard(values, previewTs, group.format);

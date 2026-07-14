@@ -30,6 +30,7 @@ class GroupConfig {
   String format;
 
   // Custom Keys
+  bool customKeysEnabled;
   List<CustomKeyConfig> customKeys;
 
   GroupConfig({
@@ -48,6 +49,7 @@ class GroupConfig {
     this.changeRatio = 0.3,
     this.randomChange = false,
     this.format = PayloadFormat.timestamped,
+    this.customKeysEnabled = true,
     this.customKeys = const [],
   }) : id = id ?? const Uuid().v4();
 
@@ -67,6 +69,7 @@ class GroupConfig {
     double? changeRatio,
     bool? randomChange,
     String? format,
+    bool? customKeysEnabled,
     List<CustomKeyConfig>? customKeys,
   }) {
     return GroupConfig(
@@ -86,9 +89,15 @@ class GroupConfig {
       changeRatio: changeRatio ?? this.changeRatio,
       randomChange: randomChange ?? this.randomChange,
       format: format ?? this.format,
+      customKeysEnabled: customKeysEnabled ?? this.customKeysEnabled,
       customKeys: customKeys ?? this.customKeys,
     );
   }
+
+  /// Custom keys that are allowed to reach preview and runtime generation.
+  /// The master switch is a gate only; per-key selections remain untouched.
+  List<CustomKeyConfig> get effectiveCustomKeys =>
+      customKeysEnabled ? customKeys : const <CustomKeyConfig>[];
 
   Map<String, dynamic> toJson() {
     return {
@@ -106,6 +115,7 @@ class GroupConfig {
       'changeRatio': changeRatio,
       'randomChange': randomChange,
       'format': format,
+      'customKeysEnabled': customKeysEnabled,
       'customKeys': customKeys.map((e) => e.toJson()).toList(),
     };
   }
@@ -126,6 +136,8 @@ class GroupConfig {
       changeRatio: (json['changeRatio'] ?? 0.3).toDouble(),
       randomChange: json['randomChange'] ?? false,
       format: PayloadFormat.normalize(json['format'] as String?),
+      // Legacy groups predate the master switch and remain enabled.
+      customKeysEnabled: json['customKeysEnabled'] != false,
       customKeys: (json['customKeys'] as List? ?? [])
           .map((e) => CustomKeyConfig.fromJson(e))
           .toList(),

@@ -218,6 +218,12 @@ class _GroupsManagerState extends State<GroupsManager> {
                               endDeviceNumber: int.tryParse(v) ?? 10)),
                       isNumber: true,
                       enabled: !widget.isLocked),
+                ],
+              ),
+              const SizedBox(height: 10),
+              FormGrid(
+                minItemWidth: 210,
+                children: [
                   _buildTextField(
                       l10n.clientId,
                       group.clientIdPrefix,
@@ -236,24 +242,6 @@ class _GroupsManagerState extends State<GroupsManager> {
                       (v) => _updateGroup(
                           index, group.copyWith(passwordPrefix: v)),
                       enabled: !widget.isLocked),
-                  LabSelect<String>(
-                    label: l10n.format,
-                    value: group.format,
-                    helperText: payloadFormatDescription(l10n, group.format),
-                    items: [
-                      LabSelectItem(PayloadFormat.simpleKv, l10n.formatSimpleKv),
-                      LabSelectItem(
-                          PayloadFormat.timestamped, l10n.formatTbTimestamp),
-                      LabSelectItem(PayloadFormat.array, l10n.formatTbArray),
-                      LabSelectItem(PayloadFormat.tieNiu, l10n.formatTieNiu),
-                      LabSelectItem(
-                          PayloadFormat.tieNiuEmpty, l10n.formatTieNiuEmpty),
-                    ],
-                    onChanged: widget.isLocked
-                        ? null
-                        : (v) =>
-                            _updateGroup(index, group.copyWith(format: v!)),
-                  ),
                 ],
               ),
               const SizedBox(height: 10),
@@ -296,6 +284,24 @@ class _GroupsManagerState extends State<GroupsManager> {
                       enabled: !widget.isLocked),
                 ],
               ),
+              const SizedBox(height: 10),
+              LabSelect<String>(
+                label: l10n.format,
+                value: group.format,
+                helperText: payloadFormatDescription(l10n, group.format),
+                items: [
+                  LabSelectItem(PayloadFormat.simpleKv, l10n.formatSimpleKv),
+                  LabSelectItem(
+                      PayloadFormat.timestamped, l10n.formatTbTimestamp),
+                  LabSelectItem(PayloadFormat.array, l10n.formatTbArray),
+                  LabSelectItem(PayloadFormat.tieNiu, l10n.formatTieNiu),
+                  LabSelectItem(
+                      PayloadFormat.tieNiuEmpty, l10n.formatTieNiuEmpty),
+                ],
+                onChanged: widget.isLocked
+                    ? null
+                    : (v) => _updateGroup(index, group.copyWith(format: v!)),
+              ),
               const SizedBox(height: 12),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -326,6 +332,11 @@ class _GroupsManagerState extends State<GroupsManager> {
               const Divider(),
               CustomKeysManager(
                 keys: group.customKeys,
+                customKeysEnabled: group.customKeysEnabled,
+                onCustomKeysEnabledChanged: (enabled) {
+                  _updateGroup(
+                      index, group.copyWith(customKeysEnabled: enabled));
+                },
                 isLocked: widget.isLocked,
                 maxKeys: group.totalKeyCount,
                 onKeysChanged: (newKeys) {

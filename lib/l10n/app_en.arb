@@ -58,6 +58,24 @@
   "selectTheme": "Select Theme",
   "selectLanguage": "Select Language",
   "customKeys": "Custom Keys",
+  "customKeysMaster": "Master switch",
+  "customKeysMasterHint": "When off, no custom keys are generated or sent. Turning it back on restores each key's previous state.",
+  "customKeysMasterLimitHint": "Too many keys are selected. Disable the extras before turning the master switch on.",
+  "customKeyActive": "Active",
+  "customKeyInactive": "Inactive",
+  "customKeyPending": "Pending",
+  "customKeyPendingHint": "The master switch is off. This key will use its current state when custom keys are enabled again.",
+  "customKeyToggleLabel": "Whether this custom key is active",
+  "customKeyToggleHint": "When off, this key is kept but not generated or sent.",
+  "customKeyEnableLimitHint": "The total-key limit is reached. Disable an active key first.",
+  "customKeyCount": "Active {enabled}/{limit} · {total} saved",
+  "@customKeyCount": {
+    "placeholders": {
+      "enabled": {"type": "int"},
+      "limit": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
   "add": "Add",
   "keyName": "Key Name",
   "type": "Type",

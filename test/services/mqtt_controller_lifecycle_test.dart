@@ -139,8 +139,8 @@ void main() {
     await controller.start(config).timeout(const Duration(milliseconds: 500));
 
     expect(fakeManager.subscriptions.length, 1);
-    expect(fakeManager.subscriptions.first.topic,
-        'v1/devices/me/rpc/request/+');
+    expect(
+        fakeManager.subscriptions.first.topic, 'v1/devices/me/rpc/request/+');
 
     await controller.stop().timeout(const Duration(milliseconds: 200));
   });
@@ -215,6 +215,50 @@ void main() {
         .timeout(const Duration(milliseconds: 500));
 
     expect(fakeManager.subscriptions, isEmpty);
+    await controller.stop().timeout(const Duration(milliseconds: 200));
+  });
+
+  test('custom_keys_enabled=false removes all keys from basic runtime context',
+      () async {
+    late _FakeMqttClientManager fakeManager;
+    final controller = MqttController(
+      initializeWorkers: false,
+      stabilizationDelay: Duration.zero,
+      clientManagerFactory: ({
+        required onConnected,
+        required onDisconnected,
+        onConnectionFailed,
+        onReconnectScheduled,
+        required onLog,
+      }) {
+        fakeManager = _FakeMqttClientManager(
+          onConnected: onConnected,
+          onDisconnected: onDisconnected,
+          onConnectionFailed: onConnectionFailed,
+          onReconnectScheduled: onReconnectScheduled,
+          onLog: onLog,
+        );
+        return fakeManager;
+      },
+    );
+    addTearDown(controller.dispose);
+
+    final config = _oneDeviceConfig(port: 1883)
+      ..['custom_keys_enabled'] = false
+      ..['custom_keys'] = [
+        {
+          'name': 'temperature',
+          'type': 'integer',
+          'mode': 'random',
+        },
+      ];
+
+    await controller.start(config).timeout(const Duration(milliseconds: 500));
+
+    final context =
+        fakeManager.getClientContext('device1') as BasicSimulationContext;
+    expect(context.customKeys, isEmpty);
+
     await controller.stop().timeout(const Duration(milliseconds: 200));
   });
 

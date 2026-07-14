@@ -615,7 +615,10 @@ class MqttController extends ChangeNotifier {
         PayloadFormat.normalize(config['data']['format'] as String?);
     int dataPointCount = config['data']['data_point_count'] ?? 10;
     List<CustomKeyConfig> customKeys = [];
-    if (config['custom_keys'] != null && config['custom_keys'] is List) {
+    final customKeysEnabled = config['custom_keys_enabled'] != false;
+    if (customKeysEnabled &&
+        config['custom_keys'] != null &&
+        config['custom_keys'] is List) {
       customKeys = (config['custom_keys'] as List)
           .map((e) => CustomKeyConfig.fromJson(e))
           .toList();

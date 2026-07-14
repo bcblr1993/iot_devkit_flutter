@@ -135,6 +135,7 @@ class SimulationConfigValidator {
     _validateCustomKeys(
       issues,
       _customKeysFrom(config['custom_keys']),
+      enabled: config['custom_keys_enabled'] != false,
       maxKeys: dataPointCount ?? SimulationConfigLimits.maxDataPoints,
       ownerLabelZh: '基础模式',
       ownerLabelEn: 'Basic mode',
@@ -248,6 +249,7 @@ class SimulationConfigValidator {
       _validateCustomKeys(
         issues,
         group.customKeys,
+        enabled: group.customKeysEnabled,
         maxKeys: group.totalKeyCount,
         ownerLabelZh: groupNameZh,
         ownerLabelEn: groupNameEn,
@@ -350,11 +352,15 @@ class SimulationConfigValidator {
   void _validateCustomKeys(
     List<SimulationConfigIssue> issues,
     List<CustomKeyConfig> keys, {
+    bool enabled = true,
     required int maxKeys,
     required String ownerLabelZh,
     required String ownerLabelEn,
   }) {
-    if (keys.length > maxKeys) {
+    if (!enabled) return;
+
+    final enabledKeyCount = keys.where((key) => key.enabled).length;
+    if (enabledKeyCount > maxKeys) {
       issues.add(SimulationConfigIssue(
         field: 'custom_keys',
         zhMessage: '$ownerLabelZh 自定义 Key 数量不能超过键总数。',
@@ -365,6 +371,9 @@ class SimulationConfigValidator {
     final seenNames = <String>{};
     for (var i = 0; i < keys.length; i++) {
       final key = keys[i];
+      // Disabled rows are intentionally kept as reusable configuration. They
+      // only become subject to runtime validation when switched back on.
+      if (!key.enabled) continue;
       final name = key.name.trim();
       if (name.isEmpty) {
         issues.add(SimulationConfigIssue(

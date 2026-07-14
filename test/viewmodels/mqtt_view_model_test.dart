@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:iot_devkit/l10n/generated/app_localizations.dart';
+import 'package:iot_devkit/models/custom_key_config.dart';
+import 'package:iot_devkit/models/group_config.dart';
 import 'package:iot_devkit/models/payload_format.dart';
 import 'package:iot_devkit/models/subscription_config.dart';
 import 'package:iot_devkit/viewmodels/mqtt_view_model.dart';
@@ -27,6 +29,7 @@ void main() {
       expect(vm.hostController.text, 'localhost');
       expect(vm.portController.text, '1883');
       expect(vm.groups.length, 1); // loadConfig adds 1 default group if empty
+      expect(vm.basicCustomKeysEnabled, isTrue);
     });
 
     test('setEnableSsl updates state', () {
@@ -57,12 +60,89 @@ void main() {
       expect(((arr as List).first as Map).containsKey('ts'), true);
     });
 
+    test('disabled custom keys stay out of basic and advanced previews', () {
+      CustomKeyConfig key(String name, {required bool enabled}) {
+        return CustomKeyConfig(
+          name: name,
+          enabled: enabled,
+          type: CustomKeyType.string,
+          mode: CustomKeyMode.static,
+          staticValue: name,
+        );
+      }
+
+      vm.setFormat(PayloadFormat.simpleKv);
+      vm.dataPointController.text = '2';
+      vm.updateBasicCustomKeys([
+        key('basic_active', enabled: true),
+        key('basic_inactive', enabled: false),
+      ]);
+
+      final basic = vm.generatePreviewData(isBasic: true) as Map;
+      expect(basic, contains('basic_active'));
+      expect(basic, isNot(contains('basic_inactive')));
+
+      vm.updateGroups([
+        GroupConfig(
+          totalKeyCount: 2,
+          format: PayloadFormat.simpleKv,
+          customKeys: [
+            key('advanced_active', enabled: true),
+            key('advanced_inactive', enabled: false),
+          ],
+        ),
+      ]);
+
+      final advanced = vm.generatePreviewData(isBasic: false) as Map;
+      expect(advanced, contains('advanced_active'));
+      expect(advanced, isNot(contains('advanced_inactive')));
+    });
+
+    test('master switches suppress custom keys without deleting their rows',
+        () {
+      CustomKeyConfig activeKey(String name) => CustomKeyConfig(
+            name: name,
+            type: CustomKeyType.string,
+            mode: CustomKeyMode.static,
+            staticValue: name,
+          );
+
+      vm.setFormat(PayloadFormat.simpleKv);
+      vm.dataPointController.text = '2';
+      vm.updateBasicCustomKeys([activeKey('basic_saved')]);
+      vm.setBasicCustomKeysEnabled(false);
+
+      final basic = vm.generatePreviewData(isBasic: true) as Map;
+      final config = vm.getCompleteConfig();
+      expect(basic, isNot(contains('basic_saved')));
+      expect(config['custom_keys_enabled'], isFalse);
+      expect(config['custom_keys'], hasLength(1));
+
+      vm.updateGroups([
+        GroupConfig(
+          totalKeyCount: 2,
+          format: PayloadFormat.simpleKv,
+          customKeysEnabled: false,
+          customKeys: [activeKey('advanced_saved')],
+        ),
+      ]);
+
+      final advanced = vm.generatePreviewData(isBasic: false) as Map;
+      expect(advanced, isNot(contains('advanced_saved')));
+      expect(vm.groups.single.customKeys, hasLength(1));
+
+      vm.setBasicCustomKeysEnabled(true);
+      final restored = vm.generatePreviewData(isBasic: true) as Map;
+      expect(restored, contains('basic_saved'));
+    });
+
     test('getCompleteConfig returns valid map', () {
       vm.hostController.text = 'test.host';
       final config = vm.getCompleteConfig();
       expect(config['mqtt']['host'], 'test.host');
       expect(config['mqtt']['protocol_version'], 'mqtt_3_1_1');
       expect(config['data']['data_point_count'], 10);
+      expect(config['custom_keys_enabled'], isTrue);
     });
 
     test('setMqttProtocolVersion persists selected protocol', () {

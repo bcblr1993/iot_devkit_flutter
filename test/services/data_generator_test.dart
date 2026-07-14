@@ -74,6 +74,58 @@ void main() {
       expect(data['inc_test'], 2);
     });
 
+    test('disabled custom keys are retained but do not consume payload slots',
+        () {
+      final keys = [
+        CustomKeyConfig(
+          name: 'active_key',
+          type: CustomKeyType.string,
+          mode: CustomKeyMode.static,
+          staticValue: 'active',
+        ),
+        CustomKeyConfig(
+          name: 'inactive_key',
+          enabled: false,
+          type: CustomKeyType.string,
+          mode: CustomKeyMode.static,
+          staticValue: 'inactive',
+        ),
+      ];
+
+      final data = DataGenerator.generateBatteryStatus(
+        3,
+        clientId: 'test',
+        customKeys: keys,
+      );
+
+      expect(data, containsPair('active_key', 'active'));
+      expect(data, isNot(contains('inactive_key')));
+      expect(data.length, 3);
+      expect(data, contains('key_1'));
+      expect(data, contains('key_2'));
+    });
+
+    test('generateCustomKeys excludes disabled advanced-mode keys', () {
+      final values = DataGenerator.generateCustomKeys([
+        CustomKeyConfig(
+          name: 'active_key',
+          type: CustomKeyType.boolean,
+          mode: CustomKeyMode.static,
+          staticValue: 'true',
+        ),
+        CustomKeyConfig(
+          name: 'inactive_key',
+          enabled: false,
+          type: CustomKeyType.boolean,
+          mode: CustomKeyMode.static,
+          staticValue: 'true',
+        ),
+      ]);
+
+      expect(values, containsPair('active_key', true));
+      expect(values, isNot(contains('inactive_key')));
+    });
+
     test('wrapWithTimestamp adds ts field', () {
       final payload = {'val': 123};
       const ts = 10000;

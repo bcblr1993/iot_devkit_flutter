@@ -7,6 +7,7 @@ enum CustomKeyMode { random, static, increment, toggle }
 class CustomKeyConfig {
   final String id;
   String name;
+  bool enabled;
   CustomKeyType type;
   CustomKeyMode mode;
 
@@ -20,6 +21,7 @@ class CustomKeyConfig {
   CustomKeyConfig({
     String? id,
     this.name = 'key_custom',
+    this.enabled = true,
     this.type = CustomKeyType.integer,
     this.mode = CustomKeyMode.random,
     this.min = 0,
@@ -29,6 +31,7 @@ class CustomKeyConfig {
 
   CustomKeyConfig copyWith({
     String? name,
+    bool? enabled,
     CustomKeyType? type,
     CustomKeyMode? mode,
     double? min,
@@ -38,6 +41,7 @@ class CustomKeyConfig {
     return CustomKeyConfig(
       id: id,
       name: name ?? this.name,
+      enabled: enabled ?? this.enabled,
       type: type ?? this.type,
       mode: mode ?? this.mode,
       min: min ?? this.min,
@@ -50,6 +54,7 @@ class CustomKeyConfig {
     return {
       'id': id,
       'name': name,
+      'enabled': enabled,
       'type': type.name,
       'mode': mode.name,
       'min': min,
@@ -62,6 +67,9 @@ class CustomKeyConfig {
     return CustomKeyConfig(
       id: json['id'],
       name: json['name'] ?? 'key_custom',
+      // Profiles created before this flag existed keep their original
+      // behavior: every custom key remains active after upgrade.
+      enabled: json['enabled'] is bool ? json['enabled'] as bool : true,
       type: CustomKeyType.values.firstWhere((e) => e.name == json['type'],
           orElse: () => CustomKeyType.integer),
       mode: CustomKeyMode.values.firstWhere((e) => e.name == json['mode'],

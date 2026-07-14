@@ -7,6 +7,7 @@ void main() {
     test('CustomKeyConfig serialization round-trip', () {
       final key = CustomKeyConfig(
         name: 'test_key',
+        enabled: false,
         type: CustomKeyType.float,
         mode: CustomKeyMode.random,
         min: 10.0,
@@ -15,12 +16,24 @@ void main() {
 
       final json = key.toJson();
       expect(json['name'], 'test_key');
+      expect(json['enabled'], isFalse);
       expect(json['type'], 'float');
       expect(json['mode'], 'random');
 
       final restored = CustomKeyConfig.fromJson(json);
       expect(restored.name, key.name);
+      expect(restored.enabled, isFalse);
       expect(restored.min, 10.0);
+    });
+
+    test('CustomKeyConfig keeps legacy keys enabled by default', () {
+      final restored = CustomKeyConfig.fromJson({
+        'name': 'legacy_key',
+        'type': 'integer',
+        'mode': 'random',
+      });
+
+      expect(restored.enabled, isTrue);
     });
 
     test('GroupConfig serialization round-trip', () {

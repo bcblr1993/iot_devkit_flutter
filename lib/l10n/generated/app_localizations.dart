@@ -452,6 +452,72 @@ abstract class AppLocalizations {
   /// **'Custom Keys'**
   String get customKeys;
 
+  /// No description provided for @customKeysMaster.
+  ///
+  /// In en, this message translates to:
+  /// **'Master switch'**
+  String get customKeysMaster;
+
+  /// No description provided for @customKeysMasterHint.
+  ///
+  /// In en, this message translates to:
+  /// **'When off, no custom keys are generated or sent. Turning it back on restores each key\'s previous state.'**
+  String get customKeysMasterHint;
+
+  /// No description provided for @customKeysMasterLimitHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many keys are selected. Disable the extras before turning the master switch on.'**
+  String get customKeysMasterLimitHint;
+
+  /// No description provided for @customKeyActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get customKeyActive;
+
+  /// No description provided for @customKeyInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get customKeyInactive;
+
+  /// No description provided for @customKeyPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get customKeyPending;
+
+  /// No description provided for @customKeyPendingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The master switch is off. This key will use its current state when custom keys are enabled again.'**
+  String get customKeyPendingHint;
+
+  /// No description provided for @customKeyToggleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Whether this custom key is active'**
+  String get customKeyToggleLabel;
+
+  /// No description provided for @customKeyToggleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'When off, this key is kept but not generated or sent.'**
+  String get customKeyToggleHint;
+
+  /// No description provided for @customKeyEnableLimitHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The total-key limit is reached. Disable an active key first.'**
+  String get customKeyEnableLimitHint;
+
+  /// No description provided for @customKeyCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Active {enabled}/{limit} · {total} saved'**
+  String customKeyCount(int enabled, int limit, int total);
+
   /// No description provided for @add.
   ///
   /// In en, this message translates to:

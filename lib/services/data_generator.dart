@@ -44,9 +44,12 @@ class DataGenerator {
   static Map<String, dynamic> generateBatteryStatus(int count,
       {String? clientId, List<CustomKeyConfig>? customKeys}) {
     final Map<String, dynamic> data = {};
+    final enabledCustomKeys =
+        customKeys?.where((key) => key.enabled).toList(growable: false) ??
+            const <CustomKeyConfig>[];
 
     // Custom keys are part of the total count
-    final int customCount = customKeys?.length ?? 0;
+    final int customCount = enabledCustomKeys.length;
     // We prioritize custom keys but only up to 'count'
     final int effectiveCustomCount = min(customCount, count);
     final int autoGenerateCount = count - effectiveCustomCount;
@@ -75,9 +78,9 @@ class DataGenerator {
     }
 
     // Then, add custom keys (up to effective limit)
-    if (customKeys != null && customKeys.isNotEmpty) {
+    if (enabledCustomKeys.isNotEmpty) {
       for (int i = 0; i < effectiveCustomCount; i++) {
-        final key = customKeys[i];
+        final key = enabledCustomKeys[i];
         data[key.name] = _generateSingleCustomValue(key);
       }
     }
@@ -243,6 +246,7 @@ class DataGenerator {
       List<CustomKeyConfig> customKeys) {
     final Map<String, dynamic> data = {};
     for (var key in customKeys) {
+      if (!key.enabled) continue;
       data[key.name] = _generateSingleCustomValue(key);
     }
     return data;
@@ -252,6 +256,7 @@ class DataGenerator {
       Map<String, dynamic> generatedData, List<CustomKeyConfig> customKeys) {
     if (customKeys.isEmpty) return generatedData;
     final customData = generateCustomKeys(customKeys);
+    if (customData.isEmpty) return generatedData;
     // Custom keys usually come first or override
     return {...customData, ...generatedData};
   }

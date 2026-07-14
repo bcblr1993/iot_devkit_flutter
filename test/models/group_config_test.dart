@@ -11,6 +11,7 @@ void main() {
         name: 'Test Group',
         startDeviceNumber: 1,
         endDeviceNumber: 5,
+        customKeysEnabled: false,
         customKeys: [customKey],
       );
 
@@ -20,8 +21,10 @@ void main() {
       expect(newGroup.name, 'Test Group');
       expect(newGroup.startDeviceNumber, 1);
       expect(newGroup.endDeviceNumber, 5);
+      expect(newGroup.customKeysEnabled, isFalse);
       expect(newGroup.customKeys.length, 1);
       expect(newGroup.customKeys.first.name, 'temp');
+      expect(newGroup.effectiveCustomKeys, isEmpty);
     });
 
     test('copyWith creates new instance with updated values', () {
@@ -33,6 +36,15 @@ void main() {
       // Original remains unchanged
       expect(group.name, 'Old Name');
       expect(group.totalKeyCount, 10);
+    });
+
+    test('legacy groups keep the custom-key master switch enabled', () {
+      final group = GroupConfig.fromJson({
+        'name': 'Legacy Group',
+        'customKeys': <Map<String, dynamic>>[],
+      });
+
+      expect(group.customKeysEnabled, isTrue);
     });
   });
 

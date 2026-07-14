@@ -186,6 +186,41 @@ class AppLocalizationsZh extends AppLocalizations {
   String get customKeys => '自定义 Key';
 
   @override
+  String get customKeysMaster => '总开关';
+
+  @override
+  String get customKeysMasterHint => '关闭后所有自定义 Key 均不生成或发送；重新开启会恢复每项原来的开关状态。';
+
+  @override
+  String get customKeysMasterLimitHint => '生效项超过键总数，请先停用多余 Key 后再开启总开关。';
+
+  @override
+  String get customKeyActive => '生效';
+
+  @override
+  String get customKeyInactive => '停用';
+
+  @override
+  String get customKeyPending => '待生效';
+
+  @override
+  String get customKeyPendingHint => '总开关已关闭；此项会在重新开启后按当前状态生效。';
+
+  @override
+  String get customKeyToggleLabel => '自定义 Key 是否生效';
+
+  @override
+  String get customKeyToggleHint => '关闭后保留此 Key 配置，但不会生成或发送。';
+
+  @override
+  String get customKeyEnableLimitHint => '已达到键总数上限，请先停用一个生效 Key。';
+
+  @override
+  String customKeyCount(int enabled, int limit, int total) {
+    return '生效 $enabled/$limit · 已保留 $total 个';
+  }
+
+  @override
   String get add => '添加';
 
   @override

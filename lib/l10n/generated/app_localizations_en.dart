@@ -188,6 +188,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String get customKeys => 'Custom Keys';
 
   @override
+  String get customKeysMaster => 'Master switch';
+
+  @override
+  String get customKeysMasterHint =>
+      'When off, no custom keys are generated or sent. Turning it back on restores each key\'s previous state.';
+
+  @override
+  String get customKeysMasterLimitHint =>
+      'Too many keys are selected. Disable the extras before turning the master switch on.';
+
+  @override
+  String get customKeyActive => 'Active';
+
+  @override
+  String get customKeyInactive => 'Inactive';
+
+  @override
+  String get customKeyPending => 'Pending';
+
+  @override
+  String get customKeyPendingHint =>
+      'The master switch is off. This key will use its current state when custom keys are enabled again.';
+
+  @override
+  String get customKeyToggleLabel => 'Whether this custom key is active';
+
+  @override
+  String get customKeyToggleHint =>
+      'When off, this key is kept but not generated or sent.';
+
+  @override
+  String get customKeyEnableLimitHint =>
+      'The total-key limit is reached. Disable an active key first.';
+
+  @override
+  String customKeyCount(int enabled, int limit, int total) {
+    return 'Active $enabled/$limit · $total saved';
+  }
+
+  @override
   String get add => 'Add';
 
   @override

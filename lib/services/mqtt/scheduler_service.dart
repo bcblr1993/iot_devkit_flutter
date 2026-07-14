@@ -435,7 +435,7 @@ class SchedulerService {
     // 1. Prepare State (Main Thread)
     int key1 = DataGenerator.getKey1Value(clientId);
     Map<String, dynamic> customValues =
-        DataGenerator.generateCustomKeys(group.customKeys);
+        DataGenerator.generateCustomKeys(group.effectiveCustomKeys);
 
     // 2. Offload work to Persistent Isolate
     try {
@@ -567,7 +567,7 @@ class SchedulerService {
         // 1. Prepare State (Main Thread)
         int key1 = DataGenerator.getKey1Value(clientId);
         Map<String, dynamic> customValues =
-            DataGenerator.generateCustomKeys(group.customKeys);
+            DataGenerator.generateCustomKeys(group.effectiveCustomKeys);
 
         try {
           payloadBytes = await PersistentIsolateManager.instance
@@ -683,7 +683,7 @@ class SchedulerService {
       // --- GENERATE FULL REPORT ---
       int key1 = DataGenerator.getKey1Value(clientId);
       Map<String, dynamic> customValues =
-          DataGenerator.generateCustomKeys(group.customKeys);
+          DataGenerator.generateCustomKeys(group.effectiveCustomKeys);
 
       try {
         payload = await PersistentIsolateManager.instance
@@ -714,7 +714,7 @@ class SchedulerService {
       // Use Isolate
       int key1 = DataGenerator.getKey1Value(clientId);
       Map<String, dynamic> customValues =
-          DataGenerator.generateCustomKeys(group.customKeys);
+          DataGenerator.generateCustomKeys(group.effectiveCustomKeys);
 
       try {
         payload = await PersistentIsolateManager.instance

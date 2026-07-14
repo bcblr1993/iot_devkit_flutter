@@ -573,6 +573,8 @@ class _SimulatorPanelState extends State<SimulatorPanel>
             ),
             CustomKeysManager(
               keys: vm.basicCustomKeys,
+              customKeysEnabled: vm.basicCustomKeysEnabled,
+              onCustomKeysEnabledChanged: vm.setBasicCustomKeysEnabled,
               isLocked: isRunning,
               maxKeys: int.tryParse(vm.dataPointController.text) ?? 10,
               enableExpandedLayout: false,

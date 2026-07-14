@@ -60,6 +60,54 @@ void main() {
       );
     });
 
+    test('disabled custom keys do not count toward limits or validation', () {
+      final config = _basicConfig()
+        ..['data'] = {
+          'format': 'default',
+          'data_point_count': 1,
+        }
+        ..['custom_keys'] = [
+          CustomKeyConfig(name: 'active').toJson(),
+          CustomKeyConfig(
+            name: '',
+            enabled: false,
+            min: 100,
+            max: 1,
+          ).toJson(),
+          CustomKeyConfig(
+            name: 'active',
+            enabled: false,
+          ).toJson(),
+        ];
+
+      final result = validator.validate(
+        config,
+        mode: SimulationMode.basic,
+      );
+
+      expect(result.isValid, isTrue);
+    });
+
+    test('basic master switch skips all custom key validation', () {
+      final config = _basicConfig()
+        ..['custom_keys_enabled'] = false
+        ..['data'] = {
+          'format': 'default',
+          'data_point_count': 1,
+        }
+        ..['custom_keys'] = [
+          CustomKeyConfig(name: '', min: 100, max: 1).toJson(),
+          CustomKeyConfig(name: '').toJson(),
+        ];
+
+      final result = validator.validate(
+        config,
+        mode: SimulationMode.basic,
+      );
+
+      expect(result.isValid, isTrue);
+    });
+
     test('rejects advanced mode without groups', () {
       final config = _basicConfig()
         ..['groups'] = []
@@ -115,6 +163,32 @@ void main() {
           'custom_keys[0].static_value',
         ]),
       );
+    });
+
+    test('advanced group master switch skips all custom key validation', () {
+      final config = _basicConfig()
+        ..['groups'] = [
+          GroupConfig(
+            name: 'Group A',
+            customKeysEnabled: false,
+            customKeys: [
+              CustomKeyConfig(
+                name: '',
+                type: CustomKeyType.boolean,
+                mode: CustomKeyMode.static,
+                staticValue: 'maybe',
+              ),
+            ],
+          ).toJson(),
+        ]
+        ..['mode'] = 'advanced';
+
+      final result = validator.validate(
+        config,
+        mode: SimulationMode.advanced,
+      );
+
+      expect(result.isValid, isTrue);
     });
 
     test('accepts full interval 0 (disabled) with a change ratio', () {

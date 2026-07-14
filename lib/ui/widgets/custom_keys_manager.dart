@@ -7,6 +7,8 @@ import '../lab/lab.dart';
 class CustomKeysManager extends StatefulWidget {
   final List<CustomKeyConfig> keys;
   final Function(List<CustomKeyConfig>) onKeysChanged;
+  final bool customKeysEnabled;
+  final ValueChanged<bool> onCustomKeysEnabledChanged;
   final bool isLocked;
   final int maxKeys;
   final Color? headerColor;
@@ -16,6 +18,8 @@ class CustomKeysManager extends StatefulWidget {
     super.key,
     required this.keys,
     required this.onKeysChanged,
+    required this.customKeysEnabled,
+    required this.onCustomKeysEnabledChanged,
     this.isLocked = false,
     this.maxKeys = 100,
     this.headerColor,
@@ -63,8 +67,22 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
         .toList();
   }
 
+  int get _enabledKeyCount => _localKeys.where((key) => key.enabled).length;
+
+  bool _isIgnored(CustomKeyConfig key) {
+    if (!widget.customKeysEnabled || !key.enabled) return false;
+
+    var enabledIndex = 0;
+    for (final current in _localKeys) {
+      if (!current.enabled) continue;
+      if (current.id == key.id) return enabledIndex >= widget.maxKeys;
+      enabledIndex++;
+    }
+    return false;
+  }
+
   void _addKey() {
-    if (_localKeys.length >= widget.maxKeys) return;
+    if (_enabledKeyCount >= widget.maxKeys) return;
     setState(() {
       _localKeys
           .add(CustomKeyConfig(name: 'key_custom_${_localKeys.length + 1}'));
@@ -113,6 +131,14 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final selectedKeyCount = _enabledKeyCount;
+    final effectiveKeyCount = widget.customKeysEnabled ? selectedKeyCount : 0;
+    final canEnableMaster = selectedKeyCount <= widget.maxKeys;
+    final canToggleMaster =
+        !widget.isLocked && (widget.customKeysEnabled || canEnableMaster);
+    final masterHint = !widget.customKeysEnabled && !canEnableMaster
+        ? l10n.customKeysMasterLimitHint
+        : l10n.customKeysMasterHint;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -138,15 +164,18 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
                                 theme.colorScheme.primary)),
                   ],
                 ),
-                if (_localKeys.length > widget.maxKeys)
+                if (widget.customKeysEnabled &&
+                    selectedKeyCount > widget.maxKeys)
                   Text(
-                    '${l10n.limitExceeded} (${_localKeys.length}/${widget.maxKeys})',
+                    '${l10n.limitExceeded} · '
+                    '${l10n.customKeyCount(effectiveKeyCount, widget.maxKeys, _localKeys.length)}',
                     style:
                         TextStyle(color: theme.colorScheme.error, fontSize: 12),
                   )
                 else
                   Text(
-                    '${_localKeys.length}/${widget.maxKeys}',
+                    l10n.customKeyCount(
+                        effectiveKeyCount, widget.maxKeys, _localKeys.length),
                     style: TextStyle(
                         color: theme.colorScheme.onSurfaceVariant,
                         fontSize: 11),
@@ -156,6 +185,34 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                Tooltip(
+                  message: masterHint,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        l10n.customKeysMaster,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Semantics(
+                        label: l10n.customKeysMaster,
+                        toggled: widget.customKeysEnabled,
+                        enabled: canToggleMaster,
+                        child: LabToggle(
+                          key: const ValueKey('custom_keys_master_toggle'),
+                          value: widget.customKeysEnabled,
+                          onChanged: canToggleMaster
+                              ? widget.onCustomKeysEnabledChanged
+                              : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
                 LabIconButton(
                   icon: _isSearchVisible ? Icons.search_off : Icons.search,
                   tooltip: l10n.searchLabel,
@@ -169,7 +226,7 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
                     variant: LabButtonVariant.primary,
                     size: LabButtonSize.sm,
                     onPressed:
-                        _localKeys.length >= widget.maxKeys ? null : _addKey,
+                        selectedKeyCount >= widget.maxKeys ? null : _addKey,
                   ),
                 ],
               ],
@@ -221,8 +278,7 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
         itemCount: _filteredKeys.length,
         itemBuilder: (context, index) {
           final key = _filteredKeys[index];
-          final originalIndex = _localKeys.indexOf(key);
-          final isIgnored = originalIndex >= widget.maxKeys;
+          final isIgnored = _isIgnored(key);
           return KeyedSubtree(
             key: ValueKey(key.id),
             child: _buildKeyCard(key, l10n, theme, isIgnored),
@@ -243,8 +299,7 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
           itemCount: _filteredKeys.length,
           itemBuilder: (context, index) {
             final key = _filteredKeys[index];
-            final originalIndex = _localKeys.indexOf(key);
-            final isIgnored = originalIndex >= widget.maxKeys;
+            final isIgnored = _isIgnored(key);
             return KeyedSubtree(
               key: ValueKey(key.id),
               child: _buildKeyCard(key, l10n, theme, isIgnored),
@@ -257,6 +312,20 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
 
   Widget _buildKeyCard(CustomKeyConfig key, AppLocalizations l10n,
       ThemeData theme, bool isIgnored) {
+    final canEnable = key.enabled || _enabledKeyCount < widget.maxKeys;
+    final canToggle = !widget.isLocked && canEnable;
+    final toggleHint = !key.enabled && !canEnable
+        ? l10n.customKeyEnableLimitHint
+        : !widget.customKeysEnabled
+            ? l10n.customKeyPendingHint
+            : l10n.customKeyToggleHint;
+    final isEffectivelyEnabled = widget.customKeysEnabled && key.enabled;
+    final statusLabel = !widget.customKeysEnabled && key.enabled
+        ? l10n.customKeyPending
+        : key.enabled
+            ? l10n.customKeyActive
+            : l10n.customKeyInactive;
+
     return Opacity(
       opacity: isIgnored ? 0.5 : 1.0,
       child: Container(
@@ -265,8 +334,11 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
         decoration: BoxDecoration(
           color: isIgnored
               ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
-              : theme.colorScheme.surfaceContainerHighest
-                  .withValues(alpha: 0.5),
+              : !isEffectivelyEnabled
+                  ? theme.colorScheme.surfaceContainerHighest
+                      .withValues(alpha: 0.28)
+                  : theme.colorScheme.surfaceContainerHighest
+                      .withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(4),
           border: isIgnored
               ? Border.all(
@@ -276,6 +348,42 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            SizedBox(
+              width: 50,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    statusLabel,
+                    style: TextStyle(
+                      color: isEffectivelyEnabled
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.onSurfaceVariant,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Tooltip(
+                    message: toggleHint,
+                    child: Semantics(
+                      label: l10n.customKeyToggleLabel,
+                      toggled: key.enabled,
+                      enabled: canToggle,
+                      child: LabToggle(
+                        key: ValueKey('custom_key_enabled_${key.id}'),
+                        value: key.enabled,
+                        onChanged: canToggle
+                            ? (value) =>
+                                _updateKey(key.copyWith(enabled: value))
+                            : null,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
             if (isIgnored)
               Padding(
                 padding: const EdgeInsets.only(right: 8),
