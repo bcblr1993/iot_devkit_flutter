@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:iot_devkit/l10n/generated/app_localizations.dart';
@@ -10,6 +11,7 @@ import 'package:iot_devkit/services/status_registry.dart';
 import 'package:iot_devkit/services/lab_theme_manager.dart';
 import 'package:iot_devkit/ui/screens/home_screen.dart';
 import 'package:iot_devkit/ui/styles/app_theme_effect.dart';
+import 'package:iot_devkit/ui/tools/json_virtualized_editor.dart';
 import 'package:iot_devkit/ui/widgets/log_console.dart';
 import 'package:iot_devkit/ui/widgets/simulator_panel.dart';
 import 'package:iot_devkit/ui/lab/lab.dart';
@@ -152,8 +154,26 @@ void main() {
     );
   });
 
-  testWidgets('json large document smoke uses a bounded preview',
+  testWidgets('json large document remains fully editable and virtualized',
       (tester) async {
+    String? copiedText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          copiedText =
+              (call.arguments as Map<Object?, Object?>)['text'] as String;
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+
     await _pumpSmokeApp(tester);
     await _selectRailDestination(tester, 2);
 
@@ -174,9 +194,42 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Large document mode'), findsOneWidget);
-    expect(find.textContaining('25,000'), findsNothing);
+    expect(find.byType(VirtualizedJsonEditor), findsOneWidget);
+    final editor = tester.widget<VirtualizedJsonEditor>(
+      find.byType(VirtualizedJsonEditor),
+    );
+    expect(editor.controller.text, largeJson);
+    expect(editor.controller.blocks.length, greaterThan(50));
+    expect(
+      tester
+          .widgetList<TextField>(find.descendant(
+            of: find.byType(VirtualizedJsonEditor),
+            matching: find.byType(TextField),
+          ))
+          .length,
+      lessThan(20),
+    );
     expect(find.byType(CircularProgressIndicator), findsNothing);
+
+    await _pressButton(tester, 'Format');
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 250)),
+    );
+    await tester.pump();
+    clearLabToasts();
+    await tester.pump();
+
+    final formattedEditor = tester.widget<VirtualizedJsonEditor>(
+      find.byType(VirtualizedJsonEditor),
+    );
+    expect(formattedEditor.controller.text, contains('\n'));
+    expect(jsonDecode(formattedEditor.controller.text), jsonDecode(largeJson));
+
+    await _pressButton(tester, 'Copy');
+    await tester.pump();
+    expect(copiedText, formattedEditor.controller.text);
+    clearLabToasts();
+    await tester.pump();
   });
 
   testWidgets('certificate smoke: previews ThingsBoard SSL package',

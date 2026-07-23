@@ -119,14 +119,6 @@
       "total": {"type": "int"}
     }
   },
-  "largeJsonModeTitle": "大文件模式",
-  "largeJsonModeDescription": "完整内容大小为 {size}，当前显示最多前 {lines} 行的限量预览；复制、格式化、压缩、搜索和树形视图仍使用完整文档。",
-  "@largeJsonModeDescription": {
-    "placeholders": {
-      "size": {"type": "String"},
-      "lines": {"type": "int"}
-    }
-  },
   "enterJsonHint": "输入 JSON 以查看树形结构",
   "invalidJson": "无效的 JSON",
   "exportConfig": "导出配置",

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Import
 import '../../services/json_formatter_service.dart';
-import 'json_large_document_view.dart';
+import 'json_virtualized_editor.dart';
 import '../widgets/json_tree_view.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../lab/lab.dart';
@@ -21,6 +21,8 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
   final TextEditingController _inputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
+  final VirtualizedTextController _largeInputController =
+      VirtualizedTextController();
 
   String _searchQuery = '';
 
@@ -44,11 +46,14 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
   static const int _maxPersistedContentLength = 1024 * 1024;
   int _parseGeneration = 0;
   bool _isProcessing = false;
-  String? _largeDocumentText;
+  bool _isLargeDocument = false;
 
-  String get _documentText => _largeDocumentText ?? _inputController.text;
+  String get _documentText =>
+      _isLargeDocument ? _largeInputController.text : _inputController.text;
 
-  bool get _isLargeDocument => _largeDocumentText != null;
+  int get _documentLength => _isLargeDocument
+      ? _largeInputController.length
+      : _inputController.text.length;
 
   @override
   void initState() {
@@ -66,6 +71,7 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
     _saveTimer?.cancel();
     _parseTimer?.cancel();
     _inputController.dispose();
+    _largeInputController.dispose();
     _scrollController.dispose();
     _searchController.dispose();
     _treeControlNotifier.dispose();
@@ -96,11 +102,11 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
 
   Future<void> _saveState() async {
     final prefs = await SharedPreferences.getInstance();
-    final content = _documentText;
-    if (content.length > _maxPersistedContentLength) {
+    if (_documentLength > _maxPersistedContentLength) {
       await prefs.remove(_storageKey);
       return;
     }
+    final content = _documentText;
     await prefs.setString(_storageKey, content);
   }
 
@@ -149,8 +155,9 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
     _parseGeneration++;
     _parseTimer?.cancel();
     _inputController.clear();
+    _largeInputController.replaceAll('');
     setState(() {
-      _largeDocumentText = null;
+      _isLargeDocument = false;
       _parsedData = null;
       _matches = [];
       _currentMatchIndex = -1;
@@ -189,14 +196,15 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
   void _replaceDocumentText(String source) {
     if (source.length > _largeDocumentThreshold) {
       _inputController.clear();
-      if (_largeDocumentText != source) {
-        setState(() => _largeDocumentText = source);
+      _largeInputController.replaceAll(source);
+      if (!_isLargeDocument) {
+        setState(() => _isLargeDocument = true);
       }
       return;
     }
 
-    if (_largeDocumentText != null) {
-      setState(() => _largeDocumentText = null);
+    if (_isLargeDocument) {
+      setState(() => _isLargeDocument = false);
     }
     if (_inputController.text != source) {
       _inputController.value = TextEditingValue(
@@ -204,6 +212,18 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
         selection: const TextSelection.collapsed(offset: 0),
       );
     }
+  }
+
+  void _onLargeDocumentChanged() {
+    _saveDelayed();
+    final generation = ++_parseGeneration;
+    _parseTimer?.cancel();
+    _parseTimer = Timer(const Duration(milliseconds: 500), () {
+      if (!mounted || generation != _parseGeneration) {
+        return;
+      }
+      _parseInput(_documentText, immediate: true);
+    });
   }
 
   void _parseInput(String source, {bool immediate = false}) {
@@ -466,13 +486,9 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
                         const Divider(height: 1),
                         Expanded(
                           child: _isLargeDocument
-                              ? LargeJsonDocumentPreview(
-                                  content: _documentText,
-                                  title: l10n.largeJsonModeTitle,
-                                  description: l10n.largeJsonModeDescription(
-                                    '${(_documentText.length / (1024 * 1024)).toStringAsFixed(1)} MB',
-                                    400,
-                                  ),
+                              ? VirtualizedJsonEditor(
+                                  controller: _largeInputController,
+                                  onChanged: _onLargeDocumentChanged,
                                 )
                               : TextField(
                                   controller: _inputController,
