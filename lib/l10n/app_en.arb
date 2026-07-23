@@ -94,6 +94,21 @@
   "inputLabel": "Input",
   "treeViewLabel": "Tree View",
   "itemsLabel": "items",
+  "loadMoreJsonItems": "Load more ({visible}/{total})",
+  "@loadMoreJsonItems": {
+    "placeholders": {
+      "visible": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "largeJsonModeTitle": "Large document mode",
+  "largeJsonModeDescription": "Full content is {size}. Showing a bounded preview of up to {lines} lines; copy, format, minify, search, and tree view still use the complete document.",
+  "@largeJsonModeDescription": {
+    "placeholders": {
+      "size": {"type": "String"},
+      "lines": {"type": "int"}
+    }
+  },
   "enterJsonHint": "Enter JSON to view tree",
   "invalidJson": "Invalid JSON",
   "exportConfig": "Export Config",
