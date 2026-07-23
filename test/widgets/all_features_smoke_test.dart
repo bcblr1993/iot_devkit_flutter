@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -56,7 +58,8 @@ void main() {
     final enableToggle =
         find.byKey(const ValueKey('enable_subscriptions_toggle'));
     expect(enableToggle, findsOneWidget);
-    await tester.tap(find.descendant(of: enableToggle, matching: find.byType(Switch)));
+    await tester
+        .tap(find.descendant(of: enableToggle, matching: find.byType(Switch)));
     await tester.pumpAndSettle();
 
     // Tap the "ThingsBoard RPC" preset icon (its tooltip identifies it).
@@ -119,8 +122,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 180));
 
     await _pressButton(tester, 'Format');
-    clearLabToasts();
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
     await tester.pump();
+    clearLabToasts();
 
     final formattedInput = tester
         .widget<TextField>(_textFieldWithHint('Paste or type JSON here...'));
@@ -132,8 +138,11 @@ void main() {
     expect(find.text('1/1'), findsOneWidget);
 
     await _pressButton(tester, 'Minify');
-    clearLabToasts();
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
     await tester.pump();
+    clearLabToasts();
 
     final minifiedInput = tester
         .widget<TextField>(_textFieldWithHint('Paste or type JSON here...'));
@@ -141,6 +150,33 @@ void main() {
       minifiedInput.controller?.text,
       '{"device":"dev-1","temperature":23}',
     );
+  });
+
+  testWidgets('json large document smoke uses a bounded preview',
+      (tester) async {
+    await _pumpSmokeApp(tester);
+    await _selectRailDestination(tester, 2);
+
+    final largeJson = jsonEncode({
+      'values': [
+        for (var index = 0; index < 25000; index++)
+          {'ts': index, 'value': '$index'},
+      ],
+    });
+    expect(largeJson.length, greaterThan(512 * 1024));
+    await tester.enterText(
+      _textFieldWithHint('Paste or type JSON here...'),
+      largeJson,
+    );
+    await tester.pump();
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 300)),
+    );
+    await tester.pump();
+
+    expect(find.text('Large document mode'), findsOneWidget);
+    expect(find.textContaining('25,000'), findsNothing);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
   });
 
   testWidgets('certificate smoke: previews ThingsBoard SSL package',

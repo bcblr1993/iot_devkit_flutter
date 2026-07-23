@@ -269,6 +269,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get itemsLabel => '项';
 
   @override
+  String loadMoreJsonItems(int visible, int total) {
+    return '加载更多（$visible/$total）';
+  }
+
+  @override
+  String get largeJsonModeTitle => '大文件模式';
+
+  @override
+  String largeJsonModeDescription(String size, int lines) {
+    return '完整内容大小为 $size，当前显示最多前 $lines 行的限量预览；复制、格式化、压缩、搜索和树形视图仍使用完整文档。';
+  }
+
+  @override
   String get enterJsonHint => '输入 JSON 以查看树形结构';
 
   @override

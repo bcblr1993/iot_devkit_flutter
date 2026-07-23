@@ -614,6 +614,24 @@ abstract class AppLocalizations {
   /// **'items'**
   String get itemsLabel;
 
+  /// No description provided for @loadMoreJsonItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more ({visible}/{total})'**
+  String loadMoreJsonItems(int visible, int total);
+
+  /// No description provided for @largeJsonModeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Large document mode'**
+  String get largeJsonModeTitle;
+
+  /// No description provided for @largeJsonModeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Full content is {size}. Showing a bounded preview of up to {lines} lines; copy, format, minify, search, and tree view still use the complete document.'**
+  String largeJsonModeDescription(String size, int lines);
+
   /// No description provided for @enterJsonHint.
   ///
   /// In en, this message translates to:

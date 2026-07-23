@@ -4,6 +4,8 @@ import 'dart:async'; // For Timer
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Import
+import '../../services/json_formatter_service.dart';
+import 'json_large_document_view.dart';
 import '../widgets/json_tree_view.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../lab/lab.dart';
@@ -35,7 +37,18 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
 
   // Persistence
   Timer? _saveTimer;
+  Timer? _parseTimer;
   static const String _storageKey = 'json_formatter_content';
+  static const int _backgroundParseThreshold = 128 * 1024;
+  static const int _largeDocumentThreshold = 512 * 1024;
+  static const int _maxPersistedContentLength = 1024 * 1024;
+  int _parseGeneration = 0;
+  bool _isProcessing = false;
+  String? _largeDocumentText;
+
+  String get _documentText => _largeDocumentText ?? _inputController.text;
+
+  bool get _isLargeDocument => _largeDocumentText != null;
 
   @override
   void initState() {
@@ -51,6 +64,10 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
   @override
   void dispose() {
     _saveTimer?.cancel();
+    _parseTimer?.cancel();
+    _inputController.dispose();
+    _scrollController.dispose();
+    _searchController.dispose();
     _treeControlNotifier.dispose();
     super.dispose();
   }
@@ -59,15 +76,13 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
     final prefs = await SharedPreferences.getInstance();
     final content = prefs.getString(_storageKey);
     if (content != null && content.isNotEmpty) {
+      if (content.length > _maxPersistedContentLength) {
+        await prefs.remove(_storageKey);
+        return;
+      }
       if (mounted) {
-        setState(() {
-          _inputController.text = content;
-        });
-        // Parse it
-        try {
-          final obj = json.decode(content);
-          _updateParsedData(obj, save: false); // Don't save again immediately
-        } catch (_) {}
+        _replaceDocumentText(content);
+        _parseInput(content, immediate: true);
       }
     }
   }
@@ -81,75 +96,161 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
 
   Future<void> _saveState() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_storageKey, _inputController.text);
-  }
-
-  void _formatJson() {
-    final text = _inputController.text;
-    if (text.isEmpty) return;
-    final l10n = AppLocalizations.of(context)!;
-
-    try {
-      final object = json.decode(text);
-      final prettyString = const JsonEncoder.withIndent('    ').convert(object);
-      _inputController.text = prettyString;
-      _setStatus(l10n.formatSuccess, Colors.green);
-      _updateParsedData(object);
-    } catch (e) {
-      _setStatus(
-          '${l10n.invalidJson}: $e', Theme.of(context).colorScheme.error);
+    final content = _documentText;
+    if (content.length > _maxPersistedContentLength) {
+      await prefs.remove(_storageKey);
+      return;
     }
+    await prefs.setString(_storageKey, content);
   }
 
-  void _minifyJson() {
-    final text = _inputController.text;
-    if (text.isEmpty) return;
+  Future<void> _formatJson() async {
+    await _transformJson(JsonOutputStyle.pretty);
+  }
+
+  Future<void> _minifyJson() async {
+    await _transformJson(JsonOutputStyle.compact);
+  }
+
+  Future<void> _transformJson(JsonOutputStyle style) async {
+    final text = _documentText;
+    if (text.isEmpty || _isProcessing) return;
     final l10n = AppLocalizations.of(context)!;
+    final generation = ++_parseGeneration;
+    _parseTimer?.cancel();
+    setState(() => _isProcessing = true);
 
     try {
-      final object = json.decode(text);
-      final miniString = json.encode(object);
-      _inputController.text = miniString;
-      _setStatus(l10n.minifySuccess, Colors.green);
-      _updateParsedData(object);
+      final result = await JsonFormatterService.transform(text, style);
+      if (!mounted || generation != _parseGeneration) return;
+
+      if (_documentText != result.output) {
+        _replaceDocumentText(result.output);
+      }
+      _setStatus(
+        style == JsonOutputStyle.pretty
+            ? l10n.formatSuccess
+            : l10n.minifySuccess,
+        Colors.green,
+      );
+      _updateParsedData(result.data);
     } catch (e) {
+      if (!mounted || generation != _parseGeneration) return;
       _setStatus(
           '${l10n.invalidJson}: $e', Theme.of(context).colorScheme.error);
+    } finally {
+      if (mounted && generation == _parseGeneration) {
+        setState(() => _isProcessing = false);
+      }
     }
   }
 
   void _clear() {
+    _parseGeneration++;
+    _parseTimer?.cancel();
     _inputController.clear();
     setState(() {
+      _largeDocumentText = null;
       _parsedData = null;
       _matches = [];
       _currentMatchIndex = -1;
       _searchQuery = '';
       _searchController.clear();
+      _isProcessing = false;
     });
     _saveState(); // Save empty
     _setStatus(AppLocalizations.of(context)!.ready, Colors.grey);
   }
 
-  void _copyInput() {
+  Future<void> _copyInput() async {
     final l10n = AppLocalizations.of(context)!;
-    if (_inputController.text.isEmpty) return;
-    Clipboard.setData(ClipboardData(text: _inputController.text));
+    if (_documentText.isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: _documentText));
+    if (!mounted) return;
     _setStatus(l10n.copySuccess, Colors.green);
   }
 
   void _paste() async {
     final data = await Clipboard.getData(Clipboard.kTextPlain);
     if (data?.text != null) {
-      _inputController.text = data!.text!;
-      _saveState(); // Save immediately on paste
-      // Try parse
-      try {
-        final obj = json.decode(data.text!);
-        _updateParsedData(obj, save: false);
-      } catch (e) {
-        // ignore
+      _replaceDocumentText(data!.text!);
+      _saveState();
+      _parseInput(data.text!, immediate: true);
+    }
+  }
+
+  void _acceptLargeDocument(String source) {
+    if (!mounted) return;
+    _replaceDocumentText(source);
+    _saveState();
+    _parseInput(source, immediate: true);
+  }
+
+  void _replaceDocumentText(String source) {
+    if (source.length > _largeDocumentThreshold) {
+      _inputController.clear();
+      if (_largeDocumentText != source) {
+        setState(() => _largeDocumentText = source);
       }
+      return;
+    }
+
+    if (_largeDocumentText != null) {
+      setState(() => _largeDocumentText = null);
+    }
+    if (_inputController.text != source) {
+      _inputController.value = TextEditingValue(
+        text: source,
+        selection: const TextSelection.collapsed(offset: 0),
+      );
+    }
+  }
+
+  void _parseInput(String source, {bool immediate = false}) {
+    final generation = ++_parseGeneration;
+    _parseTimer?.cancel();
+
+    if (source.trim().isEmpty) {
+      setState(() {
+        _parsedData = null;
+        _isProcessing = false;
+      });
+      return;
+    }
+
+    if (source.length < _backgroundParseThreshold) {
+      try {
+        _updateParsedData(jsonDecode(source), save: false);
+      } catch (_) {}
+      if (_isProcessing) {
+        setState(() => _isProcessing = false);
+      }
+      return;
+    }
+
+    setState(() {
+      _parsedData = null;
+      _isProcessing = true;
+    });
+
+    Future<void> parse() async {
+      try {
+        final data = await JsonFormatterService.parse(source);
+        if (!mounted || generation != _parseGeneration) return;
+        _updateParsedData(data, save: false);
+      } catch (_) {
+        // Invalid input is expected while the user is editing.
+      } finally {
+        if (mounted && generation == _parseGeneration) {
+          setState(() => _isProcessing = false);
+        }
+      }
+    }
+
+    if (immediate) {
+      parse();
+    } else {
+      _parseTimer = Timer(const Duration(milliseconds: 250), parse);
     }
   }
 
@@ -342,13 +443,18 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
                                             icon: Icons.format_align_left,
                                             variant: LabButtonVariant.ghost,
                                             size: LabButtonSize.sm,
-                                            onPressed: _formatJson),
+                                            loading: _isProcessing,
+                                            onPressed: _isProcessing
+                                                ? null
+                                                : _formatJson),
                                         LabButton(
                                             label: l10n.minifyAction,
                                             icon: Icons.compress,
                                             variant: LabButtonVariant.ghost,
                                             size: LabButtonSize.sm,
-                                            onPressed: _minifyJson),
+                                            onPressed: _isProcessing
+                                                ? null
+                                                : _minifyJson),
                                       ],
                                     ),
                                   ),
@@ -359,30 +465,42 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
                         ),
                         const Divider(height: 1),
                         Expanded(
-                          child: TextField(
-                            controller: _inputController,
-                            scrollController: _scrollController,
-                            expands: true,
-                            maxLines: null,
-                            minLines: null,
-                            keyboardType: TextInputType.multiline,
-                            textAlignVertical: TextAlignVertical.top,
-                            style: const TextStyle(
-                                fontFamily: 'Courier', fontSize: 13),
-                            decoration: const InputDecoration(
-                              hintText: 'Paste or type JSON here...',
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.all(16),
-                            ),
-                            onChanged: (val) {
-                              _saveDelayed(); // Debounce save
-                              try {
-                                final obj = json.decode(val);
-                                _updateParsedData(obj,
-                                    save: false); // Already saving
-                              } catch (e) {/* user format */}
-                            },
-                          ),
+                          child: _isLargeDocument
+                              ? LargeJsonDocumentPreview(
+                                  content: _documentText,
+                                  title: l10n.largeJsonModeTitle,
+                                  description: l10n.largeJsonModeDescription(
+                                    '${(_documentText.length / (1024 * 1024)).toStringAsFixed(1)} MB',
+                                    400,
+                                  ),
+                                )
+                              : TextField(
+                                  controller: _inputController,
+                                  scrollController: _scrollController,
+                                  expands: true,
+                                  maxLines: null,
+                                  minLines: null,
+                                  keyboardType: TextInputType.multiline,
+                                  textAlignVertical: TextAlignVertical.top,
+                                  style: const TextStyle(
+                                      fontFamily: 'Courier', fontSize: 13),
+                                  decoration: const InputDecoration(
+                                    hintText: 'Paste or type JSON here...',
+                                    border: InputBorder.none,
+                                    contentPadding: EdgeInsets.all(16),
+                                  ),
+                                  inputFormatters: [
+                                    LargeJsonTextInputFormatter(
+                                      maxEditableCharacters:
+                                          _largeDocumentThreshold,
+                                      onLargeText: _acceptLargeDocument,
+                                    ),
+                                  ],
+                                  onChanged: (val) {
+                                    _saveDelayed();
+                                    _parseInput(val);
+                                  },
+                                ),
                         ),
                       ],
                     ),
@@ -570,19 +688,15 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
   }
 
   Widget _buildTreeContent(AppLocalizations l10n, ThemeData theme) {
+    if (_isProcessing && _parsedData == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     if (_parsedData == null) {
-      if (_inputController.text.trim().isEmpty) {
+      if (_documentText.trim().isEmpty) {
         return Center(
             child: Text(l10n.enterJsonHint,
                 style: TextStyle(color: theme.colorScheme.onSurfaceVariant)));
-      } else {
-        // Try to parse once if not parsed
-        try {
-          final obj = json.decode(_inputController.text);
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _updateParsedData(obj, save: false);
-          });
-        } catch (_) {}
       }
     }
 

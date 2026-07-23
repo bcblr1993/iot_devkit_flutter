@@ -276,6 +276,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get itemsLabel => 'items';
 
   @override
+  String loadMoreJsonItems(int visible, int total) {
+    return 'Load more ($visible/$total)';
+  }
+
+  @override
+  String get largeJsonModeTitle => 'Large document mode';
+
+  @override
+  String largeJsonModeDescription(String size, int lines) {
+    return 'Full content is $size. Showing a bounded preview of up to $lines lines; copy, format, minify, search, and tree view still use the complete document.';
+  }
+
+  @override
   String get enterJsonHint => 'Enter JSON to view tree';
 
   @override

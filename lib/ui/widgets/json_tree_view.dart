@@ -38,7 +38,10 @@ class JsonTreeView extends StatefulWidget {
 }
 
 class _JsonTreeViewState extends State<JsonTreeView> {
+  static const int _childPageSize = 100;
+
   bool _isExpanded = false;
+  int _visibleChildCount = _childPageSize;
   int _localControlVersion = 0;
   int _searchExpandVersion = 0; // Forces rebuild when search triggers expansion
 
@@ -62,6 +65,9 @@ class _JsonTreeViewState extends State<JsonTreeView> {
   @override
   void didUpdateWidget(JsonTreeView oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (!identical(widget.data, oldWidget.data)) {
+      _visibleChildCount = _childPageSize;
+    }
     if (widget.searchQuery != oldWidget.searchQuery) {
       _checkSearchExpansion();
     }
@@ -246,32 +252,23 @@ class _JsonTreeViewState extends State<JsonTreeView> {
         onExpansionChanged: (val) {
           setState(() => _isExpanded = val);
         },
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              border: Border(
-                  left:
-                      BorderSide(color: theme.colorScheme.outline, width: 1.0)),
-            ),
-            margin: const EdgeInsets.only(left: _lineMargin),
-            padding: const EdgeInsets.only(left: 14.5),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: map.entries.map((e) {
-                final newPath = [...widget.currentParamsPath, e.key];
-                return JsonTreeView(
-                  data: e.value,
-                  keyName: e.key,
-                  searchQuery: widget.searchQuery,
-                  isArrayItem: false,
-                  currentParamsPath: newPath,
-                  activeMatchPath: widget.activeMatchPath,
-                  expandAllNotifier: widget.expandAllNotifier,
-                );
-              }).toList(),
-            ),
-          )
-        ],
+        children: _isExpanded
+            ? [
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border(
+                        left: BorderSide(
+                            color: theme.colorScheme.outline, width: 1.0)),
+                  ),
+                  margin: const EdgeInsets.only(left: _lineMargin),
+                  padding: const EdgeInsets.only(left: 14.5),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: _buildObjectChildren(map, l10n),
+                  ),
+                )
+              ]
+            : const [],
       ),
     );
   }
@@ -311,33 +308,122 @@ class _JsonTreeViewState extends State<JsonTreeView> {
         onExpansionChanged: (val) {
           setState(() => _isExpanded = val);
         },
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              border: Border(
-                  left:
-                      BorderSide(color: theme.colorScheme.outline, width: 1.0)),
-            ),
-            margin: const EdgeInsets.only(left: _lineMargin),
-            padding: const EdgeInsets.only(left: 14.5),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: list.asMap().entries.map((e) {
-                final newPath = [...widget.currentParamsPath, e.key];
-                return JsonTreeView(
-                  data: e.value,
-                  keyName: e.key.toString(),
-                  searchQuery: widget.searchQuery,
-                  isArrayItem: true,
-                  currentParamsPath: newPath,
-                  activeMatchPath: widget.activeMatchPath,
-                  expandAllNotifier: widget.expandAllNotifier,
-                );
-              }).toList(),
-            ),
-          )
-        ],
+        children: _isExpanded
+            ? [
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border(
+                        left: BorderSide(
+                            color: theme.colorScheme.outline, width: 1.0)),
+                  ),
+                  margin: const EdgeInsets.only(left: _lineMargin),
+                  padding: const EdgeInsets.only(left: 14.5),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: _buildArrayChildren(list, l10n),
+                  ),
+                )
+              ]
+            : const [],
       ),
+    );
+  }
+
+  List<Widget> _buildObjectChildren(
+    Map<String, dynamic> map,
+    AppLocalizations? l10n,
+  ) {
+    final visibleCount = _visibleChildCount.clamp(0, map.length);
+    final visibleEntries = map.entries.take(visibleCount).toList();
+    final activeSegment = _activeChildSegment();
+
+    if (activeSegment is String &&
+        !map.keys.take(visibleCount).contains(activeSegment)) {
+      final activeValue = map[activeSegment];
+      if (map.containsKey(activeSegment)) {
+        visibleEntries.add(MapEntry(activeSegment, activeValue));
+      }
+    }
+
+    return [
+      for (final entry in visibleEntries)
+        JsonTreeView(
+          data: entry.value,
+          keyName: entry.key,
+          searchQuery: widget.searchQuery,
+          isArrayItem: false,
+          currentParamsPath: [...widget.currentParamsPath, entry.key],
+          activeMatchPath: widget.activeMatchPath,
+          expandAllNotifier: widget.expandAllNotifier,
+        ),
+      if (visibleCount < map.length)
+        _buildLoadMoreButton(visibleCount, map.length, l10n),
+    ];
+  }
+
+  List<Widget> _buildArrayChildren(
+    List<dynamic> list,
+    AppLocalizations? l10n,
+  ) {
+    final visibleCount = _visibleChildCount.clamp(0, list.length);
+    final indices = <int>[
+      for (var index = 0; index < visibleCount; index++) index
+    ];
+    final activeSegment = _activeChildSegment();
+
+    if (activeSegment is int &&
+        activeSegment >= visibleCount &&
+        activeSegment < list.length) {
+      indices.add(activeSegment);
+    }
+
+    return [
+      for (final index in indices)
+        JsonTreeView(
+          data: list[index],
+          keyName: index.toString(),
+          searchQuery: widget.searchQuery,
+          isArrayItem: true,
+          currentParamsPath: [...widget.currentParamsPath, index],
+          activeMatchPath: widget.activeMatchPath,
+          expandAllNotifier: widget.expandAllNotifier,
+        ),
+      if (visibleCount < list.length)
+        _buildLoadMoreButton(visibleCount, list.length, l10n),
+    ];
+  }
+
+  dynamic _activeChildSegment() {
+    final activePath = widget.activeMatchPath;
+    if (activePath == null ||
+        activePath.length <= widget.currentParamsPath.length) {
+      return null;
+    }
+
+    for (var index = 0; index < widget.currentParamsPath.length; index++) {
+      if (activePath[index] != widget.currentParamsPath[index]) {
+        return null;
+      }
+    }
+    return activePath[widget.currentParamsPath.length];
+  }
+
+  Widget _buildLoadMoreButton(
+    int visibleCount,
+    int totalCount,
+    AppLocalizations? l10n,
+  ) {
+    final label = l10n?.loadMoreJsonItems(visibleCount, totalCount) ??
+        'Load more ($visibleCount/$totalCount)';
+    return TextButton.icon(
+      onPressed: () {
+        setState(() {
+          _visibleChildCount =
+              (_visibleChildCount + _childPageSize).clamp(0, totalCount);
+        });
+      },
+      icon: const Icon(Icons.expand_more),
+      label: Text(label),
     );
   }
 
