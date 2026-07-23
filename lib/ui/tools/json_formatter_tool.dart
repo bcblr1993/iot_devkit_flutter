@@ -33,20 +33,25 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
 
   // Expand Control
   final ValueNotifier<TreeControlState> _treeControlNotifier =
-      ValueNotifier(TreeControlState(0, false));
+      ValueNotifier(const TreeControlState(0, false));
   int _controlVersion = 0;
   bool _isTreeExpanded = false;
 
   // Persistence
   Timer? _saveTimer;
   Timer? _parseTimer;
+  Timer? _searchTimer;
   static const String _storageKey = 'json_formatter_content';
   static const int _backgroundParseThreshold = 128 * 1024;
   static const int _largeDocumentThreshold = 512 * 1024;
   static const int _maxPersistedContentLength = 1024 * 1024;
+  static const int _maxSearchMatches = 1000;
   int _parseGeneration = 0;
+  int _searchGeneration = 0;
   bool _isProcessing = false;
   bool _isLargeDocument = false;
+  bool _searchResultsTruncated = false;
+  String? _parsedSource;
 
   String get _documentText =>
       _isLargeDocument ? _largeInputController.text : _inputController.text;
@@ -70,6 +75,7 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
   void dispose() {
     _saveTimer?.cancel();
     _parseTimer?.cancel();
+    _searchTimer?.cancel();
     _inputController.dispose();
     _largeInputController.dispose();
     _scrollController.dispose();
@@ -139,7 +145,7 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
             : l10n.minifySuccess,
         Colors.green,
       );
-      _updateParsedData(result.data);
+      _updateParsedData(result.data, parsedSource: result.output);
     } catch (e) {
       if (!mounted || generation != _parseGeneration) return;
       _setStatus(
@@ -153,7 +159,9 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
 
   void _clear() {
     _parseGeneration++;
+    _searchGeneration++;
     _parseTimer?.cancel();
+    _searchTimer?.cancel();
     _inputController.clear();
     _largeInputController.replaceAll('');
     setState(() {
@@ -164,6 +172,8 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
       _searchQuery = '';
       _searchController.clear();
       _isProcessing = false;
+      _searchResultsTruncated = false;
+      _parsedSource = null;
     });
     _saveState(); // Save empty
     _setStatus(AppLocalizations.of(context)!.ready, Colors.grey);
@@ -240,7 +250,11 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
 
     if (source.length < _backgroundParseThreshold) {
       try {
-        _updateParsedData(jsonDecode(source), save: false);
+        _updateParsedData(
+          jsonDecode(source),
+          save: false,
+          parsedSource: source,
+        );
       } catch (_) {}
       if (_isProcessing) {
         setState(() => _isProcessing = false);
@@ -257,7 +271,7 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
       try {
         final data = await JsonFormatterService.parse(source);
         if (!mounted || generation != _parseGeneration) return;
-        _updateParsedData(data, save: false);
+        _updateParsedData(data, save: false, parsedSource: source);
       } catch (_) {
         // Invalid input is expected while the user is editing.
       } finally {
@@ -274,11 +288,18 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
     }
   }
 
-  void _updateParsedData(dynamic data, {bool save = true}) {
+  void _updateParsedData(
+    dynamic data, {
+    bool save = true,
+    String? parsedSource,
+  }) {
     setState(() {
       _parsedData = data;
+      _parsedSource = parsedSource ?? _parsedSource;
       _isTreeExpanded = false;
     });
+    _controlVersion++;
+    _treeControlNotifier.value = TreeControlState(_controlVersion, false);
     if (save) {
       _saveDelayed();
     }
@@ -289,34 +310,91 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
   }
 
   void _performSearch(String query) {
+    _searchTimer?.cancel();
+    final generation = ++_searchGeneration;
     if (query.isEmpty) {
       setState(() {
         _matches = [];
         _currentMatchIndex = -1;
+        _searchResultsTruncated = false;
+      });
+      return;
+    }
+
+    if (_isLargeDocument) {
+      setState(() {
+        _matches = [];
+        _currentMatchIndex = -1;
+        _searchResultsTruncated = false;
+      });
+      final source = _parsedSource;
+      if (source == null) {
+        return;
+      }
+      _searchTimer = Timer(const Duration(milliseconds: 250), () {
+        _performLargeDocumentSearch(source, query, generation);
       });
       return;
     }
 
     // Find all paths
     final newMatches = <List<dynamic>>[];
+    var isTruncated = false;
     if (_parsedData != null) {
-      _findMatchesRecursive(_parsedData, query.toLowerCase(), [], newMatches);
+      isTruncated = _findMatchesRecursive(
+        _parsedData,
+        query.toLowerCase(),
+        [],
+        newMatches,
+      );
     }
 
     setState(() {
       _matches = newMatches;
       _currentMatchIndex = newMatches.isNotEmpty ? 0 : -1;
+      _searchResultsTruncated = isTruncated;
     });
   }
 
-  void _findMatchesRecursive(dynamic matchData, String query,
-      List<dynamic> currentPath, List<List<dynamic>> results) {
+  Future<void> _performLargeDocumentSearch(
+    String source,
+    String query,
+    int generation,
+  ) async {
+    try {
+      final result = await JsonFormatterService.search(
+        source,
+        query,
+        maxMatches: _maxSearchMatches,
+      );
+      if (!mounted || generation != _searchGeneration) {
+        return;
+      }
+      setState(() {
+        _matches = result.paths;
+        _currentMatchIndex = result.paths.isNotEmpty ? 0 : -1;
+        _searchResultsTruncated = result.isTruncated;
+      });
+    } catch (_) {
+      // Search should not replace the current valid tree on malformed input.
+    }
+  }
+
+  bool _findMatchesRecursive(
+    dynamic matchData,
+    String query,
+    List<dynamic> currentPath,
+    List<List<dynamic>> results,
+  ) {
+    if (results.length >= _maxSearchMatches) {
+      return true;
+    }
     // Check self (value)
     if (matchData is! Map && matchData is! List) {
       if (matchData.toString().toLowerCase().contains(query)) {
         results.add(List.from(currentPath));
       }
-      return;
+      return results.length >= _maxSearchMatches;
     }
 
     if (matchData is Map) {
@@ -328,18 +406,26 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
         if (keyName.toLowerCase().contains(query)) {
           // If key matches, we highlight this node.
           results.add(nextPath);
+          if (results.length >= _maxSearchMatches) {
+            return true;
+          }
         }
 
         // Recurse Value
-        _findMatchesRecursive(entry.value, query, nextPath, results);
+        if (_findMatchesRecursive(entry.value, query, nextPath, results)) {
+          return true;
+        }
       }
     } else if (matchData is List) {
       for (int i = 0; i < matchData.length; i++) {
         final nextPath = [...currentPath, i];
         // List index isn't usually matched against text query, but recursion continues
-        _findMatchesRecursive(matchData[i], query, nextPath, results);
+        if (_findMatchesRecursive(matchData[i], query, nextPath, results)) {
+          return true;
+        }
       }
     }
+    return false;
   }
 
   void _nextMatch() {
@@ -375,8 +461,11 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
       _isTreeExpanded = !_isTreeExpanded;
     });
     _controlVersion++;
-    _treeControlNotifier.value =
-        TreeControlState(_controlVersion, _isTreeExpanded);
+    _treeControlNotifier.value = TreeControlState(
+      _controlVersion,
+      _isTreeExpanded,
+      maxDepth: _isLargeDocument && _isTreeExpanded ? 1 : null,
+    );
   }
 
   @override
@@ -607,7 +696,7 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
                                                 children: [
                                                   if (_matches.isNotEmpty)
                                                     Text(
-                                                        '${_currentMatchIndex + 1}/${_matches.length}',
+                                                        '${_currentMatchIndex + 1}/${_matches.length}${_searchResultsTruncated ? '+' : ''}',
                                                         style: TextStyle(
                                                             fontSize: 10,
                                                             color: colorScheme

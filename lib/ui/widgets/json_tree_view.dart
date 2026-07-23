@@ -5,7 +5,13 @@ import '../../l10n/generated/app_localizations.dart';
 class TreeControlState {
   final int version;
   final bool expand;
-  TreeControlState(this.version, this.expand);
+  final int? maxDepth;
+
+  const TreeControlState(this.version, this.expand, {this.maxDepth});
+
+  bool expandsDepth(int depth) {
+    return expand && (maxDepth == null || depth < maxDepth!);
+  }
 }
 
 class JsonTreeView extends StatefulWidget {
@@ -55,7 +61,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
     if (widget.isRoot) {
       _isExpanded = true;
     }
-    _checkSearchExpansion();
+    _checkActivePathExpansion();
     if (widget.expandAllNotifier != null) {
       _applyGlobalState(widget.expandAllNotifier!.value);
       widget.expandAllNotifier!.addListener(_handleExpandAll);
@@ -69,7 +75,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
       _visibleChildCount = _childPageSize;
     }
     if (widget.searchQuery != oldWidget.searchQuery) {
-      _checkSearchExpansion();
+      _checkActivePathExpansion();
     }
     if (widget.activeMatchPath != oldWidget.activeMatchPath) {
       _checkActivePathExpansion();
@@ -103,26 +109,12 @@ class _JsonTreeViewState extends State<JsonTreeView> {
     if (state.version > _localControlVersion) {
       if (mounted) {
         setState(() {
-          _isExpanded = state.expand;
+          _isExpanded = state.expandsDepth(widget.currentParamsPath.length);
           _localControlVersion = state.version;
         });
       } else {
-        _isExpanded = state.expand;
+        _isExpanded = state.expandsDepth(widget.currentParamsPath.length);
         _localControlVersion = state.version;
-      }
-    }
-  }
-
-  void _checkSearchExpansion() {
-    if (widget.searchQuery != null && widget.searchQuery!.isNotEmpty) {
-      if (_hasMatch(widget.data)) {
-        // If match found and NOT expanded, force expand and rebuild
-        if (!_isExpanded) {
-          setState(() {
-            _isExpanded = true;
-            _searchExpandVersion++;
-          });
-        }
       }
     }
   }
@@ -170,38 +162,6 @@ class _JsonTreeViewState extends State<JsonTreeView> {
       }
     }
     return true;
-  }
-
-  bool _hasMatch(dynamic data) {
-    final query = widget.searchQuery?.toLowerCase() ?? '';
-    if (query.isEmpty) return false;
-
-    if (widget.keyName != null &&
-        widget.keyName!.toLowerCase().contains(query)) {
-      return true;
-    }
-
-    if (data is! Map && data is! List) {
-      return data.toString().toLowerCase().contains(query);
-    }
-
-    return _deepCheck(data, query);
-  }
-
-  bool _deepCheck(dynamic data, String query) {
-    if (data is Map) {
-      for (var entry in data.entries) {
-        if (entry.key.toLowerCase().contains(query)) return true;
-        if (_deepCheck(entry.value, query)) return true;
-      }
-    } else if (data is List) {
-      for (var item in data) {
-        if (_deepCheck(item, query)) return true;
-      }
-    } else {
-      return data.toString().toLowerCase().contains(query);
-    }
-    return false;
   }
 
   @override

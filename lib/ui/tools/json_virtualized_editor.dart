@@ -32,6 +32,7 @@ class VirtualizedTextController extends ChangeNotifier {
   final int maxLinesPerBlock;
 
   List<VirtualizedTextBlock> _blocks = const [];
+  final Map<int, int> _blockIndexById = {};
   int _length = 0;
   int _nextBlockId = 0;
 
@@ -57,6 +58,7 @@ class VirtualizedTextController extends ChangeNotifier {
 
   void replaceAll(String source, {bool notify = true}) {
     _blocks = _split(source);
+    _reindexBlocks();
     _length = source.length;
     if (notify) {
       notifyListeners();
@@ -64,8 +66,8 @@ class VirtualizedTextController extends ChangeNotifier {
   }
 
   void updateBlock(int id, String value) {
-    final index = _blocks.indexWhere((block) => block.id == id);
-    if (index < 0 || _blocks[index].text == value) {
+    final index = _blockIndexById[id];
+    if (index == null || _blocks[index].text == value) {
       return;
     }
     final previous = _blocks[index];
@@ -78,8 +80,8 @@ class VirtualizedTextController extends ChangeNotifier {
   }
 
   void replaceBlockText(int id, String value) {
-    final index = _blocks.indexWhere((block) => block.id == id);
-    if (index < 0) {
+    final index = _blockIndexById[id];
+    if (index == null) {
       return;
     }
     final previous = _blocks[index];
@@ -91,12 +93,13 @@ class VirtualizedTextController extends ChangeNotifier {
       ...replacement,
       ..._blocks.skip(index + 1),
     ];
+    _reindexBlocks();
     notifyListeners();
   }
 
   _MergeTarget? _mergeAtStart(int id) {
-    final index = _blocks.indexWhere((block) => block.id == id);
-    if (index <= 0) {
+    final index = _blockIndexById[id];
+    if (index == null || index <= 0) {
       return null;
     }
 
@@ -120,13 +123,14 @@ class VirtualizedTextController extends ChangeNotifier {
       merged,
       ..._blocks.skip(index + 1),
     ];
+    _reindexBlocks();
     notifyListeners();
     return _MergeTarget(merged.id, caretOffset);
   }
 
   _MergeTarget? _mergeAtEnd(int id) {
-    final index = _blocks.indexWhere((block) => block.id == id);
-    if (index < 0 || index >= _blocks.length - 1) {
+    final index = _blockIndexById[id];
+    if (index == null || index >= _blocks.length - 1) {
       return null;
     }
 
@@ -149,8 +153,17 @@ class VirtualizedTextController extends ChangeNotifier {
       merged,
       ..._blocks.skip(index + 2),
     ];
+    _reindexBlocks();
     notifyListeners();
     return _MergeTarget(merged.id, current.text.length);
+  }
+
+  void _reindexBlocks() {
+    _blockIndexById
+      ..clear()
+      ..addEntries(
+        _blocks.indexed.map((entry) => MapEntry(entry.$2.id, entry.$1)),
+      );
   }
 
   List<VirtualizedTextBlock> _split(String source) {
@@ -338,7 +351,10 @@ class _VirtualizedJsonEditorState extends State<VirtualizedJsonEditor> {
           horizontal: tokens.sXl,
           vertical: tokens.sLg,
         ),
-        cacheExtent: 800,
+        // A zero cache extent is intentional. On Windows every off-screen
+        // EditableText keeps a native text-input/semantics subtree alive, so
+        // prebuilding several large blocks can make the window unresponsive.
+        cacheExtent: 0,
         itemCount: blocks.length,
         itemBuilder: (context, index) {
           final block = blocks[index];
@@ -440,8 +456,19 @@ class _VirtualTextBlockEditorState extends State<_VirtualTextBlockEditor> {
           fontSize: 13,
           height: 1.35,
         ),
+        autocorrect: false,
+        enableSuggestions: false,
+        smartDashesType: SmartDashesType.disabled,
+        smartQuotesType: SmartQuotesType.disabled,
+        scrollPadding: EdgeInsets.zero,
         decoration: const InputDecoration(
           border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          disabledBorder: InputBorder.none,
+          errorBorder: InputBorder.none,
+          focusedErrorBorder: InputBorder.none,
+          filled: false,
           isDense: true,
           contentPadding: EdgeInsets.zero,
         ),

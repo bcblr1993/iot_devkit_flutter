@@ -44,6 +44,15 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: flutter test
 
+      - name: Run Windows large JSON regressions
+        if: matrix.os == 'windows-latest'
+        run: >-
+          flutter test --no-pub
+          test/services/json_formatter_service_test.dart
+          test/widgets/json_virtualized_editor_test.dart
+          test/widgets/json_tree_view_performance_test.dart
+          test/utils/version_helper_test.dart
+
       - name: Set Build Date and Version
         run: |
           BUILD_DATE=$(date +'%Y%m%d')

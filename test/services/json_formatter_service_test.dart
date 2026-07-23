@@ -54,5 +54,25 @@ void main() {
       );
       expect(result.output, contains('"value": "122984"'));
     });
+
+    test('searches large JSON off the UI isolate and caps common matches',
+        () async {
+      final source = jsonEncode({
+        'values': [
+          for (var index = 0; index < 5000; index++)
+            {'ts': index, 'value': 'reading-$index'},
+        ],
+      });
+
+      final result = await JsonFormatterService.search(
+        source,
+        'value',
+        maxMatches: 100,
+      );
+
+      expect(result.paths, hasLength(100));
+      expect(result.paths, contains(equals(['values', 0, 'value'])));
+      expect(result.isTruncated, isTrue);
+    });
   });
 }

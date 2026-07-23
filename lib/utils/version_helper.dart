@@ -14,4 +14,12 @@ class VersionHelper {
     final packageInfo = await PackageInfo.fromPlatform();
     return packageInfo.appName;
   }
+
+  static String? releaseDateFromVersion(String version) {
+    final match = RegExp(r'(20\d{2})(\d{2})(\d{2})').firstMatch(version);
+    if (match == null) {
+      return null;
+    }
+    return '${match.group(1)}-${match.group(2)}-${match.group(3)}';
+  }
 }

@@ -5,11 +5,10 @@ import '../l10n/generated/app_localizations.dart';
 import 'version_helper.dart';
 
 class AboutDialogHelper {
-  static const String _releaseDate = '2026-07-14';
-
   static Future<void> showAboutDialog(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
     final version = await VersionHelper.getAppVersion();
+    final releaseDate = VersionHelper.releaseDateFromVersion(version) ?? '-';
 
     if (!context.mounted) return;
 
@@ -101,7 +100,7 @@ class AboutDialogHelper {
                       final dateTile = _AboutInfoTile(
                         icon: Icons.event_outlined,
                         label: l10n.releaseDate,
-                        value: _releaseDate,
+                        value: releaseDate,
                       );
 
                       if (compact) {

@@ -12,6 +12,7 @@ import 'package:iot_devkit/services/lab_theme_manager.dart';
 import 'package:iot_devkit/ui/screens/home_screen.dart';
 import 'package:iot_devkit/ui/styles/app_theme_effect.dart';
 import 'package:iot_devkit/ui/tools/json_virtualized_editor.dart';
+import 'package:iot_devkit/ui/widgets/json_tree_view.dart';
 import 'package:iot_devkit/ui/widgets/log_console.dart';
 import 'package:iot_devkit/ui/widgets/simulator_panel.dart';
 import 'package:iot_devkit/ui/lab/lab.dart';
@@ -210,6 +211,12 @@ void main() {
       lessThan(20),
     );
     expect(find.byType(CircularProgressIndicator), findsNothing);
+
+    await _pressButton(tester, 'Expand All');
+    await tester.pumpAndSettle();
+    expect(find.byType(JsonTreeView), findsNWidgets(2));
+    await _pressButton(tester, 'Collapse All');
+    await tester.pumpAndSettle();
 
     await _pressButton(tester, 'Format');
     await tester.runAsync(
