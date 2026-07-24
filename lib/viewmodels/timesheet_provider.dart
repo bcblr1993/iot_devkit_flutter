@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/work_log_entry.dart';
 import '../services/timesheet_service.dart';
 
@@ -16,32 +15,8 @@ class TimesheetProvider extends ChangeNotifier {
   double get totalHours =>
       _currentLogs.fold<double>(0, (sum, log) => sum + log.durationHours);
 
-  bool _isEnabled = false;
-  bool get isEnabled => _isEnabled;
-
   TimesheetProvider() {
-    _loadState();
-  }
-
-  Future<void> _loadState() async {
-    final prefs = await SharedPreferences.getInstance();
-    _isEnabled = prefs.getBool('ts_enabled') ?? false;
-    if (_isEnabled) {
-      _loadLogs();
-    } else {
-      notifyListeners();
-    }
-  }
-
-  Future<void> toggleEnabled(bool value) async {
-    _isEnabled = value;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('ts_enabled', value);
-    if (_isEnabled) {
-      _loadLogs();
-    } else {
-      notifyListeners();
-    }
+    _loadLogs();
   }
 
   void selectDate(DateTime date) {

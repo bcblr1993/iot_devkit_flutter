@@ -21,6 +21,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navJson => 'JSON工具';
 
   @override
+  String get navTextDiff => '文本比较';
+
+  @override
   String get startSimulation => '开始模拟';
 
   @override
@@ -827,6 +830,53 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get navCertificates => '证书生成';
+
+  @override
+  String get optionalTools => '可选功能';
+
+  @override
+  String get textDiffDescription => '在本地比较两段文本，并逐行查看新增、删除和修改。';
+
+  @override
+  String get textDiffOriginal => '原始文本';
+
+  @override
+  String get textDiffModified => '修改后文本';
+
+  @override
+  String get textDiffOriginalHint => '在此粘贴原始文本...';
+
+  @override
+  String get textDiffModifiedHint => '在此粘贴修改后的文本...';
+
+  @override
+  String get textDiffResult => '比较结果';
+
+  @override
+  String get textDiffEmpty => '在任意一侧输入文本后开始比较。';
+
+  @override
+  String get textDiffNoChanges => '两段文本完全一致。';
+
+  @override
+  String get textDiffSwap => '交换两侧';
+
+  @override
+  String get textDiffCopyPatch => '复制补丁';
+
+  @override
+  String get textDiffAdded => '新增';
+
+  @override
+  String get textDiffRemoved => '删除';
+
+  @override
+  String get textDiffChanged => '修改';
+
+  @override
+  String textDiffSummary(int added, int removed, int changed) {
+    return '新增 $added 行 · 删除 $removed 行 · 修改 $changed 行';
+  }
 
   @override
   String get certGenerator => '证书生成';

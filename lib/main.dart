@@ -14,6 +14,7 @@ import 'services/lab_theme_manager.dart';
 import 'ui/styles/app_theme_effect.dart';
 import 'services/language_provider.dart';
 import 'services/status_registry.dart';
+import 'services/feature_visibility_provider.dart';
 import 'utils/statistics_collector.dart';
 import 'ui/screens/home_screen.dart';
 import 'utils/about_dialog_helper.dart';
@@ -199,8 +200,12 @@ class IoTDevKitApp extends StatelessWidget {
         ChangeNotifierProvider<LanguageProvider>(
             create: (_) => LanguageProvider()),
         ChangeNotifierProvider<StatusRegistry>(create: (_) => StatusRegistry()),
+        ChangeNotifierProvider<FeatureVisibilityProvider>(
+          create: (_) => FeatureVisibilityProvider(),
+        ),
         ChangeNotifierProvider<TimesheetProvider>(
-            create: (_) => TimesheetProvider()), // Added TimesheetProvider
+          create: (_) => TimesheetProvider(),
+        ),
         ChangeNotifierProvider<MqttController>(
           create: (_) => MqttController(
             processShard: processShard,

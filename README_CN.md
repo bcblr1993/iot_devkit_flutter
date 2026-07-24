@@ -6,7 +6,7 @@
 
 **面向 IoT 开发者的跨平台桌面工具箱 — Flutter 构建。**
 
-MQTT 设备模拟器 · JSON 格式化 · 时间戳转换 · X.509 证书生成 · 工时记录
+MQTT 设备模拟器 · JSON 格式化 · 文本比较 · 时间戳转换 · X.509 证书生成 · 工时记录
 
 [![Release](https://img.shields.io/github/v/release/bcblr1993/iot_devkit_flutter?style=flat-square&color=ff7a00)](https://github.com/bcblr1993/iot_devkit_flutter/releases)
 [![Flutter](https://img.shields.io/badge/Flutter-3.41.8-02569B?style=flat-square&logo=flutter)](https://flutter.dev)
@@ -45,8 +45,9 @@ MQTT 设备模拟器 · JSON 格式化 · 时间戳转换 · X.509 证书生成 
 | 📡 | **MQTT 模拟器** | 单设备或上千虚拟设备；发布遥测、主题订阅、RPC 自动确认、profile 导入导出；低延迟发送调度（含 drop-vs-catch-up） |
 | 🔐 | **证书生成器** | 一键生成 IoT broker（ThingsBoard / EMQX）所需的 X.509 包：CA + 设备证书 + key + 可部署 zip |
 | 🧾 | **JSON 格式化** | 校验/压缩/格式化；可折叠交互式树视图；树内 key/value 搜索；自动持久化输入 |
+| 🔀 | **文本比较** | 本地双栏逐行比较，标记新增/删除/修改，支持行号、交换与复制统一补丁；在设置中按需开启 |
 | ⏱ | **时间戳转换** | 毫秒级实时时钟；Unix ↔ ISO 双向；完整 IANA 时区；一键复制 |
-| 📅 | **工时记录** | 工时条目记录；周报一键复制；纯本地持久化 |
+| 📅 | **工时记录** | 工时条目记录；周报一键复制；纯本地持久化；在设置中按需开启 |
 | 🎨 | **8 套主题** | Lab Console 设计系统：5 暗（Signal / Plasma / Cobalt / Amber / Mint）+ 3 亮（Paper / Linen / Slate）|
 | 🌐 | **国际化** | 完整支持简体中文 + English；所有用户可见文案走 `.arb`，无硬编码 |
 | 🖥 | **桌面原生** | macOS / Windows / Linux 三端；窗口状态、文件选择器、原生菜单，非移动端思维 |
@@ -84,7 +85,7 @@ IoT DevKit 按桌面产品组织：稳定应用壳、独立功能模块、清晰
 
 ```mermaid
 flowchart LR
-  Shell["应用壳\nNavigationRail · Settings · Status"] --> Screens["功能页面\nSimulator · Tools · Timesheet"]
+  Shell["应用壳\nNavigationRail · Settings · 可选功能"] --> Screens["功能页面\nSimulator · Tools · Timesheet"]
   Screens --> ViewModels["ViewModels\nChangeNotifier 状态"]
   ViewModels --> Services["Services\nMQTT · Certificates · Profiles · Storage"]
   Services --> Runtime["桌面运行时\nmacOS · Windows · Linux"]
@@ -96,10 +97,10 @@ flowchart LR
 
 | 领域 | 职责 |
 |---|---|
-| 应用壳 | 导航、快捷键、设置、主题/语言切换、状态横幅 |
+| 应用壳 | 稳定功能 ID、可选功能显隐、快捷键、设置、主题/语言切换、状态横幅 |
 | 模拟器 | MQTT 连接生命周期、遥测 payload、主题订阅、RPC 自动确认、指标、日志控制台 |
-| 工具页 | 时间戳转换、JSON 工具、证书包生成与端点检查 |
-| 服务层 | Broker 客户端、发送调度、profile 导入导出、证书生成、本地存储 |
+| 工具页 | 时间戳转换、JSON 工具、本地文本比较、证书包生成与端点检查 |
+| 服务层 | Broker 客户端、发送调度、文本比较、profile 导入导出、证书生成、本地存储 |
 | 设计系统 | Lab tokens、8 套主题、原子组件、自研 lint、golden 基线 |
 
 ---
@@ -205,7 +206,7 @@ lib/
     │   ├── tokens/             # LabTokens、LabThemes、OKLCH、文本主题
     │   └── components/         # LabButton / LabField / LabSection / LabDialog / ...
     ├── components/             # 项目通用组件
-    ├── tools/                  # 独立工具页（JSON / 时间戳 / 证书）
+    ├── tools/                  # 独立工具页（JSON / 文本比较 / 时间戳 / 证书）
     ├── widgets/                # 模拟器专用组件
     └── styles/                 # 旧主题常量
 

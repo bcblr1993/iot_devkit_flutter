@@ -8,10 +8,12 @@ import 'package:iot_devkit/l10n/generated/app_localizations.dart';
 import 'package:iot_devkit/services/language_provider.dart';
 import 'package:iot_devkit/services/mqtt_controller.dart';
 import 'package:iot_devkit/services/status_registry.dart';
+import 'package:iot_devkit/services/feature_visibility_provider.dart';
 import 'package:iot_devkit/services/lab_theme_manager.dart';
 import 'package:iot_devkit/ui/screens/home_screen.dart';
 import 'package:iot_devkit/ui/styles/app_theme_effect.dart';
 import 'package:iot_devkit/ui/tools/json_virtualized_editor.dart';
+import 'package:iot_devkit/ui/tools/text_diff_tool.dart';
 import 'package:iot_devkit/ui/widgets/json_tree_view.dart';
 import 'package:iot_devkit/ui/widgets/log_console.dart';
 import 'package:iot_devkit/ui/widgets/simulator_panel.dart';
@@ -269,6 +271,64 @@ void main() {
     expect(find.text('Generate ZIP'), findsOneWidget);
   });
 
+  testWidgets('text diff smoke: compares, swaps, and copies a patch',
+      (tester) async {
+    String? copiedText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          copiedText =
+              (call.arguments as Map<Object?, Object?>)['text'] as String;
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+
+    await _pumpSmokeApp(tester, enableTextDiff: true);
+    await tester.tap(
+      find.byKey(const ValueKey('rail_destination_textDiff')),
+    );
+    await tester.pump(const Duration(milliseconds: 260));
+
+    expect(find.byType(TextDiffTool), findsOneWidget);
+    await tester.enterText(
+      _textFieldWithHint('Paste the original text here...'),
+      'alpha\nold\nomega',
+    );
+    await tester.enterText(
+      _textFieldWithHint('Paste the modified text here...'),
+      'alpha\nnew\nomega',
+    );
+    await tester.pump(const Duration(milliseconds: 260));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pump();
+
+    expect(find.text('CHANGED 1'), findsOneWidget);
+    expect(find.text('old'), findsOneWidget);
+    expect(find.text('new'), findsOneWidget);
+
+    await _pressButton(tester, 'Copy patch');
+    expect(copiedText, contains('-old'));
+    expect(copiedText, contains('+new'));
+    clearLabToasts();
+
+    await _pressButton(tester, 'Swap sides');
+    await tester.pump(const Duration(milliseconds: 260));
+    final original = tester.widget<TextField>(
+      _textFieldWithHint('Paste the original text here...'),
+    );
+    expect(original.controller?.text, contains('new'));
+  });
+
   testWidgets('settings smoke: opens theme and language pickers',
       (tester) async {
     await _pumpSmokeApp(tester, enableTimesheet: true);
@@ -351,12 +411,14 @@ void main() {
 Future<void> _pumpSmokeApp(
   WidgetTester tester, {
   bool enableTimesheet = false,
+  bool enableTextDiff = false,
 }) async {
   SharedPreferences.setMockInitialValues({
     'lab_theme_id': 'signal',
     'lab_theme_mode': 'dark',
     'app-locale': 'en',
     'ts_enabled': enableTimesheet,
+    'feature_text_diff_enabled': enableTextDiff,
   });
   clearLabToasts();
   addTearDown(clearLabToasts);
@@ -371,8 +433,17 @@ Future<void> _selectRailDestination(
   WidgetTester tester,
   int index,
 ) async {
-  // Lab Console rail items carry ValueKey('rail_item_<index>').
-  await tester.tap(find.byKey(ValueKey('rail_item_$index')));
+  final destination = switch (index) {
+    0 => 'simulator',
+    1 => 'timestamp',
+    2 => 'json',
+    3 => 'certificates',
+    4 => 'timesheet',
+    _ => throw ArgumentError.value(index, 'index'),
+  };
+  await tester.tap(
+    find.byKey(ValueKey('rail_destination_$destination')),
+  );
   await tester.pump(const Duration(milliseconds: 260));
 }
 
@@ -462,6 +533,9 @@ class _SmokeApp extends StatelessWidget {
         ),
         ChangeNotifierProvider<StatusRegistry>(
           create: (_) => StatusRegistry(),
+        ),
+        ChangeNotifierProvider<FeatureVisibilityProvider>(
+          create: (_) => FeatureVisibilityProvider(),
         ),
         ChangeNotifierProvider<TimesheetProvider>(
           create: (_) => TimesheetProvider(),

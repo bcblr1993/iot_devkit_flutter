@@ -6,7 +6,7 @@
 
 **A cross-platform desktop toolkit for IoT developers — built with Flutter.**
 
-MQTT device simulator · JSON formatter · Timestamp converter · X.509 certificate generator · Timesheet.
+MQTT device simulator · JSON formatter · Text diff · Timestamp converter · X.509 certificate generator · Timesheet.
 
 [![Release](https://img.shields.io/github/v/release/bcblr1993/iot_devkit_flutter?style=flat-square&color=ff7a00)](https://github.com/bcblr1993/iot_devkit_flutter/releases)
 [![Flutter](https://img.shields.io/badge/Flutter-3.41.8-02569B?style=flat-square&logo=flutter)](https://flutter.dev)
@@ -45,8 +45,9 @@ MQTT device simulator · JSON formatter · Timestamp converter · X.509 certific
 | 📡 | **MQTT Simulator** | Single or thousands of virtual devices; publish telemetry, enable topic subscriptions, auto-ack RPC requests, import/export profiles, and run low-latency schedules with drop-vs-catch-up control |
 | 🔐 | **Certificate Generator** | One-click X.509 bundle for IoT brokers (ThingsBoard / EMQX). CA + device cert + key + ready-to-deploy zip |
 | 🧾 | **JSON Formatter** | Validate / minify / format; interactive collapsible tree; in-tree key/value search; auto-persists last input |
+| 🔀 | **Text Diff** | Local side-by-side line comparison with add/remove/change markers, line numbers, swap, and unified patch copy; opt-in from Settings |
 | ⏱ | **Timestamp Converter** | ms-precision live clock; bi-directional Unix ↔ ISO; full IANA timezone list; one-click copy |
-| 📅 | **Timesheet** | Log work entries, weekly report copy, local-only persistence |
+| 📅 | **Timesheet** | Log work entries, weekly report copy, local-only persistence; opt-in from Settings |
 | 🎨 | **8 Themes** | Lab Console design system — 5 dark (Signal / Plasma / Cobalt / Amber / Mint) + 3 light (Paper / Linen / Slate) |
 | 🌐 | **i18n** | Full English + 简体中文; all user-facing text in `.arb` files, no hardcoded strings |
 | 🖥 | **Desktop-native** | macOS / Windows / Linux. Window state, file picker, native menus; no mobile-first compromises |
@@ -84,7 +85,7 @@ IoT DevKit is organized as a desktop product with a stable app shell, feature mo
 
 ```mermaid
 flowchart LR
-  Shell["App Shell\nNavigationRail · Settings · Status"] --> Screens["Feature Screens\nSimulator · Tools · Timesheet"]
+  Shell["App Shell\nNavigationRail · Settings · Optional Features"] --> Screens["Feature Screens\nSimulator · Tools · Timesheet"]
   Screens --> ViewModels["ViewModels\nChangeNotifier state"]
   ViewModels --> Services["Services\nMQTT · Certificates · Profiles · Storage"]
   Services --> Runtime["Desktop Runtime\nmacOS · Windows · Linux"]
@@ -96,10 +97,10 @@ flowchart LR
 
 | Area | What it owns |
 |---|---|
-| App shell | Navigation, keyboard shortcuts, settings, theme/language switching, status banner |
+| App shell | Stable feature IDs, optional-feature visibility, keyboard shortcuts, settings, theme/language switching, status banner |
 | Simulator | MQTT connection lifecycle, telemetry payloads, subscriptions, RPC auto-ack, metrics, log console |
-| Tool pages | Timestamp conversion, JSON tooling, certificate package generation and endpoint checks |
-| Services | Broker clients, scheduler, profile import/export, certificate generation, local storage |
+| Tool pages | Timestamp conversion, JSON tooling, local text diff, certificate package generation and endpoint checks |
+| Services | Broker clients, scheduler, text diff, profile import/export, certificate generation, local storage |
 | Design system | Lab tokens, 8 themes, atomic components, custom lint rules, golden baselines |
 
 ---
@@ -205,7 +206,7 @@ lib/
     │   ├── tokens/             # LabTokens, LabThemes, OKLCH, text theme
     │   └── components/         # LabButton / LabField / LabSection / LabDialog / ...
     ├── components/             # Project-wide shared widgets
-    ├── tools/                  # Standalone tool screens (JSON / Timestamp / Cert)
+    ├── tools/                  # Standalone tool screens (JSON / Text Diff / Timestamp / Cert)
     ├── widgets/                # Simulator-specific widgets
     └── styles/                 # Legacy theme constants
 

@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../l10n/generated/app_localizations.dart';
-import '../../viewmodels/timesheet_provider.dart';
+import '../../services/feature_visibility_provider.dart';
 import '../lab/lab.dart';
+import 'app_destination.dart';
 import 'settings_menu.dart';
 
 /// Lab Console left rail (design system · simulator.jsx).
@@ -15,29 +16,24 @@ import 'settings_menu.dart';
 class AppNavigationRail extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
-  final VoidCallback? onTimesheetDisabled;
+  final ValueChanged<AppDestination>? onDestinationDisabled;
 
   const AppNavigationRail({
     super.key,
     required this.selectedIndex,
     required this.onDestinationSelected,
-    this.onTimesheetDisabled,
+    this.onDestinationDisabled,
   });
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final isTimesheetVisible = context.watch<TimesheetProvider>().isEnabled;
+    final features = context.watch<FeatureVisibilityProvider>();
     final scheme = Theme.of(context).colorScheme;
+    final destinations = visibleAppDestinations(features);
 
-    final items = <_RailEntry>[
-      _RailEntry(Icons.settings_input_component, l10n.navSimulator, 'F1'),
-      _RailEntry(Icons.access_time, l10n.navTimestamp, 'F2'),
-      _RailEntry(Icons.code, l10n.navJson, 'F3'),
-      _RailEntry(Icons.workspace_premium_outlined, l10n.navCertificates, 'F4'),
-      if (isTimesheetVisible)
-        _RailEntry(Icons.calendar_month, l10n.toolTimesheet, 'F5'),
-    ];
+    final items = destinations
+        .map((destination) => _entryFor(context, destination))
+        .toList(growable: false);
 
     return Container(
       width: 80,
@@ -50,7 +46,7 @@ class AppNavigationRail extends StatelessWidget {
           const SizedBox(height: 10),
           for (var i = 0; i < items.length; i++)
             _RailItem(
-              key: ValueKey('rail_item_$i'),
+              key: ValueKey('rail_destination_${destinations[i].name}'),
               entry: items[i],
               active: i == selectedIndex,
               onTap: () => onDestinationSelected(i),
@@ -58,11 +54,43 @@ class AppNavigationRail extends StatelessWidget {
           const Spacer(),
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: SettingsMenu(onTimesheetDisabled: onTimesheetDisabled),
+            child: SettingsMenu(
+              onFeatureDisabled: (feature) {
+                for (final destination in AppDestination.values) {
+                  if (destination.feature == feature) {
+                    onDestinationDisabled?.call(destination);
+                    return;
+                  }
+                }
+              },
+            ),
           ),
         ],
       ),
     );
+  }
+
+  _RailEntry _entryFor(
+    BuildContext context,
+    AppDestination destination,
+  ) {
+    final l10n = AppLocalizations.of(context)!;
+    return switch (destination) {
+      AppDestination.simulator =>
+        _RailEntry(Icons.settings_input_component, l10n.navSimulator, 'F1'),
+      AppDestination.timestamp =>
+        _RailEntry(Icons.access_time, l10n.navTimestamp, 'F2'),
+      AppDestination.json => _RailEntry(Icons.code, l10n.navJson, 'F3'),
+      AppDestination.certificates => _RailEntry(
+          Icons.workspace_premium_outlined,
+          l10n.navCertificates,
+          'F4',
+        ),
+      AppDestination.textDiff =>
+        _RailEntry(Icons.difference_outlined, l10n.navTextDiff, 'F5'),
+      AppDestination.timesheet =>
+        _RailEntry(Icons.calendar_month, l10n.toolTimesheet, 'F6'),
+    };
   }
 }
 

@@ -15,6 +15,7 @@ class LabSection extends StatelessWidget {
   final Widget? trailing;
   final Widget child;
   final bool padded;
+  final bool expandBody;
   final Color? accent;
 
   const LabSection({
@@ -24,6 +25,7 @@ class LabSection extends StatelessWidget {
     this.hint,
     this.trailing,
     this.padded = true,
+    this.expandBody = false,
     this.accent,
   });
 
@@ -48,13 +50,16 @@ class LabSection extends StatelessWidget {
             decoration: BoxDecoration(
               color: scheme.surfaceContainerLow,
               border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(tokens.rLg)),
+              borderRadius:
+                  BorderRadius.vertical(top: Radius.circular(tokens.rLg)),
             ),
-            padding: EdgeInsets.symmetric(horizontal: tokens.sLg, vertical: tokens.sMd),
+            padding: EdgeInsets.symmetric(
+                horizontal: tokens.sLg, vertical: tokens.sMd),
             child: Row(
               children: [
                 Container(
-                  width: 4, height: 12,
+                  width: 4,
+                  height: 12,
                   decoration: BoxDecoration(
                     color: accent ?? scheme.primary,
                     borderRadius: BorderRadius.circular(1),
@@ -64,7 +69,9 @@ class LabSection extends StatelessWidget {
                 Text(
                   title.toUpperCase(),
                   style: text.titleMedium?.copyWith(
-                    fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.6,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
                   ),
                 ),
                 if (hint != null) ...[
@@ -72,7 +79,8 @@ class LabSection extends StatelessWidget {
                   Text(
                     hint!,
                     style: text.labelLarge?.copyWith(
-                      fontSize: 11, color: tokens.faint,
+                      fontSize: 11,
+                      color: tokens.faint,
                     ),
                   ),
                 ],
@@ -82,7 +90,16 @@ class LabSection extends StatelessWidget {
             ),
           ),
           // Body
-          if (padded)
+          if (expandBody)
+            Expanded(
+              child: padded
+                  ? Padding(
+                      padding: EdgeInsets.all(tokens.sLg),
+                      child: child,
+                    )
+                  : child,
+            )
+          else if (padded)
             Padding(padding: EdgeInsets.all(tokens.sLg), child: child)
           else
             child,
@@ -96,7 +113,7 @@ class LabStatTile extends StatelessWidget {
   final String label;
   final String value;
   final String? unit;
-  final String? trend;     // e.g. "▲ 4.2% / min"
+  final String? trend; // e.g. "▲ 4.2% / min"
   final Color? valueColor;
 
   const LabStatTile({
@@ -134,22 +151,27 @@ class LabStatTile extends StatelessWidget {
             Text(
               value,
               style: text.displaySmall?.copyWith(
-                fontSize: 22, color: valueColor ?? scheme.onSurface, height: 1,
+                fontSize: 22,
+                color: valueColor ?? scheme.onSurface,
+                height: 1,
               ),
             ),
             if (unit != null) ...[
               SizedBox(width: tokens.sXs),
               Padding(
                 padding: const EdgeInsets.only(bottom: 2),
-                child: Text(unit!, style: text.labelLarge?.copyWith(color: tokens.faint)),
+                child: Text(unit!,
+                    style: text.labelLarge?.copyWith(color: tokens.faint)),
               ),
             ],
           ]),
           if (trend != null) ...[
             SizedBox(height: tokens.sXs),
-            Text(trend!, style: text.labelLarge?.copyWith(
-              color: tokens.accentDim, fontSize: 10,
-            )),
+            Text(trend!,
+                style: text.labelLarge?.copyWith(
+                  color: tokens.accentDim,
+                  fontSize: 10,
+                )),
           ],
         ],
       ),

@@ -122,6 +122,12 @@ abstract class AppLocalizations {
   /// **'JSON'**
   String get navJson;
 
+  /// No description provided for @navTextDiff.
+  ///
+  /// In en, this message translates to:
+  /// **'Text Diff'**
+  String get navTextDiff;
+
   /// No description provided for @startSimulation.
   ///
   /// In en, this message translates to:
@@ -1694,6 +1700,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Certificates'**
   String get navCertificates;
+
+  /// No description provided for @optionalTools.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional tools'**
+  String get optionalTools;
+
+  /// No description provided for @textDiffDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare two texts locally and inspect line-by-line changes.'**
+  String get textDiffDescription;
+
+  /// No description provided for @textDiffOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'Original text'**
+  String get textDiffOriginal;
+
+  /// No description provided for @textDiffModified.
+  ///
+  /// In en, this message translates to:
+  /// **'Modified text'**
+  String get textDiffModified;
+
+  /// No description provided for @textDiffOriginalHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste the original text here...'**
+  String get textDiffOriginalHint;
+
+  /// No description provided for @textDiffModifiedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste the modified text here...'**
+  String get textDiffModifiedHint;
+
+  /// No description provided for @textDiffResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Comparison result'**
+  String get textDiffResult;
+
+  /// No description provided for @textDiffEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter text on either side to start comparing.'**
+  String get textDiffEmpty;
+
+  /// No description provided for @textDiffNoChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'The two texts are identical.'**
+  String get textDiffNoChanges;
+
+  /// No description provided for @textDiffSwap.
+  ///
+  /// In en, this message translates to:
+  /// **'Swap sides'**
+  String get textDiffSwap;
+
+  /// No description provided for @textDiffCopyPatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy patch'**
+  String get textDiffCopyPatch;
+
+  /// No description provided for @textDiffAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Added'**
+  String get textDiffAdded;
+
+  /// No description provided for @textDiffRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed'**
+  String get textDiffRemoved;
+
+  /// No description provided for @textDiffChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed'**
+  String get textDiffChanged;
+
+  /// No description provided for @textDiffSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{added} added · {removed} removed · {changed} changed'**
+  String textDiffSummary(int added, int removed, int changed);
 
   /// No description provided for @certGenerator.
   ///

@@ -3,26 +3,27 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../models/app_feature.dart';
+import '../../services/feature_visibility_provider.dart';
 import '../../services/language_provider.dart';
 import '../../services/lab_theme_manager.dart';
 import '../../services/log_storage_service.dart';
 import '../../utils/about_dialog_helper.dart';
 import '../lab/lab.dart';
 import '../../utils/app_dialog_helper.dart';
-import '../../viewmodels/timesheet_provider.dart';
 
 class SettingsMenu extends StatelessWidget {
-  final VoidCallback? onTimesheetDisabled;
+  final ValueChanged<AppFeature>? onFeatureDisabled;
 
   const SettingsMenu({
     super.key,
-    this.onTimesheetDisabled,
+    this.onFeatureDisabled,
   });
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final tsProvider = context.watch<TimesheetProvider>();
+    final features = context.watch<FeatureVisibilityProvider>();
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -57,12 +58,15 @@ class SettingsMenu extends StatelessWidget {
             case 'about':
               AboutDialogHelper.showAboutDialog(context);
               break;
+            case 'toggle_text_diff':
+              _toggleFeature(context, AppFeature.textDiff);
+              break;
             case 'toggle_timesheet':
-              final nextValue = !tsProvider.isEnabled;
+              final nextValue = !features.isEnabled(AppFeature.timesheet);
               if (!nextValue) {
-                onTimesheetDisabled?.call();
+                onFeatureDisabled?.call(AppFeature.timesheet);
               }
-              tsProvider.toggleEnabled(nextValue);
+              features.setEnabled(AppFeature.timesheet, nextValue);
               break;
           }
         },
@@ -91,6 +95,32 @@ class SettingsMenu extends StatelessWidget {
               color: colorScheme.outlineVariant.withValues(alpha: 0.62),
             ),
             PopupMenuItem(
+              enabled: false,
+              height: 26,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                l10n.optionalTools.toUpperCase(),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.7,
+                ),
+              ),
+            ),
+            PopupMenuItem(
+              value: 'toggle_text_diff',
+              height: 44,
+              padding: EdgeInsets.zero,
+              child: _SettingsMenuRow(
+                icon: Icons.difference_outlined,
+                label: l10n.navTextDiff,
+                iconColor: colorScheme.primary,
+                trailing: _MenuStatePill(
+                  active: features.isEnabled(AppFeature.textDiff),
+                ),
+              ),
+            ),
+            PopupMenuItem(
               value: 'toggle_timesheet',
               height: 44,
               padding: EdgeInsets.zero,
@@ -98,7 +128,9 @@ class SettingsMenu extends StatelessWidget {
                 icon: Icons.calendar_month_outlined,
                 label: l10n.toolTimesheet,
                 iconColor: colorScheme.primary,
-                trailing: _MenuStatePill(active: tsProvider.isEnabled),
+                trailing: _MenuStatePill(
+                  active: features.isEnabled(AppFeature.timesheet),
+                ),
               ),
             ),
             PopupMenuDivider(
@@ -128,6 +160,15 @@ class SettingsMenu extends StatelessWidget {
         child: _SettingsButton(colorScheme: colorScheme),
       ),
     );
+  }
+
+  void _toggleFeature(BuildContext context, AppFeature feature) {
+    final features = context.read<FeatureVisibilityProvider>();
+    final nextValue = !features.isEnabled(feature);
+    if (!nextValue) {
+      onFeatureDisabled?.call(feature);
+    }
+    features.setEnabled(feature, nextValue);
   }
 
   void _showThemeDialog(BuildContext context) {

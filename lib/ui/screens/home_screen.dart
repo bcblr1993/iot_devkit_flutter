@@ -4,9 +4,10 @@ import 'dart:async';
 import 'package:provider/provider.dart';
 import '../../services/mqtt_controller.dart';
 import '../../services/status_registry.dart';
+import '../../services/feature_visibility_provider.dart';
 import '../widgets/log_console.dart';
-import '../../viewmodels/timesheet_provider.dart';
 import '../shell/app_navigation_rail.dart';
+import '../shell/app_destination.dart';
 import '../shell/main_content_switcher.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -17,7 +18,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
+  AppDestination _selectedDestination = AppDestination.simulator;
   final List<LogEntry> _logs = [];
   bool _isLogExpanded = false;
 
@@ -76,29 +77,36 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  /// Rail navigation via keyboard (design system · rail F-key hints).
-  /// F1 Simulator · F2 Timestamp · F3 JSON · F4 Certs · F5 Timesheet.
-  void _select(int index) {
-    if (index == 4 && !context.read<TimesheetProvider>().isEnabled) {
-      return; // Timesheet rail item is hidden — ignore the shortcut.
+  void _select(AppDestination destination) {
+    final feature = destination.feature;
+    if (feature != null &&
+        !context.read<FeatureVisibilityProvider>().isEnabled(feature)) {
+      return;
     }
-    setState(() => _selectedIndex = index);
+    setState(() => _selectedDestination = destination);
   }
 
   @override
   Widget build(BuildContext context) {
-    final tsProvider = context.watch<TimesheetProvider>();
-    final isTimesheetVisible = tsProvider.isEnabled;
-    final selectedIndex =
-        isTimesheetVisible || _selectedIndex < 4 ? _selectedIndex : 0;
+    final features = context.watch<FeatureVisibilityProvider>();
+    final destinations = visibleAppDestinations(features);
+    final selectedIndex = destinations.indexOf(_selectedDestination);
+    final safeSelectedIndex = selectedIndex < 0 ? 0 : selectedIndex;
 
     return CallbackShortcuts(
       bindings: <ShortcutActivator, VoidCallback>{
-        const SingleActivator(LogicalKeyboardKey.f1): () => _select(0),
-        const SingleActivator(LogicalKeyboardKey.f2): () => _select(1),
-        const SingleActivator(LogicalKeyboardKey.f3): () => _select(2),
-        const SingleActivator(LogicalKeyboardKey.f4): () => _select(3),
-        const SingleActivator(LogicalKeyboardKey.f5): () => _select(4),
+        const SingleActivator(LogicalKeyboardKey.f1): () =>
+            _select(AppDestination.simulator),
+        const SingleActivator(LogicalKeyboardKey.f2): () =>
+            _select(AppDestination.timestamp),
+        const SingleActivator(LogicalKeyboardKey.f3): () =>
+            _select(AppDestination.json),
+        const SingleActivator(LogicalKeyboardKey.f4): () =>
+            _select(AppDestination.certificates),
+        const SingleActivator(LogicalKeyboardKey.f5): () =>
+            _select(AppDestination.textDiff),
+        const SingleActivator(LogicalKeyboardKey.f6): () =>
+            _select(AppDestination.timesheet),
       },
       child: Focus(
         autofocus: true,
@@ -107,17 +115,15 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               RepaintBoundary(
                 child: AppNavigationRail(
-                  selectedIndex: selectedIndex,
+                  selectedIndex: safeSelectedIndex,
                   onDestinationSelected: (int index) {
-                    setState(() {
-                      _selectedIndex = index;
-                    });
+                    if (index < destinations.length) {
+                      _select(destinations[index]);
+                    }
                   },
-                  onTimesheetDisabled: () {
-                    if (_selectedIndex == 4) {
-                      setState(() {
-                        _selectedIndex = 0;
-                      });
+                  onDestinationDisabled: (destination) {
+                    if (_selectedDestination == destination) {
+                      _select(AppDestination.simulator);
                     }
                   },
                 ),
@@ -126,7 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Expanded(
                 child: RepaintBoundary(
                   child: MainContentSwitcher(
-                    selectedIndex: selectedIndex,
+                    selectedIndex: safeSelectedIndex,
                     logs: _logs,
                     isLogExpanded: _isLogExpanded,
                     onToggleLog: () {

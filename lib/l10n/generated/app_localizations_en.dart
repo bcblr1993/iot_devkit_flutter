@@ -21,6 +21,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navJson => 'JSON';
 
   @override
+  String get navTextDiff => 'Text Diff';
+
+  @override
   String get startSimulation => 'START SIMULATION';
 
   @override
@@ -840,6 +843,54 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get navCertificates => 'Certificates';
+
+  @override
+  String get optionalTools => 'Optional tools';
+
+  @override
+  String get textDiffDescription =>
+      'Compare two texts locally and inspect line-by-line changes.';
+
+  @override
+  String get textDiffOriginal => 'Original text';
+
+  @override
+  String get textDiffModified => 'Modified text';
+
+  @override
+  String get textDiffOriginalHint => 'Paste the original text here...';
+
+  @override
+  String get textDiffModifiedHint => 'Paste the modified text here...';
+
+  @override
+  String get textDiffResult => 'Comparison result';
+
+  @override
+  String get textDiffEmpty => 'Enter text on either side to start comparing.';
+
+  @override
+  String get textDiffNoChanges => 'The two texts are identical.';
+
+  @override
+  String get textDiffSwap => 'Swap sides';
+
+  @override
+  String get textDiffCopyPatch => 'Copy patch';
+
+  @override
+  String get textDiffAdded => 'Added';
+
+  @override
+  String get textDiffRemoved => 'Removed';
+
+  @override
+  String get textDiffChanged => 'Changed';
+
+  @override
+  String textDiffSummary(int added, int removed, int changed) {
+    return '$added added · $removed removed · $changed changed';
+  }
 
   @override
   String get certGenerator => 'Certificate Generator';

@@ -5,9 +5,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:iot_devkit/l10n/generated/app_localizations.dart';
 import 'package:iot_devkit/services/mqtt_controller.dart';
 import 'package:iot_devkit/services/status_registry.dart';
+import 'package:iot_devkit/services/feature_visibility_provider.dart';
 import 'package:iot_devkit/ui/lab/lab.dart';
 import 'package:iot_devkit/ui/screens/home_screen.dart';
 import 'package:iot_devkit/ui/screens/timesheet_screen.dart';
+import 'package:iot_devkit/ui/tools/text_diff_tool.dart';
 import 'package:iot_devkit/ui/shell/app_navigation_rail.dart';
 import 'package:iot_devkit/viewmodels/timesheet_provider.dart';
 import 'package:provider/provider.dart';
@@ -42,19 +44,76 @@ void main() {
     expect(find.byType(TimesheetScreen), findsOneWidget);
   });
 
-  testWidgets('HomeScreen F-key shortcuts switch the rail destination',
+  testWidgets('HomeScreen keeps optional tools hidden by default',
       (tester) async {
-    SharedPreferences.setMockInitialValues({'ts_enabled': true});
+    SharedPreferences.setMockInitialValues({});
 
     await tester.pumpWidget(_buildTestApp());
     await tester.pump();
     await tester.pump();
 
-    // Default = Simulator (index 0), Timesheet not shown.
-    expect(find.byType(TimesheetScreen), findsNothing);
+    expect(find.byType(TextDiffTool), findsNothing);
+    expect(
+      find.byKey(const ValueKey('rail_destination_textDiff')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('rail_destination_timesheet')),
+      findsNothing,
+    );
+  });
 
-    // F5 → Timesheet.
+  testWidgets('settings can reveal and hide Text Diff', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+
+    await tester.pumpWidget(_buildTestApp());
+    await tester.pump();
+    await tester.pump();
+
+    var settings = tester.widget<PopupMenuButton<String>>(
+      find.byType(PopupMenuButton<String>),
+    );
+    settings.onSelected?.call('toggle_text_diff');
+    await tester.pump();
+
+    final destination = find.byKey(const ValueKey('rail_destination_textDiff'));
+    expect(destination, findsOneWidget);
+    await tester.tap(destination);
+    await tester.pump();
+    expect(find.byType(TextDiffTool), findsOneWidget);
+
+    settings = tester.widget<PopupMenuButton<String>>(
+      find.byType(PopupMenuButton<String>),
+    );
+    settings.onSelected?.call('toggle_text_diff');
+    await tester.pump();
+
+    expect(destination, findsNothing);
+    expect(find.byType(TextDiffTool), findsNothing);
+  });
+
+  testWidgets('HomeScreen F-key shortcuts use stable optional destinations',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({
+      'ts_enabled': true,
+      'feature_text_diff_enabled': true,
+    });
+
+    await tester.pumpWidget(_buildTestApp());
+    await tester.pump();
+    await tester.pump();
+
+    // Default = Simulator; optional tools are not selected.
+    expect(find.byType(TimesheetScreen), findsNothing);
+    expect(find.byType(TextDiffTool), findsNothing);
+
+    // F5 → Text Diff.
     await tester.sendKeyEvent(LogicalKeyboardKey.f5);
+    await tester.pump();
+    expect(find.byType(TextDiffTool), findsOneWidget);
+
+    // F6 → Timesheet.
+    await tester.sendKeyEvent(LogicalKeyboardKey.f6);
     await tester.pump();
     expect(find.byType(TimesheetScreen), findsOneWidget);
 
@@ -66,15 +125,22 @@ void main() {
 
   testWidgets('HomeScreen shell stays stable at the minimum window size',
       (tester) async {
-    SharedPreferences.setMockInitialValues({'ts_enabled': true});
+    SharedPreferences.setMockInitialValues({
+      'ts_enabled': true,
+      'feature_text_diff_enabled': true,
+    });
     await _setSurfaceSize(tester, const Size(800, 600));
 
     await tester.pumpWidget(_buildTestApp());
     await tester.pump();
-    await tester.tap(find.byIcon(Icons.calendar_month).first);
+    await tester.pump();
+    await tester.tap(
+      find.byKey(const ValueKey('rail_destination_textDiff')),
+    );
     await tester.pump();
 
     expect(find.byType(HomeScreen), findsOneWidget);
+    expect(find.byType(TextDiffTool), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
@@ -106,6 +172,9 @@ Widget _buildTestApp() {
         ),
         ChangeNotifierProvider<StatusRegistry>(
           create: (_) => StatusRegistry(),
+        ),
+        ChangeNotifierProvider<FeatureVisibilityProvider>(
+          create: (_) => FeatureVisibilityProvider(),
         ),
         ChangeNotifierProvider<TimesheetProvider>(
           create: (_) => TimesheetProvider(),
