@@ -38,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
         // Check for critical errors to show in Status Banner
         if (type == 'error' && message.contains('Max reconnect attempts')) {
           Provider.of<StatusRegistry>(context, listen: false)
-              .setStatus(message, Theme.of(context).colorScheme.error);
+              .setStatus(message);
         }
 
         final now = DateTime.now();

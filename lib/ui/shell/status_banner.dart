@@ -11,7 +11,7 @@ class StatusBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<StatusRegistry>(
       builder: (context, registry, child) {
-        final color = registry.color;
+        final color = Theme.of(context).colorScheme.error;
         final msg = registry.message;
 
         return AnimatedSwitcher(
