@@ -1,6 +1,6 @@
-// ignore_for_file: avoid_hardcoded_color, avoid_raw_edge_insets
 import 'package:flutter/material.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../lab/lab.dart';
 
 class TreeControlState {
   final int version;
@@ -54,6 +54,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
   static const double _iconSize = 20.0;
   static const double _tileHPad = 4.0;
   static const double _lineMargin = 13.5;
+  static const double _childIndent = 14.5;
 
   @override
   void initState() {
@@ -167,7 +168,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
   @override
   Widget build(BuildContext context) {
     if (widget.data == null) {
-      return _buildRow(context, 'null', Colors.purple, isNull: true);
+      return _buildPrimitive(context, widget.data);
     } else if (widget.data is Map) {
       return _buildObject(context, widget.data as Map<String, dynamic>);
     } else if (widget.data is List) {
@@ -185,7 +186,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
 
     return Theme(
       data: theme.copyWith(
-        dividerColor: Colors.transparent,
+        dividerColor: theme.colorScheme.surface.withValues(alpha: 0),
         iconTheme: theme.iconTheme
             .copyWith(size: _iconSize, color: theme.colorScheme.onSurface),
         listTileTheme: const ListTileThemeData(
@@ -221,7 +222,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
                             color: theme.colorScheme.outline, width: 1.0)),
                   ),
                   margin: const EdgeInsets.only(left: _lineMargin),
-                  padding: const EdgeInsets.only(left: 14.5),
+                  padding: const EdgeInsets.only(left: _childIndent),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: _buildObjectChildren(map, l10n),
@@ -241,7 +242,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
 
     return Theme(
       data: theme.copyWith(
-        dividerColor: Colors.transparent,
+        dividerColor: theme.colorScheme.surface.withValues(alpha: 0),
         iconTheme: theme.iconTheme
             .copyWith(size: _iconSize, color: theme.colorScheme.onSurface),
         listTileTheme: const ListTileThemeData(
@@ -277,7 +278,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
                             color: theme.colorScheme.outline, width: 1.0)),
                   ),
                   margin: const EdgeInsets.only(left: _lineMargin),
-                  padding: const EdgeInsets.only(left: 14.5),
+                  padding: const EdgeInsets.only(left: _childIndent),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: _buildArrayChildren(list, l10n),
@@ -417,7 +418,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
                           ? theme.colorScheme.onTertiaryContainer
                           : (widget.isArrayItem
                               ? theme.colorScheme.secondary
-                              : Colors.purple[800])),
+                              : theme.colorScheme.tertiary)),
                   fontWeight:
                       widget.isArrayItem ? FontWeight.normal : FontWeight.bold,
                   backgroundColor:
@@ -440,6 +441,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
     Color color;
     String valueStr = value.toString();
     final theme = Theme.of(context);
+    final tokens = LabTokens.of(context);
     final isKeyMatch = _checkMatch(widget.keyName);
     final isValueMatch = _checkMatch(valueStr);
     final isActive = _isSelfActive();
@@ -451,17 +453,12 @@ class _JsonTreeViewState extends State<JsonTreeView> {
     final activeColor = theme.colorScheme.onPrimaryContainer;
 
     if (value is String) {
-      color = Colors.green[800]!;
-      if (theme.brightness == Brightness.dark) color = Colors.greenAccent[400]!;
+      color = tokens.ok;
       valueStr = '"$value"';
     } else if (value is num) {
-      color = Colors.blue[800]!;
-      if (theme.brightness == Brightness.dark) color = Colors.blueAccent[200]!;
+      color = tokens.info;
     } else if (value is bool) {
-      color = Colors.orange[800]!;
-      if (theme.brightness == Brightness.dark) {
-        color = Colors.orangeAccent[200]!;
-      }
+      color = tokens.warn;
     } else {
       color = theme.colorScheme.onSurface;
     }
@@ -501,7 +498,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
                               ? highColor
                               : (widget.isArrayItem
                                   ? theme.colorScheme.secondary
-                                  : Colors.purple[800])),
+                                  : theme.colorScheme.tertiary)),
                       fontWeight: widget.isArrayItem
                           ? FontWeight.normal
                           : FontWeight.bold,
@@ -515,7 +512,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
                         ? activeColor
                         : (isValueMatch && !isKeyMatch
                             ? highColor
-                            : (widget.data == null ? Colors.grey : color)),
+                            : (widget.data == null ? tokens.faint : color)),
                     backgroundColor:
                         isActive ? activeBg : (isValueMatch ? highBg : null),
                   )),
@@ -524,11 +521,6 @@ class _JsonTreeViewState extends State<JsonTreeView> {
         ),
       ),
     );
-  }
-
-  Widget _buildRow(BuildContext context, String valueStr, Color valueColor,
-      {bool isNull = false}) {
-    return _buildPrimitive(context, widget.data);
   }
 
   bool _checkMatch(String? text) {
