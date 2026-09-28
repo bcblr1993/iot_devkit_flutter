@@ -1,4 +1,3 @@
-// ignore_for_file: avoid_raw_edge_insets, prefer_lab_tokens
 import 'package:flutter/material.dart';
 import '../../models/custom_key_config.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -139,6 +138,7 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
     final masterHint = !widget.customKeysEnabled && !canEnableMaster
         ? l10n.customKeysMasterLimitHint
         : l10n.customKeysMasterHint;
+    final tokens = LabTokens.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,7 +155,7 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
                         width: 4,
                         height: 16,
                         color: widget.headerColor ?? theme.colorScheme.primary,
-                        margin: const EdgeInsets.only(right: 8)),
+                        margin: EdgeInsets.only(right: tokens.sMd)),
                     Text(l10n.customKeys,
                         style: TextStyle(
                             fontWeight: FontWeight.bold,
@@ -235,7 +235,7 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
         ),
         if (_isSearchVisible)
           Padding(
-            padding: const EdgeInsets.only(bottom: 8.0, top: 4.0),
+            padding: EdgeInsets.only(bottom: tokens.sMd, top: tokens.sXs),
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
@@ -248,10 +248,10 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
                         onPressed: _clearSearch,
                       )
                     : null,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                contentPadding: EdgeInsets.symmetric(
+                    horizontal: tokens.sMd, vertical: tokens.sMd),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(tokens.rLg)),
               ),
               style: const TextStyle(fontSize: 13),
               onChanged: (v) => setState(() => _searchQuery = v),
@@ -326,11 +326,13 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
             ? l10n.customKeyActive
             : l10n.customKeyInactive;
 
+    final tokens = LabTokens.of(context);
     return Opacity(
       opacity: isIgnored ? 0.5 : 1.0,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-        margin: const EdgeInsets.only(bottom: 6),
+        padding:
+            EdgeInsets.symmetric(vertical: tokens.sXs, horizontal: tokens.sMd),
+        margin: EdgeInsets.only(bottom: tokens.sSm),
         decoration: BoxDecoration(
           color: isIgnored
               ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
@@ -339,7 +341,7 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
                       .withValues(alpha: 0.28)
                   : theme.colorScheme.surfaceContainerHighest
                       .withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(tokens.rSm),
           border: isIgnored
               ? Border.all(
                   color: theme.colorScheme.outline.withValues(alpha: 0.2))
@@ -386,13 +388,13 @@ class _CustomKeysManagerState extends State<CustomKeysManager> {
             const SizedBox(width: 8),
             if (isIgnored)
               Padding(
-                padding: const EdgeInsets.only(right: 8),
+                padding: EdgeInsets.only(right: tokens.sMd),
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: tokens.sXs, vertical: tokens.sXxs),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.errorContainer,
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(tokens.rXs),
                   ),
                   child: Text(l10n.ignored,
                       style: TextStyle(
