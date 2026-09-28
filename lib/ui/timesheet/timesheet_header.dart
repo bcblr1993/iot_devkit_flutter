@@ -1,4 +1,3 @@
-// ignore_for_file: avoid_raw_edge_insets
 import 'package:flutter/material.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -24,9 +23,10 @@ class TimesheetHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final tokens = LabTokens.of(context);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(tokens.sXl),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         border: Border(
