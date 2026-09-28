@@ -1,4 +1,3 @@
-// ignore_for_file: avoid_hardcoded_color
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -147,7 +146,7 @@ void main(List<String> arguments) async {
       WindowOptions windowOptions = WindowOptions(
         size: const Size(1100, 750),
         center: true,
-        backgroundColor: Colors.white,
+        backgroundColor: themeManager.theme.themeData.scaffoldBackgroundColor,
         skipTaskbar: false,
         title: windowTitle,
         titleBarStyle: TitleBarStyle.normal,
