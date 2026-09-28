@@ -1,4 +1,3 @@
-// ignore_for_file: avoid_raw_edge_insets, prefer_lab_tokens
 import 'package:flutter/material.dart';
 import '../../models/group_config.dart';
 import '../../models/payload_format.dart';
@@ -105,12 +104,13 @@ class _GroupsManagerState extends State<GroupsManager> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final tokens = LabTokens.of(context);
     final bool allExpanded = _localGroups.every((g) => g.isExpanded);
 
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.only(bottom: 2),
+          padding: EdgeInsets.only(bottom: tokens.sXxs),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -121,7 +121,7 @@ class _GroupsManagerState extends State<GroupsManager> {
                       height: 16,
                       color: widget.headerColor ??
                           Theme.of(context).colorScheme.primary,
-                      margin: const EdgeInsets.only(right: 8)),
+                      margin: EdgeInsets.only(right: tokens.sMd)),
                   Text(l10n.groupManagement,
                       style: TextStyle(
                           fontWeight: FontWeight.bold,
@@ -170,6 +170,7 @@ class _GroupsManagerState extends State<GroupsManager> {
 
   Widget _buildGroupCard(int index, GroupConfig group, AppLocalizations l10n) {
     final theme = Theme.of(context);
+    final tokens = LabTokens.of(context);
 
     final cardContent = ExpansionTile(
       key: ValueKey("${group.id}_${group.isExpanded}"),
@@ -190,7 +191,7 @@ class _GroupsManagerState extends State<GroupsManager> {
             ),
       children: [
         Padding(
-          padding: const EdgeInsets.all(12.0),
+          padding: EdgeInsets.all(tokens.sLg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -352,9 +353,9 @@ class _GroupsManagerState extends State<GroupsManager> {
     return Card(
       elevation: 0,
       color: theme.colorScheme.surfaceContainerLow,
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: EdgeInsets.only(bottom: tokens.sLg),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(tokens.rLg),
         side: BorderSide(
           color: theme.colorScheme.outlineVariant.withValues(alpha: 0.42),
         ),
