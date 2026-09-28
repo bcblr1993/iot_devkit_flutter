@@ -1,4 +1,3 @@
-// ignore_for_file: avoid_raw_edge_insets, prefer_lab_tokens
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -64,6 +63,7 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final tokens = LabTokens.of(context);
     final parsed = _parsedAddresses;
     final request = _request;
     final plan = CertificatePackageBuilder.buildPlan(
@@ -77,7 +77,8 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
     return Container(
       color: theme.colorScheme.surface,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+        padding: EdgeInsets.fromLTRB(
+            tokens.s3xl, tokens.s3xl, tokens.s3xl, tokens.s4xl),
         // Fill the available width (no centered max-width cap) so the page
         // adapts to wide windows like the other tools.
         child: Column(
@@ -86,7 +87,7 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
             _buildHeader(context, l10n),
             const SizedBox(height: 18),
             Padding(
-              padding: const EdgeInsets.only(bottom: 16),
+              padding: EdgeInsets.only(bottom: tokens.sXl),
               child: LabSection(
                 title: l10n.certUsage,
                 child: Column(
@@ -107,7 +108,7 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.only(bottom: 16),
+              padding: EdgeInsets.only(bottom: tokens.sXl),
               child: LabSection(
                 title: l10n.certSanAddresses,
                 trailing: Text(
@@ -147,14 +148,14 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.only(bottom: 16),
+              padding: EdgeInsets.only(bottom: tokens.sXl),
               child: LabSection(
                 title: l10n.certOutputPreview,
                 child: _buildOutputPreview(context, l10n, plan),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.only(bottom: 16),
+              padding: EdgeInsets.only(bottom: tokens.sXl),
               child: LabSection(
                 title: l10n.certEndpointVerify,
                 child: _buildEndpointVerifier(context, l10n),
@@ -215,6 +216,7 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
 
   Widget _buildHeader(BuildContext context, AppLocalizations l10n) {
     final theme = Theme.of(context);
+    final tokens = LabTokens.of(context);
     return Row(
       children: [
         Container(
@@ -222,7 +224,7 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
           height: 52,
           decoration: BoxDecoration(
             color: theme.colorScheme.primaryContainer.withValues(alpha: 0.55),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(tokens.rXl),
           ),
           child: Icon(
             Icons.workspace_premium_outlined,
@@ -391,6 +393,7 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
     CertificatePackagePlan plan,
   ) {
     final theme = Theme.of(context);
+    final tokens = LabTokens.of(context);
 
     return FormGrid(
       minItemWidth: 360,
@@ -402,7 +405,7 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
             children: [
               for (final file in plan.fileNames)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                  padding: EdgeInsets.only(bottom: tokens.sMd),
                   child: Row(
                     children: [
                       Icon(
@@ -631,11 +634,13 @@ class _CertificateGeneratorToolState extends State<CertificateGeneratorTool> {
     String path,
   ) {
     final theme = Theme.of(context);
+    final tokens = LabTokens.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: EdgeInsets.symmetric(
+          horizontal: tokens.sLg, vertical: tokens.sLg),
       decoration: BoxDecoration(
         color: theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(tokens.rLg),
         border: Border.all(
           color: theme.colorScheme.primary.withValues(alpha: 0.18),
         ),
@@ -879,9 +884,10 @@ class _ResultLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final tokens = LabTokens.of(context);
     final color = theme.colorScheme.onSurfaceVariant;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: EdgeInsets.only(bottom: tokens.sSm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -922,12 +928,13 @@ class _PreviewPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final tokens = LabTokens.of(context);
     return Container(
       constraints: const BoxConstraints(minHeight: 180),
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(tokens.sLg),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.65),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(tokens.rLg),
         border: Border.all(
           color: theme.colorScheme.outlineVariant.withValues(alpha: 0.42),
         ),
