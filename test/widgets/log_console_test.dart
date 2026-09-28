@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:iot_devkit/ui/lab/lab.dart';
 import 'package:iot_devkit/ui/widgets/log_console.dart';
 
 void main() {
@@ -12,6 +13,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        theme: labThemeSignal.themeData,
         home: Scaffold(
           body: SizedBox(
             width: 360,
@@ -49,6 +51,7 @@ void main() {
       (tester) async {
     await tester.pumpWidget(
       MaterialApp(
+        theme: labThemeSignal.themeData,
         home: Scaffold(
           body: SizedBox(
             width: 420,

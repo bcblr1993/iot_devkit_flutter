@@ -1,9 +1,9 @@
-// ignore_for_file: avoid_hardcoded_color, avoid_raw_edge_insets, prefer_lab_tokens
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../components/app_empty_state.dart';
+import '../lab/lab.dart';
 
 class LogEntry {
   final String message;
@@ -141,7 +141,7 @@ class _LogConsoleState extends State<LogConsole> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.14),
+            color: colors.shadow.withValues(alpha: 0.14),
             blurRadius: 18,
             offset: const Offset(0, -8),
           ),
@@ -170,6 +170,7 @@ class _LogConsoleState extends State<LogConsole> {
   ) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final tokens = LabTokens.of(context);
     final errorCount = _typeCount('error');
     final warningCount = _typeCount('warning');
     final lastLog = widget.logs.isEmpty ? null : widget.logs.last;
@@ -180,7 +181,7 @@ class _LogConsoleState extends State<LogConsole> {
       child: SizedBox(
         height: 54,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: EdgeInsets.symmetric(horizontal: tokens.sLg),
           child: Row(
             children: [
               Container(
@@ -188,7 +189,7 @@ class _LogConsoleState extends State<LogConsole> {
                 height: 30,
                 decoration: BoxDecoration(
                   color: colors.primaryContainer.withValues(alpha: 0.45),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(tokens.rLg),
                 ),
                 child: Icon(
                   Icons.terminal,
@@ -220,7 +221,7 @@ class _LogConsoleState extends State<LogConsole> {
                     // Wrapped in a horizontal scroller here so ANY headerContent
                     // (however wide) never overflows the compact header.
                     ? Padding(
-                        padding: const EdgeInsets.only(right: 8),
+                        padding: EdgeInsets.only(right: tokens.sMd),
                         child: ClipRect(
                           child: SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
@@ -336,6 +337,7 @@ class _LogConsoleState extends State<LogConsole> {
 
   Widget _buildFilterStrip(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final tokens = LabTokens.of(context);
     final isZh = Localizations.localeOf(context).languageCode == 'zh';
     final items = <(String, IconData, String)>[
       (_allTypes, Icons.all_inbox, isZh ? '全部' : 'All'),
@@ -348,7 +350,8 @@ class _LogConsoleState extends State<LogConsole> {
     return Container(
       height: 46,
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding:
+          EdgeInsets.symmetric(horizontal: tokens.sLg, vertical: tokens.sSm),
       decoration: BoxDecoration(
         color: colors.surfaceContainerLowest,
         border: Border(
@@ -389,10 +392,12 @@ class _LogConsoleState extends State<LogConsole> {
   ) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final tokens = LabTokens.of(context);
 
     return Container(
       height: 44,
-      padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+      padding: EdgeInsets.fromLTRB(
+          tokens.sLg, tokens.sSm, tokens.sLg, tokens.sSm),
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow.withValues(alpha: 0.55),
         border: Border(
@@ -423,14 +428,14 @@ class _LogConsoleState extends State<LogConsole> {
                 isDense: true,
                 filled: true,
                 fillColor: colors.surface,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                contentPadding: EdgeInsets.symmetric(
+                    horizontal: tokens.sMd, vertical: tokens.sMd),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(tokens.rLg),
                   borderSide: BorderSide(color: colors.outlineVariant),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(tokens.rLg),
                   borderSide: BorderSide(color: colors.outlineVariant),
                 ),
               ),
@@ -454,6 +459,7 @@ class _LogConsoleState extends State<LogConsole> {
   ) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final tokens = LabTokens.of(context);
 
     if (visibleLogs.isEmpty) {
       // Two real states: idle/empty (no logs yet) and filtered-no-results.
@@ -484,7 +490,8 @@ class _LogConsoleState extends State<LogConsole> {
       ),
       child: ListView.separated(
         controller: _scrollController,
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+        padding: EdgeInsets.fromLTRB(
+            tokens.sLg, tokens.sMd, tokens.sLg, tokens.sLg),
         itemCount: visibleLogs.length,
         separatorBuilder: (_, __) => Divider(
           height: 1,
@@ -505,6 +512,7 @@ class _LogConsoleState extends State<LogConsole> {
   }
 
   List<TextSpan> _highlightedText(String text, String query, Color baseColor) {
+    final colors = Theme.of(context).colorScheme;
     final baseStyle = TextStyle(
       color: baseColor,
       fontSize: 12,
@@ -533,8 +541,8 @@ class _LogConsoleState extends State<LogConsole> {
         TextSpan(
           text: text.substring(index, index + lowerQuery.length),
           style: baseStyle.copyWith(
-            color: Colors.black,
-            backgroundColor: Colors.amberAccent,
+            color: colors.onTertiaryContainer,
+            backgroundColor: colors.tertiaryContainer,
             fontWeight: FontWeight.w900,
           ),
         ),
@@ -551,13 +559,14 @@ class _LogConsoleState extends State<LogConsole> {
 
   Color _typeColor(BuildContext context, String type) {
     final colors = Theme.of(context).colorScheme;
+    final tokens = LabTokens.of(context);
     switch (type) {
       case 'error':
         return colors.error;
       case 'warning':
-        return Colors.orange.shade700;
+        return tokens.warn;
       case 'success':
-        return Colors.green.shade600;
+        return tokens.ok;
       case 'info':
         return colors.primary;
       default:
@@ -565,21 +574,23 @@ class _LogConsoleState extends State<LogConsole> {
     }
   }
 
+  // Deterministic per-tag color, picked from the theme's own accent roles
+  // (rather than computed RGB) so every tag stays legible and in-harmony
+  // across all 16 Lab themes instead of possibly clashing with one.
   Color _tagColor(BuildContext context, String tag) {
-    if (tag.isEmpty) return Theme.of(context).colorScheme.onSurfaceVariant;
-    final hash = tag.hashCode;
-    final r = (hash & 0xFF0000) >> 16;
-    final g = (hash & 0x00FF00) >> 8;
-    final b = hash & 0x0000FF;
-    final brightness = Theme.of(context).brightness;
-    final offset = brightness == Brightness.dark ? 132 : 72;
-    final range = brightness == Brightness.dark ? 124 : 112;
-    return Color.fromARGB(
-      255,
-      offset + (r % range),
-      offset + (g % range),
-      offset + (b % range),
-    );
+    final colors = Theme.of(context).colorScheme;
+    if (tag.isEmpty) return colors.onSurfaceVariant;
+    final tokens = LabTokens.of(context);
+    final palette = [
+      colors.primary,
+      colors.secondary,
+      colors.tertiary,
+      tokens.ok,
+      tokens.warn,
+      tokens.info,
+      colors.error,
+    ];
+    return palette[tag.hashCode.abs() % palette.length];
   }
 
   String _localized(
@@ -647,9 +658,10 @@ class _LogLine extends StatelessWidget {
     final state = context.findAncestorStateOfType<_LogConsoleState>();
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final tokens = LabTokens.of(context);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: EdgeInsets.symmetric(vertical: tokens.sSm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -711,6 +723,10 @@ class _LogLevelBadge extends StatelessWidget {
   final String type;
   final Color color;
 
+  // Fully-rounded pill shape — not on the token radius scale, so kept as a
+  // named constant (same escape hatch as elsewhere in the Lab migration).
+  static const double _pillRadius = 999;
+
   const _LogLevelBadge({
     required this.type,
     required this.color,
@@ -718,12 +734,14 @@ class _LogLevelBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = LabTokens.of(context);
     return Container(
       constraints: const BoxConstraints(minWidth: 58),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding:
+          EdgeInsets.symmetric(horizontal: tokens.sMd, vertical: tokens.sXs),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(_pillRadius),
         border: Border.all(color: color.withValues(alpha: 0.28)),
       ),
       child: Text(
@@ -760,13 +778,14 @@ class _LogFilterButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final tokens = LabTokens.of(context);
 
     return OutlinedButton.icon(
       style: OutlinedButton.styleFrom(
         minimumSize: const Size(0, 32),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         visualDensity: VisualDensity.compact,
-        padding: const EdgeInsets.symmetric(horizontal: 10),
+        padding: EdgeInsets.symmetric(horizontal: tokens.sLg),
         foregroundColor: selected ? color : colors.onSurfaceVariant,
         backgroundColor: selected ? color.withValues(alpha: 0.1) : null,
         side: BorderSide(
@@ -774,7 +793,8 @@ class _LogFilterButton extends StatelessWidget {
               ? color.withValues(alpha: 0.6)
               : colors.outlineVariant.withValues(alpha: 0.8),
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(tokens.rLg)),
       ),
       onPressed: onPressed,
       icon: Icon(icon, size: 15),
@@ -798,11 +818,13 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = LabTokens.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding:
+          EdgeInsets.symmetric(horizontal: tokens.sMd, vertical: tokens.sXs),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(7),
+        borderRadius: BorderRadius.circular(tokens.rLg),
         border: Border.all(color: color.withValues(alpha: 0.24)),
       ),
       child: Text(
@@ -838,12 +860,13 @@ class _ToolbarIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final tokens = LabTokens.of(context);
     final active = emphasized || isActive;
 
     return Tooltip(
       message: tooltip,
       child: Padding(
-        padding: const EdgeInsets.only(left: 4),
+        padding: EdgeInsets.only(left: tokens.sXs),
         child: IconButton(
           iconSize: 18,
           padding: EdgeInsets.zero,
@@ -852,8 +875,8 @@ class _ToolbarIconButton extends StatelessWidget {
             backgroundColor:
                 active ? colors.primary.withValues(alpha: 0.12) : null,
             foregroundColor: active ? colors.primary : colors.onSurfaceVariant,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(tokens.rLg)),
           ),
           icon: Icon(icon),
           onPressed: onPressed,
