@@ -1,4 +1,3 @@
-// ignore_for_file: avoid_hardcoded_color, avoid_raw_edge_insets, prefer_lab_tokens
 import 'dart:convert';
 import 'dart:async'; // For Timer
 import 'package:flutter/material.dart';
@@ -143,13 +142,12 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
         style == JsonOutputStyle.pretty
             ? l10n.formatSuccess
             : l10n.minifySuccess,
-        Colors.green,
+        LabStatus.ok,
       );
       _updateParsedData(result.data, parsedSource: result.output);
     } catch (e) {
       if (!mounted || generation != _parseGeneration) return;
-      _setStatus(
-          '${l10n.invalidJson}: $e', Theme.of(context).colorScheme.error);
+      _setStatus('${l10n.invalidJson}: $e', LabStatus.error);
     } finally {
       if (mounted && generation == _parseGeneration) {
         setState(() => _isProcessing = false);
@@ -176,7 +174,7 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
       _parsedSource = null;
     });
     _saveState(); // Save empty
-    _setStatus(AppLocalizations.of(context)!.ready, Colors.grey);
+    _setStatus(AppLocalizations.of(context)!.ready, null);
   }
 
   Future<void> _copyInput() async {
@@ -184,7 +182,7 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
     if (_documentText.isEmpty) return;
     await Clipboard.setData(ClipboardData(text: _documentText));
     if (!mounted) return;
-    _setStatus(l10n.copySuccess, Colors.green);
+    _setStatus(l10n.copySuccess, LabStatus.ok);
   }
 
   void _paste() async {
@@ -443,16 +441,9 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
     });
   }
 
-  void _setStatus(String msg, Color color) {
-    if (color == Colors.green) {
-      showLabToast(context, title: msg, kind: LabStatus.ok);
-    } else if (color == Colors.orange) {
-      showLabToast(context, title: msg, kind: LabStatus.warn);
-    } else if (color == Theme.of(context).colorScheme.error ||
-        color == Colors.red) {
-      showLabToast(context, title: msg, kind: LabStatus.error);
-    } else if (color != Colors.grey) {
-      showLabToast(context, title: msg, kind: LabStatus.info);
+  void _setStatus(String msg, LabStatus? kind) {
+    if (kind != null) {
+      showLabToast(context, title: msg, kind: kind);
     }
   }
 
@@ -473,9 +464,10 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final tokens = LabTokens.of(context);
 
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: EdgeInsets.all(tokens.sXl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -489,11 +481,11 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
                   child: Container(
                     decoration: BoxDecoration(
                         color: colorScheme.surface,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(tokens.rXl),
                         border: Border.all(color: theme.dividerColor),
                         boxShadow: [
                           BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
+                              color: colorScheme.shadow.withValues(alpha: 0.05),
                               blurRadius: 4,
                               offset: const Offset(0, 2))
                         ]),
@@ -502,14 +494,13 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
                       children: [
                         // Left Toolbar
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 8),
+                          padding: EdgeInsets.all(tokens.sMd),
                           color: colorScheme.surfaceContainerHighest,
                           child: Row(
                             children: [
                               Padding(
-                                padding:
-                                    const EdgeInsets.only(left: 8, right: 12),
+                                padding: EdgeInsets.only(
+                                    left: tokens.sMd, right: tokens.sLg),
                                 child: Text(l10n.inputLabel,
                                     style: TextStyle(
                                         fontWeight: FontWeight.bold,
@@ -589,10 +580,10 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
                                   textAlignVertical: TextAlignVertical.top,
                                   style: const TextStyle(
                                       fontFamily: 'Courier', fontSize: 13),
-                                  decoration: const InputDecoration(
+                                  decoration: InputDecoration(
                                     hintText: 'Paste or type JSON here...',
                                     border: InputBorder.none,
-                                    contentPadding: EdgeInsets.all(16),
+                                    contentPadding: EdgeInsets.all(tokens.sXl),
                                   ),
                                   inputFormatters: [
                                     LargeJsonTextInputFormatter(
@@ -620,11 +611,11 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
                   child: Container(
                     decoration: BoxDecoration(
                         color: colorScheme.surface,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(tokens.rXl),
                         border: Border.all(color: theme.dividerColor),
                         boxShadow: [
                           BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
+                              color: colorScheme.shadow.withValues(alpha: 0.05),
                               blurRadius: 4,
                               offset: const Offset(0, 2))
                         ]),
@@ -633,14 +624,13 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
                       children: [
                         // Right Toolbar
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 8),
+                          padding: EdgeInsets.all(tokens.sMd),
                           color: colorScheme.surfaceContainerHighest,
                           child: Row(
                             children: [
                               Padding(
-                                padding:
-                                    const EdgeInsets.only(left: 8, right: 12),
+                                padding: EdgeInsets.only(
+                                    left: tokens.sMd, right: tokens.sLg),
                                 child: Text(l10n.treeViewLabel,
                                     style: TextStyle(
                                         fontWeight: FontWeight.bold,
@@ -678,13 +668,13 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
                                             controller: _searchController,
                                             decoration: InputDecoration(
                                               hintText: l10n.searchHint,
-                                              contentPadding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 0),
+                                              contentPadding: EdgeInsets.only(
+                                                  left: tokens.sMd,
+                                                  right: tokens.sMd),
                                               border: OutlineInputBorder(
                                                   borderRadius:
-                                                      BorderRadius.circular(8),
+                                                      BorderRadius.circular(
+                                                          tokens.rLg),
                                                   borderSide: BorderSide.none),
                                               filled: true,
                                               fillColor: colorScheme.surface,
@@ -713,12 +703,12 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
                                                                 -1;
                                                           });
                                                         },
-                                                        child: const Padding(
-                                                            padding: EdgeInsets
-                                                                .symmetric(
+                                                        child: Padding(
+                                                            padding:
+                                                                EdgeInsets.symmetric(
                                                                     horizontal:
-                                                                        4),
-                                                            child: Icon(
+                                                                        tokens.sXs),
+                                                            child: const Icon(
                                                                 Icons.close,
                                                                 size: 14))),
                                                   if (_matches.isNotEmpty) ...[
@@ -728,23 +718,23 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
                                                         endIndent: 4),
                                                     GestureDetector(
                                                         onTap: _prevMatch,
-                                                        child: const Padding(
-                                                            padding: EdgeInsets
-                                                                .symmetric(
+                                                        child: Padding(
+                                                            padding:
+                                                                EdgeInsets.symmetric(
                                                                     horizontal:
-                                                                        4),
-                                                            child: Icon(
+                                                                        tokens.sXs),
+                                                            child: const Icon(
                                                                 Icons
                                                                     .keyboard_arrow_up,
                                                                 size: 16))),
                                                     GestureDetector(
                                                         onTap: _nextMatch,
-                                                        child: const Padding(
-                                                            padding: EdgeInsets
-                                                                .symmetric(
+                                                        child: Padding(
+                                                            padding:
+                                                                EdgeInsets.symmetric(
                                                                     horizontal:
-                                                                        4),
-                                                            child: Icon(
+                                                                        tokens.sXs),
+                                                            child: const Icon(
                                                                 Icons
                                                                     .keyboard_arrow_down,
                                                                 size: 16))),
@@ -775,7 +765,7 @@ class _JsonFormatterToolState extends State<JsonFormatterTool> {
                           child: Container(
                             color: colorScheme.surface,
                             child: SingleChildScrollView(
-                              padding: const EdgeInsets.all(16.0),
+                              padding: EdgeInsets.all(tokens.sXl),
                               child: _buildTreeContent(l10n, theme),
                             ),
                           ),
