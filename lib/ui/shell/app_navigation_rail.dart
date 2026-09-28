@@ -1,4 +1,3 @@
-// ignore_for_file: avoid_hardcoded_color, avoid_raw_edge_insets
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -30,6 +29,7 @@ class AppNavigationRail extends StatelessWidget {
     final features = context.watch<FeatureVisibilityProvider>();
     final scheme = Theme.of(context).colorScheme;
     final destinations = visibleAppDestinations(features);
+    final tokens = LabTokens.of(context);
 
     final items = destinations
         .map((destination) => _entryFor(context, destination))
@@ -53,7 +53,7 @@ class AppNavigationRail extends StatelessWidget {
             ),
           const Spacer(),
           Padding(
-            padding: const EdgeInsets.only(bottom: 12),
+            padding: EdgeInsets.only(bottom: tokens.sLg),
             child: SettingsMenu(
               onFeatureDisabled: (feature) {
                 for (final destination in AppDestination.values) {
@@ -131,14 +131,14 @@ class _RailItem extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: 80,
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
+        padding: EdgeInsets.symmetric(vertical: tokens.sLg, horizontal: tokens.sXxs),
         decoration: BoxDecoration(
           color: active
               ? Color.alphaBlend(accent.withValues(alpha: 0.08), scheme.surface)
-              : Colors.transparent,
+              : scheme.surface.withValues(alpha: 0),
           border: Border(
             left: BorderSide(
-              color: active ? accent : Colors.transparent,
+              color: active ? accent : scheme.surface.withValues(alpha: 0),
               width: 2,
             ),
           ),
