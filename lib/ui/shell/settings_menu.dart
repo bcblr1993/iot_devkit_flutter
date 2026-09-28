@@ -1,4 +1,3 @@
-// ignore_for_file: avoid_hardcoded_color, avoid_raw_edge_insets, prefer_lab_tokens
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -26,19 +25,20 @@ class SettingsMenu extends StatelessWidget {
     final features = context.watch<FeatureVisibilityProvider>();
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final tokens = LabTokens.of(context);
 
     return Tooltip(
       message: l10n.menuSettings,
       child: PopupMenuButton<String>(
         padding: EdgeInsets.zero,
         color: colorScheme.surfaceContainerLow,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: colorScheme.surface.withValues(alpha: 0),
         elevation: 16,
         shadowColor: colorScheme.shadow.withValues(alpha: 0.24),
         constraints: const BoxConstraints.tightFor(width: 268),
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(tokens.rXl),
           side: BorderSide(color: colorScheme.outlineVariant),
         ),
         tooltip: '',
@@ -198,7 +198,7 @@ class SettingsMenu extends StatelessWidget {
   void _showLanguageDialog(BuildContext context) {
     showDialog<void>(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.34),
+      barrierColor: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.34),
       builder: (dialogContext) => Consumer<LanguageProvider>(
         builder: (context, langProvider, child) {
           return _LanguagePickerDialog(
@@ -299,6 +299,7 @@ class _SettingsButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = LabTokens.of(context);
     return SizedBox(
       width: 44,
       height: 44,
@@ -310,7 +311,7 @@ class _SettingsButton extends StatelessWidget {
           height: 34,
           decoration: BoxDecoration(
             color: colorScheme.primaryContainer.withValues(alpha: 0.42),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(tokens.rXl),
             border: Border.all(
               color: colorScheme.primary.withValues(alpha: 0.16),
             ),
@@ -343,10 +344,11 @@ class _SettingsMenuRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final tokens = LabTokens.of(context);
     final accent = iconColor ?? colorScheme.onSurfaceVariant;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: EdgeInsets.symmetric(horizontal: tokens.sMd, vertical: tokens.sXs),
       child: Row(
         children: [
           Container(
@@ -354,7 +356,7 @@ class _SettingsMenuRow extends StatelessWidget {
             height: 30,
             decoration: BoxDecoration(
               color: accent.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(tokens.rLg),
             ),
             child: Icon(icon, size: 17, color: accent),
           ),
@@ -383,11 +385,16 @@ class _SettingsMenuRow extends StatelessWidget {
 class _MenuStatePill extends StatelessWidget {
   final bool active;
 
+  // Fully-rounded pill shape — not on the token radius scale, so kept as a
+  // named constant (same escape hatch as JsonTreeView's indent constants).
+  static const double _pillRadius = 999;
+
   const _MenuStatePill({required this.active});
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final tokens = LabTokens.of(context);
     final color = active ? colorScheme.primary : colorScheme.outline;
 
     return AnimatedContainer(
@@ -397,13 +404,13 @@ class _MenuStatePill extends StatelessWidget {
       height: 20,
       decoration: BoxDecoration(
         color: color.withValues(alpha: active ? 0.16 : 0.08),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(_pillRadius),
         border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Align(
         alignment: active ? Alignment.centerRight : Alignment.centerLeft,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 3),
+          padding: EdgeInsets.symmetric(horizontal: tokens.sXs),
           child: Container(
             width: 14,
             height: 14,
@@ -435,22 +442,23 @@ class _ThemeOptionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final tokens = LabTokens.of(context);
     final primary = colorScheme.primary;
 
     return Material(
-      color: Colors.transparent,
+      color: colorScheme.surface.withValues(alpha: 0),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(tokens.rXl),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.all(10),
+          padding: EdgeInsets.all(tokens.sLg),
           decoration: BoxDecoration(
             color: isSelected
                 ? colorScheme.primaryContainer.withValues(alpha: 0.72)
                 : colorScheme.surfaceContainerLowest,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(tokens.rXl),
             border: Border.all(
               color: isSelected ? primary : colorScheme.outlineVariant,
               width: isSelected ? 1.4 : 1,
@@ -528,6 +536,7 @@ class _LanguagePickerDialog extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final tokens = LabTokens.of(context);
     final isZh = Localizations.localeOf(context).languageCode == 'zh';
     final languages = [
       _LanguageOptionData(
@@ -546,21 +555,21 @@ class _LanguagePickerDialog extends StatelessWidget {
 
     return Dialog(
       elevation: 0,
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+      backgroundColor: colors.surface.withValues(alpha: 0),
+      insetPadding: EdgeInsets.symmetric(horizontal: tokens.s3xl),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 520),
         child: Container(
-          padding: const EdgeInsets.all(18),
+          padding: EdgeInsets.all(tokens.s2xl),
           decoration: BoxDecoration(
             color: colors.surfaceContainerLowest,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(tokens.rXl),
             border: Border.all(
               color: colors.outlineVariant.withValues(alpha: 0.5),
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.18),
+                color: colors.shadow.withValues(alpha: 0.18),
                 blurRadius: 28,
                 offset: const Offset(0, 16),
               ),
@@ -577,7 +586,7 @@ class _LanguagePickerDialog extends StatelessWidget {
                     height: 40,
                     decoration: BoxDecoration(
                       color: colors.primaryContainer.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(tokens.rLg),
                     ),
                     child: Icon(Icons.language, color: colors.primary),
                   ),
@@ -672,23 +681,24 @@ class _LanguageOptionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final tokens = LabTokens.of(context);
     final primary = colors.primary;
 
     return Material(
-      color: Colors.transparent,
+      color: colors.surface.withValues(alpha: 0),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(tokens.rLg),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOutCubic,
           constraints: const BoxConstraints(minHeight: 104),
-          padding: const EdgeInsets.all(12),
+          padding: EdgeInsets.all(tokens.sLg),
           decoration: BoxDecoration(
             color: selected
                 ? colors.primaryContainer.withValues(alpha: 0.46)
                 : colors.surfaceContainerLow.withValues(alpha: 0.62),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(tokens.rLg),
             border: Border.all(
               color: selected ? primary : colors.outlineVariant,
               width: selected ? 1.4 : 1,
@@ -702,13 +712,13 @@ class _LanguageOptionCard extends StatelessWidget {
                   Container(
                     height: 32,
                     constraints: const BoxConstraints(minWidth: 40),
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    padding: EdgeInsets.symmetric(horizontal: tokens.sMd),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: selected
                           ? primary.withValues(alpha: 0.14)
                           : colors.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(tokens.rLg),
                     ),
                     child: Text(
                       data.badge,
@@ -777,12 +787,13 @@ class _ThemeSwatch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = LabTokens.of(context);
     return SizedBox(
       width: 54,
       height: 34,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(tokens.rLg),
           border: Border.all(
             color: isSelected
                 ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.35)
@@ -790,7 +801,9 @@ class _ThemeSwatch extends StatelessWidget {
           ),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(7),
+          // Inner clip radius = outer − default 1px BorderSide width, so the
+          // swatch fill hugs the border ring without a visible gap/overlap.
+          borderRadius: BorderRadius.circular(tokens.rLg - 1),
           child: Column(
             children: [
               Expanded(
