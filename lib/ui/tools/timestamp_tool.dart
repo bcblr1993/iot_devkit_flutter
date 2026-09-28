@@ -1,11 +1,9 @@
-// ignore_for_file: avoid_hardcoded_color, avoid_raw_edge_insets, prefer_lab_tokens
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../l10n/generated/app_localizations.dart';
-import '../styles/app_theme_effect.dart';
 import '../lab/lab.dart';
 
 class TimestampTool extends StatefulWidget {
@@ -128,17 +126,8 @@ class _TimestampToolState extends State<TimestampTool> {
     });
   }
 
-  void _setStatus(String msg, Color color) {
-    if (color == Colors.green) {
-      showLabToast(context, title: msg, kind: LabStatus.ok);
-    } else if (color == Colors.orange) {
-      showLabToast(context, title: msg, kind: LabStatus.warn);
-    } else if (color == Theme.of(context).colorScheme.error ||
-        color == Colors.red) {
-      showLabToast(context, title: msg, kind: LabStatus.error);
-    } else if (color != Colors.grey) {
-      showLabToast(context, title: msg, kind: LabStatus.info);
-    }
+  void _setStatus(String msg, LabStatus kind) {
+    showLabToast(context, title: msg, kind: kind);
   }
 
   void _convertTsToDate() {
@@ -161,14 +150,13 @@ class _TimestampToolState extends State<TimestampTool> {
 
       setState(() {
         _conversionResultDate = _format.format(targetDate);
-        _setStatus(l10n.formatSuccess, Colors.green);
+        _setStatus(l10n.formatSuccess, LabStatus.ok);
       });
       _saveState(); // Save result
     } catch (e) {
       setState(() {
         _conversionResultDate = 'Error';
-        _setStatus(
-            '${l10n.formatError}: $e', Theme.of(context).colorScheme.error);
+        _setStatus('${l10n.formatError}: $e', LabStatus.error);
       });
       _saveState(); // Save error state
     }
@@ -193,7 +181,7 @@ class _TimestampToolState extends State<TimestampTool> {
 
       setState(() {
         _conversionResultTs = realUtc.millisecondsSinceEpoch.toString();
-        _setStatus(l10n.formatSuccess, Colors.green);
+        _setStatus(l10n.formatSuccess, LabStatus.ok);
       });
       _saveState(); // Save result
     } catch (e) {
@@ -207,13 +195,13 @@ class _TimestampToolState extends State<TimestampTool> {
         final realUtc = wallTimeAsUtc.subtract(Duration(hours: offsetHours));
         setState(() {
           _conversionResultTs = realUtc.millisecondsSinceEpoch.toString();
-          _setStatus(l10n.formatSuccess, Colors.green);
+          _setStatus(l10n.formatSuccess, LabStatus.ok);
         });
         _saveState();
       } catch (e2) {
         setState(() {
           _conversionResultTs = 'Error';
-          _setStatus(l10n.formatError, Theme.of(context).colorScheme.error);
+          _setStatus(l10n.formatError, LabStatus.error);
         });
         _saveState();
       }
@@ -224,7 +212,7 @@ class _TimestampToolState extends State<TimestampTool> {
     if (text.isEmpty || text == 'Error' || text == '---') return;
     await Clipboard.setData(ClipboardData(text: text));
     if (mounted) {
-      _setStatus(AppLocalizations.of(context)!.copySuccess, Colors.green);
+      _setStatus(AppLocalizations.of(context)!.copySuccess, LabStatus.ok);
     }
   }
 
@@ -243,15 +231,10 @@ class _TimestampToolState extends State<TimestampTool> {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final effect = theme.extension<AppThemeEffect>() ??
-        const AppThemeEffect(
-            animationCurve: Curves.easeInOut,
-            layoutDensity: 1.0,
-            borderRadius: 8.0,
-            icons: AppIcons.standard);
+    final tokens = LabTokens.of(context);
 
     return SingleChildScrollView(
-      padding: EdgeInsets.all(16.0 * effect.layoutDensity),
+      padding: EdgeInsets.all(tokens.sXl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -259,11 +242,11 @@ class _TimestampToolState extends State<TimestampTool> {
           Card(
             elevation: 0,
             color: colorScheme.primaryContainer,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(tokens.rXl)),
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 24.0, horizontal: 32.0),
+              padding: EdgeInsets.symmetric(
+                  vertical: tokens.s3xl, horizontal: tokens.s4xl),
               child: LayoutBuilder(builder: (context, constraints) {
                 final bool isNarrow = constraints.maxWidth < 600;
 
@@ -274,13 +257,12 @@ class _TimestampToolState extends State<TimestampTool> {
                         l10n.currentDate,
                         _format.format(_now),
                         colorScheme,
-                        effect,
                         isEnd: false,
                         onCopy: () => _copy(_format.format(_now)),
                         copyTooltip: l10n.copyDate,
                       ),
                       Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: EdgeInsets.symmetric(vertical: tokens.sXl),
                         child: Divider(
                             color: colorScheme.onPrimaryContainer
                                 .withValues(alpha: 0.1),
@@ -290,7 +272,6 @@ class _TimestampToolState extends State<TimestampTool> {
                         l10n.currentTimestamp,
                         _now.millisecondsSinceEpoch.toString(),
                         colorScheme,
-                        effect,
                         isEnd: true,
                         onCopy: () =>
                             _copy(_now.millisecondsSinceEpoch.toString()),
@@ -307,7 +288,6 @@ class _TimestampToolState extends State<TimestampTool> {
                       l10n.currentDate,
                       _format.format(_now),
                       colorScheme,
-                      effect,
                       isEnd: false,
                       onCopy: () => _copy(_format.format(_now)),
                       copyTooltip: l10n.copyDate,
@@ -321,7 +301,6 @@ class _TimestampToolState extends State<TimestampTool> {
                       l10n.currentTimestamp,
                       _now.millisecondsSinceEpoch.toString(),
                       colorScheme,
-                      effect,
                       isEnd: true,
                       onCopy: () =>
                           _copy(_now.millisecondsSinceEpoch.toString()),
@@ -342,8 +321,7 @@ class _TimestampToolState extends State<TimestampTool> {
                 _buildConverterPanel(
                   context,
                   title: l10n.timestampToDate,
-                  icon: effect.icons.time,
-                  effect: effect,
+                  icon: Icons.access_time,
                   inputWidget: TextField(
                     controller: _tsController,
                     decoration: InputDecoration(
@@ -373,8 +351,7 @@ class _TimestampToolState extends State<TimestampTool> {
                 _buildConverterPanel(
                   context,
                   title: l10n.dateToTimestamp,
-                  icon: effect.icons.calendar,
-                  effect: effect,
+                  icon: Icons.calendar_today,
                   inputWidget: TextField(
                     controller: _dateController,
                     decoration: InputDecoration(
@@ -421,7 +398,6 @@ class _TimestampToolState extends State<TimestampTool> {
   }
 
   Widget _buildHeaderItem(String label, String value, ColorScheme colorScheme,
-      AppThemeEffect effect,
       {required bool isEnd,
       required VoidCallback onCopy,
       required String copyTooltip}) {
@@ -442,13 +418,13 @@ class _TimestampToolState extends State<TimestampTool> {
           children: [
             SelectableText(value,
                 style: TextStyle(
-                    fontSize: 32 * effect.layoutDensity,
+                    fontSize: 32,
                     fontWeight: FontWeight.bold,
                     color: colorScheme.onPrimaryContainer,
                     fontFamily: 'Monospace')),
             const SizedBox(width: 8),
             LabIconButton(
-              icon: effect.icons.copy,
+              icon: Icons.copy,
               tooltip: copyTooltip,
               onPressed: onCopy,
             ),
@@ -468,16 +444,16 @@ class _TimestampToolState extends State<TimestampTool> {
     required VoidCallback onConvert,
     required String resultValue,
     required bool isPlaceholder,
-    required AppThemeEffect effect,
   }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final tokens = LabTokens.of(context);
     final l10n = AppLocalizations.of(context)!;
 
     return Card(
       elevation: 2,
       child: Padding(
-        padding: EdgeInsets.all(24.0 * effect.layoutDensity),
+        padding: EdgeInsets.all(tokens.s3xl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -490,9 +466,9 @@ class _TimestampToolState extends State<TimestampTool> {
                         ?.copyWith(fontWeight: FontWeight.bold)),
               ],
             ),
-            SizedBox(height: 24 * effect.layoutDensity),
+            SizedBox(height: tokens.s3xl),
             inputWidget,
-            SizedBox(height: 16 * effect.layoutDensity),
+            SizedBox(height: tokens.sXl),
             LabSelect<String>(
               label: l10n.timezone,
               value: timezoneValue,
@@ -516,10 +492,10 @@ class _TimestampToolState extends State<TimestampTool> {
               decoration: BoxDecoration(
                 color:
                     colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(tokens.rXl),
                 border: Border.all(color: colorScheme.outlineVariant),
               ),
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.all(tokens.s3xl),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

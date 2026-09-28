@@ -220,7 +220,7 @@ class IoTDevKitApp extends StatelessWidget {
         builder: (context, themeManager, languageProvider, child) {
           final base = themeManager.theme.themeData;
           // P0→P1 compat bridge: legacy screens (simulator_panel,
-          // simulator_log_dock, timestamp_tool) still read AppThemeEffect.
+          // simulator_log_dock) still read AppThemeEffect.
           // Keep LabTokens and append a neutral AppThemeEffect so they
           // don't null-crash until P1 migrates them off it.
           final themed = base.copyWith(
