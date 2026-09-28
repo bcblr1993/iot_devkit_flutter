@@ -1,4 +1,3 @@
-// ignore_for_file: avoid_hardcoded_color, avoid_raw_edge_insets, prefer_lab_tokens
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
@@ -71,18 +70,9 @@ class _SimulatorPanelState extends State<SimulatorPanel>
     super.dispose();
   }
 
-  void _setStatus(String msg, Color color) {
+  void _setStatus(String msg, LabStatus kind) {
     if (!mounted) return;
-    if (color == Colors.green) {
-      showLabToast(context, title: msg, kind: LabStatus.ok);
-    } else if (color == Colors.orange) {
-      showLabToast(context, title: msg, kind: LabStatus.warn);
-    } else if (color == Theme.of(context).colorScheme.error ||
-        color == Colors.red) {
-      showLabToast(context, title: msg, kind: LabStatus.error);
-    } else {
-      showLabToast(context, title: msg, kind: LabStatus.info);
-    }
+    showLabToast(context, title: msg, kind: kind);
   }
 
   // --- Dialogs ---
@@ -105,6 +95,7 @@ class _SimulatorPanelState extends State<SimulatorPanel>
             : processPlan.requiredProcessCount;
     final blocksAutomaticLaunch =
         processPlan != null && !controller.canAutoLaunchPlan(processPlan);
+    final tokens = LabTokens.of(context);
 
     final result = await AppDialogHelper.showCodePreview(
       context: context,
@@ -113,7 +104,7 @@ class _SimulatorPanelState extends State<SimulatorPanel>
       icon: Icons.preview_rounded,
       onCopy: () {
         Clipboard.setData(ClipboardData(text: jsonStr));
-        _setStatus(l10n.jsonCopied, Colors.green);
+        _setStatus(l10n.jsonCopied, LabStatus.ok);
       },
       showConfirmButton: isConfirmMode,
       confirmEnabled: !blocksAutomaticLaunch,
@@ -134,11 +125,11 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                       Provider.of<MqttController>(context, listen: false);
                   bool isPerformanceMode = !controller.enableDetailedLogs;
                   return Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: EdgeInsets.all(tokens.sLg),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primaryContainer
                           .withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(tokens.rLg),
                       border: Border.all(
                           color:
                               theme.colorScheme.primary.withValues(alpha: 0.2)),
@@ -328,6 +319,11 @@ class _SimulatorPanelState extends State<SimulatorPanel>
       BuildContext context, MqttViewModel vm, MqttController mqttController) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final tokens = LabTokens.of(context);
+    // SimulatorLogDock (below) is still a legacy P0→P1 screen that reads
+    // AppThemeEffect directly — keep constructing it to pass through, but
+    // layoutDensity is always 1.0 in practice (see main.dart's compat
+    // bridge), so spacing here uses LabTokens instead of the multiplier.
     final effect = theme.extension<AppThemeEffect>() ??
         const AppThemeEffect(
             animationCurve: Curves.easeInOut,
@@ -345,8 +341,7 @@ class _SimulatorPanelState extends State<SimulatorPanel>
               // Top Bar with Toggle
               Padding(
                 padding: EdgeInsets.symmetric(
-                    horizontal: 12.0 * effect.layoutDensity,
-                    vertical: 10.0 * effect.layoutDensity),
+                    horizontal: tokens.sLg, vertical: tokens.sMd),
                 child: SimulatorHeader(
                   isProfileSidebarVisible: _showProfileSidebar,
                   currentProfileId: vm.currentProfileId,
@@ -358,8 +353,7 @@ class _SimulatorPanelState extends State<SimulatorPanel>
 
               // MQTT Section
               Padding(
-                padding: EdgeInsets.symmetric(
-                    horizontal: 12.0 * effect.layoutDensity),
+                padding: EdgeInsets.symmetric(horizontal: tokens.sLg),
                 child: Form(
                   key: vm.formKeyMqtt,
                   autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -412,7 +406,7 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                           opacity: mqttController.isBusy ? 0.7 : 1.0,
                           child: Column(
                             children: [
-                              _buildModeSelector(context, l10n, theme, effect),
+                              _buildModeSelector(context, l10n, theme),
                               Expanded(
                                 child: TabBarView(
                                   controller: _tabController,
@@ -440,13 +434,13 @@ class _SimulatorPanelState extends State<SimulatorPanel>
               // Action Buttons
               Padding(
                 padding: EdgeInsets.fromLTRB(
-                  12.0 * effect.layoutDensity,
-                  10.0 * effect.layoutDensity,
-                  12.0 * effect.layoutDensity,
-                  12.0 * effect.layoutDensity,
+                  tokens.sLg,
+                  tokens.sMd,
+                  tokens.sLg,
+                  tokens.sLg,
                 ),
-                child: _buildActionButtons(
-                    context, vm, mqttController, l10n, effect),
+                child:
+                    _buildActionButtons(context, vm, mqttController, l10n),
               ),
             ],
           ),
@@ -475,9 +469,11 @@ class _SimulatorPanelState extends State<SimulatorPanel>
     int end = int.tryParse(vm.endIdxController.text) ?? 10;
     int count = (end - start + 1).clamp(0, 99999);
     final theme = Theme.of(context);
+    final tokens = LabTokens.of(context);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+      padding: EdgeInsets.fromLTRB(
+          tokens.sLg, tokens.sLg, tokens.sLg, tokens.s3xl),
       child: Form(
         key: vm.formKeyBasic,
         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -485,14 +481,14 @@ class _SimulatorPanelState extends State<SimulatorPanel>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.only(bottom: 16),
+              padding: EdgeInsets.only(bottom: tokens.sXl),
               child: LabInlineAlert(
                 kind: LabStatus.info,
                 child: Text(l10n.simBasicHint),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.only(bottom: 16),
+              padding: EdgeInsets.only(bottom: tokens.sXl),
               child: LabSection(
                 title: l10n.deviceConfig,
                 trailing: LabPill(
@@ -588,8 +584,10 @@ class _SimulatorPanelState extends State<SimulatorPanel>
 
   Widget _buildAdvancedTab(BuildContext context, MqttViewModel vm,
       bool isRunning, AppLocalizations l10n) {
+    final tokens = LabTokens.of(context);
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+      padding: EdgeInsets.fromLTRB(
+          tokens.sLg, tokens.sLg, tokens.sLg, tokens.s3xl),
       child: Form(
         key: vm.formKeyAdvanced,
         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -597,7 +595,7 @@ class _SimulatorPanelState extends State<SimulatorPanel>
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.only(bottom: 16),
+              padding: EdgeInsets.only(bottom: tokens.sXl),
               child: LabInlineAlert(
                 kind: LabStatus.warn,
                 child: Text(l10n.simAdvancedHint),
@@ -625,14 +623,15 @@ class _SimulatorPanelState extends State<SimulatorPanel>
 
   // ... (existing helper methods)
 
-  Widget _buildModeSelector(BuildContext context, AppLocalizations l10n,
-      ThemeData theme, AppThemeEffect effect) {
+  Widget _buildModeSelector(
+      BuildContext context, AppLocalizations l10n, ThemeData theme) {
+    final tokens = LabTokens.of(context);
     return Padding(
       padding: EdgeInsets.fromLTRB(
-        12.0 * effect.layoutDensity,
-        6,
-        12.0 * effect.layoutDensity,
-        3,
+        tokens.sLg,
+        tokens.sSm,
+        tokens.sLg,
+        tokens.sXs,
       ),
       child: SizedBox(
         width: double.infinity,
@@ -654,8 +653,7 @@ class _SimulatorPanelState extends State<SimulatorPanel>
   }
 
   Widget _buildActionButtons(BuildContext context, MqttViewModel vm,
-      MqttController controller, AppLocalizations l10n, AppThemeEffect effect) {
-    final theme = Theme.of(context);
+      MqttController controller, AppLocalizations l10n) {
     final isBusy = controller.isBusy;
     final isStopping = controller.isStopping;
     final isRunning = controller.isRunning;
@@ -708,14 +706,14 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                             _setStatus(
                                 vm.lastValidationError ??
                                     l10n.formValidationFailed,
-                                theme.colorScheme.error);
+                                LabStatus.error);
                           }
                         } else {
                           bool valid = vm.startAdvancedSimulation(context,
                               (config, basic) {
                             final data = vm.generatePreviewData(isBasic: false);
                             if (data == null) {
-                              _setStatus('No groups configured', Colors.orange);
+                              _setStatus('No groups configured', LabStatus.warn);
                               return;
                             }
                             final plan = controller.planProcesses(config);
@@ -735,7 +733,7 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                             _setStatus(
                                 vm.lastValidationError ??
                                     l10n.formValidationFailed,
-                                theme.colorScheme.error);
+                                LabStatus.error);
                           }
                         }
                       }),
@@ -763,7 +761,7 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                         if (data != null) {
                           _showUnifiedPreviewDialog(context, data);
                         } else {
-                          _setStatus('Cannot generate preview', Colors.orange);
+                          _setStatus('Cannot generate preview', LabStatus.warn);
                         }
                       },
           ),
@@ -782,9 +780,9 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                     if (res.config != null) {
                       await ConfigService.saveToLocalStorage(res.config!);
                       await vm.loadConfig();
-                      _setStatus(l10n.configImported, Colors.green);
+                      _setStatus(l10n.configImported, LabStatus.ok);
                     } else if (res.error != null) {
-                      _setStatus(res.error!, theme.colorScheme.error);
+                      _setStatus(res.error!, LabStatus.error);
                     }
                   },
           ),
@@ -802,9 +800,9 @@ class _SimulatorPanelState extends State<SimulatorPanel>
                     final res = await ConfigService.exportToFile(
                         vm.getCompleteConfig());
                     if (res.success) {
-                      _setStatus(l10n.configExported, Colors.green);
+                      _setStatus(l10n.configExported, LabStatus.ok);
                     } else if (res.error != null) {
-                      _setStatus(res.error!, theme.colorScheme.error);
+                      _setStatus(res.error!, LabStatus.error);
                     }
                   },
           ),
@@ -906,7 +904,7 @@ class _SimulatorPanelState extends State<SimulatorPanel>
             _StatSegment(
               label: _localized(context, zh: '状态', en: 'State'),
               value: stateLabel,
-              valueColor: _runStateColor(theme, mqttController.runState),
+              valueColor: _runStateColor(theme, tokens, mqttController.runState),
             ),
           if (mqttController.activeProcessCount > 1)
             _StatSegment(
@@ -956,7 +954,7 @@ class _SimulatorPanelState extends State<SimulatorPanel>
         for (var i = 0; i < segments.length; i++) {
           if (i > 0) {
             children.add(Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
+              padding: EdgeInsets.symmetric(horizontal: tokens.sLg),
               child: Container(
                 width: 1,
                 height: 12,
@@ -986,16 +984,17 @@ class _SimulatorPanelState extends State<SimulatorPanel>
     };
   }
 
-  Color _runStateColor(ThemeData theme, SimulationRunState state) {
+  Color _runStateColor(
+      ThemeData theme, LabTokens tokens, SimulationRunState state) {
     return switch (state) {
       SimulationRunState.idle => theme.colorScheme.onSurfaceVariant,
       SimulationRunState.starting ||
       SimulationRunState.connecting =>
         theme.colorScheme.primary,
-      SimulationRunState.running => Colors.green,
+      SimulationRunState.running => tokens.ok,
       SimulationRunState.reconnecting ||
       SimulationRunState.partialRunning =>
-        Colors.orange,
+        tokens.warn,
       SimulationRunState.stopping => theme.colorScheme.error,
       SimulationRunState.failed => theme.colorScheme.error,
     };
