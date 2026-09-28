@@ -1,4 +1,3 @@
-// ignore_for_file: avoid_raw_edge_insets, prefer_lab_tokens
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
@@ -63,14 +62,16 @@ class MqttConfigSection extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final tokens = LabTokens.of(context);
 
     final tlsBadge = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: EdgeInsets.symmetric(
+          horizontal: tokens.sMd, vertical: tokens.sXs),
       decoration: BoxDecoration(
         color: enableSsl
             ? colorScheme.primary.withValues(alpha: 0.08)
             : colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(tokens.rMd),
       ),
       child: Text(
         enableSsl ? 'TLS' : 'TCP',
@@ -88,11 +89,12 @@ class MqttConfigSection extends StatelessWidget {
     final subsCountBadge = subscriptionCount == 0
         ? null
         : Container(
-            margin: const EdgeInsets.only(left: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            margin: EdgeInsets.only(left: tokens.sMd),
+            padding: EdgeInsets.symmetric(
+                horizontal: tokens.sSm, vertical: tokens.sXxs),
             decoration: BoxDecoration(
               color: colorScheme.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(tokens.rLg),
             ),
             child: Text(
               '$subscriptionCount',
