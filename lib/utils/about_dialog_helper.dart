@@ -1,7 +1,7 @@
-// ignore_for_file: avoid_hardcoded_color, avoid_raw_edge_insets, prefer_lab_tokens
 import 'package:flutter/material.dart';
 
 import '../l10n/generated/app_localizations.dart';
+import '../ui/lab/lab.dart';
 import 'version_helper.dart';
 
 class AboutDialogHelper {
@@ -14,29 +14,30 @@ class AboutDialogHelper {
 
     showDialog(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.34),
+      barrierColor: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.34),
       builder: (dialogContext) {
         final theme = Theme.of(dialogContext);
         final colors = theme.colorScheme;
+        final tokens = LabTokens.of(dialogContext);
         final isZh = Localizations.localeOf(dialogContext).languageCode == 'zh';
 
         return Dialog(
           elevation: 0,
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          backgroundColor: colors.surface.withValues(alpha: 0),
+          insetPadding: EdgeInsets.symmetric(horizontal: tokens.s3xl),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 460),
             child: Container(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(tokens.s2xl),
               decoration: BoxDecoration(
                 color: colors.surfaceContainerLowest,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(tokens.rXl),
                 border: Border.all(
                   color: colors.outlineVariant.withValues(alpha: 0.5),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.18),
+                    color: colors.shadow.withValues(alpha: 0.18),
                     blurRadius: 28,
                     offset: const Offset(0, 16),
                   ),
@@ -52,10 +53,10 @@ class AboutDialogHelper {
                       Container(
                         width: 58,
                         height: 58,
-                        padding: const EdgeInsets.all(10),
+                        padding: EdgeInsets.all(tokens.sLg),
                         decoration: BoxDecoration(
                           color: colors.primaryContainer.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(tokens.rXl),
                         ),
                         child: Image.asset('assets/icon/original_icon.png'),
                       ),
@@ -124,10 +125,10 @@ class AboutDialogHelper {
                   ),
                   const SizedBox(height: 14),
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: EdgeInsets.all(tokens.sLg),
                     decoration: BoxDecoration(
                       color: colors.surfaceContainerLow.withValues(alpha: 0.7),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(tokens.rLg),
                       border: Border.all(
                         color: colors.outlineVariant.withValues(alpha: 0.42),
                       ),
@@ -177,7 +178,7 @@ class AboutDialogHelper {
                     style: FilledButton.styleFrom(
                       minimumSize: const Size.fromHeight(44),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(tokens.rLg),
                       ),
                     ),
                     child: Text(l10n.close),
@@ -207,13 +208,14 @@ class _AboutInfoTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final tokens = LabTokens.of(context);
 
     return Container(
       constraints: const BoxConstraints(minHeight: 70),
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(tokens.sLg),
       decoration: BoxDecoration(
         color: colors.primaryContainer.withValues(alpha: 0.28),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(tokens.rLg),
         border: Border.all(color: colors.primary.withValues(alpha: 0.18)),
       ),
       child: Row(
