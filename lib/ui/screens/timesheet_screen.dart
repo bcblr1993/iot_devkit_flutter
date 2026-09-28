@@ -1,4 +1,3 @@
-// ignore_for_file: avoid_hardcoded_color, avoid_raw_edge_insets, prefer_lab_tokens
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -41,14 +40,16 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   Widget build(BuildContext context) {
     final provider = context.watch<TimesheetProvider>();
     final theme = Theme.of(context);
+    final tokens = LabTokens.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: theme.colorScheme.surface.withValues(alpha: 0),
       body: SafeArea(
         // Fill the available width (no centered max-width cap) so the page
         // adapts to wide windows like the other tools.
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+          padding: EdgeInsets.fromLTRB(
+              tokens.sXl, tokens.sXl, tokens.sXl, tokens.s3xl),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -58,7 +59,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
               const SizedBox(height: 12),
               if (provider.isLoading)
                 Padding(
-                  padding: const EdgeInsets.all(48),
+                  padding: EdgeInsets.all(tokens.s4xl),
                   child: Center(
                     child: CircularProgressIndicator(
                       color: theme.colorScheme.primary,
@@ -77,12 +78,13 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   Widget _buildHeader(BuildContext context, TimesheetProvider provider) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final tokens = LabTokens.of(context);
     final l10n = AppLocalizations.of(context)!;
     final selectedDate = provider.selectedDate;
     final isToday = _isSameDay(selectedDate, DateTime.now());
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(tokens.sXl),
       decoration: _panelDecoration(context),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -94,7 +96,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
                 height: 38,
                 decoration: BoxDecoration(
                   color: colors.primaryContainer.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(tokens.rLg),
                 ),
                 child: Icon(Icons.edit_note, color: colors.primary),
               ),
@@ -188,11 +190,12 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
 
   Widget _buildQuickEditor(BuildContext context, TimesheetProvider provider) {
     final theme = Theme.of(context);
+    final tokens = LabTokens.of(context);
     final l10n = AppLocalizations.of(context)!;
     final isEditing = _editingLog != null;
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(tokens.sXl),
       decoration: _panelDecoration(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -227,7 +230,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
             child: _feedbackMessage == null
                 ? const SizedBox.shrink()
                 : Padding(
-                    padding: const EdgeInsets.only(top: 10),
+                    padding: EdgeInsets.only(top: tokens.sLg),
                     child: _InlineFeedback(
                       message: _feedbackMessage!,
                       isError: _feedbackIsError,
@@ -297,11 +300,12 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
 
   Widget _buildDailyLogs(BuildContext context, TimesheetProvider provider) {
     final theme = Theme.of(context);
+    final tokens = LabTokens.of(context);
     final l10n = AppLocalizations.of(context)!;
     final logs = provider.currentLogs;
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(tokens.sXl),
       decoration: _panelDecoration(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -334,7 +338,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
           const SizedBox(height: 12),
           if (logs.isEmpty)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 42),
+              padding: EdgeInsets.symmetric(vertical: tokens.s4xl),
               child: AppEmptyState(
                 icon: Icons.note_add_outlined,
                 message: l10n.tsNoTasks,
@@ -358,17 +362,18 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   Widget _buildLogItem(BuildContext context, WorkLogEntry log) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final tokens = LabTokens.of(context);
 
     return Material(
       color: colors.surfaceContainerLow.withValues(alpha: 0.55),
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(tokens.rLg),
       child: InkWell(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(tokens.rLg),
         onTap: () => _startEdit(log),
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: EdgeInsets.all(tokens.sLg),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(tokens.rLg),
             border: Border.all(
               color: colors.outlineVariant.withValues(alpha: 0.42),
             ),
@@ -378,10 +383,10 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
             children: [
               Container(
                 width: 72,
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                padding: EdgeInsets.symmetric(vertical: tokens.sMd),
                 decoration: BoxDecoration(
                   color: colors.primaryContainer.withValues(alpha: 0.42),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(tokens.rLg),
                 ),
                 child: Column(
                   children: [
@@ -432,15 +437,16 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
 
   BoxDecoration _panelDecoration(BuildContext context) {
     final theme = Theme.of(context);
+    final tokens = LabTokens.of(context);
     return BoxDecoration(
       color: theme.colorScheme.surfaceContainerLowest,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(tokens.rLg),
       border: Border.all(
         color: theme.colorScheme.outlineVariant.withValues(alpha: 0.42),
       ),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withValues(alpha: 0.035),
+          color: theme.colorScheme.shadow.withValues(alpha: 0.035),
           blurRadius: 12,
           offset: const Offset(0, 2),
         ),
@@ -605,15 +611,16 @@ class _TotalHoursPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final tokens = LabTokens.of(context);
     final isZh = Localizations.localeOf(context).languageCode == 'zh';
     final text = hours.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0+$'), '');
 
     return Container(
       height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: EdgeInsets.symmetric(horizontal: tokens.sLg),
       decoration: BoxDecoration(
         color: colors.primaryContainer.withValues(alpha: 0.42),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(tokens.rLg),
         border: Border.all(color: colors.primary.withValues(alpha: 0.2)),
       ),
       child: Row(
@@ -647,6 +654,7 @@ class _InlineFeedback extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final tokens = LabTokens.of(context);
     final color = isError ? colors.error : colors.primary;
 
     return Align(
@@ -658,10 +666,11 @@ class _InlineFeedback extends StatelessWidget {
         child: Container(
           key: ValueKey('$message-$isError'),
           constraints: const BoxConstraints(maxWidth: 420),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          padding: EdgeInsets.symmetric(
+              horizontal: tokens.sLg, vertical: tokens.sMd),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(tokens.rLg),
             border: Border.all(color: color.withValues(alpha: 0.22)),
           ),
           child: Row(
