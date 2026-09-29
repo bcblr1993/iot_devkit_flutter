@@ -41,7 +41,7 @@ export https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_pr
 - **MqttController** — 模拟运行生命周期。
 - **StatisticsCollector** — 经 `ChangeNotifierProxyProvider` 从 MqttController 取得,跟随其重建。
 
-注意 `main.dart` 里有一层兼容桥:在 LabTokens 主题上额外注入一个中性的 `AppThemeEffect` extension,只为让尚未迁移的 legacy 页面(simulator_panel、simulator_log_dock)读取它时不空崩。`simulator_panel` 已经不再用它算间距,但因为要把 `effect` 对象继续传给 `simulator_log_dock`(唯一还没迁移出设计系统豁免名单的文件),所以仍构造它。迁移完 `simulator_log_dock` 后这层桥应被移除。
+`main.dart` 里曾经有一层 P0→P1 兼容桥(在 LabTokens 主题上额外注入一个中性的 `AppThemeEffect` extension),已随 legacy 文件迁移一起在 2026-09 移除——`AppThemeEffect`/`AppIcons`(原 `lib/ui/styles/app_theme_effect.dart`)全项目零引用,直接删除了定义文件。
 
 ### MQTT 模拟核心(改动前务必先读)
 
@@ -61,7 +61,7 @@ export https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_pr
 - `lib/ui/components/` — 项目通用组件:`FormGrid`、`IconTooltipButton`、`AppEmptyState`。
 - `lib/ui/tools/` — 独立工具:证书生成、JSON 格式化、时间戳。
 - `lib/ui/widgets/` — 模拟器专用 widget(config section、groups/custom keys manager、log console、performance monitor、profile sidebar、json tree view)。
-- `lib/ui/styles/` — `app_constants`、`app_theme_effect`(legacy 兼容)。
+- `lib/ui/styles/` — `app_constants`。
 
 `lib/services/` 还含证书工具链(generator / package builder / address parser)、config/profile 持久化、`simulation_config_validator`、`log_storage_service`。
 
@@ -85,9 +85,7 @@ export https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_pr
 反馈用底部 Status Bar 容器,**不要**用 `SnackBar` 或 `Dialog`。保持 toolbar/button/form/grid 尺寸稳定,避免 hover/校验/loading/本地化导致布局抖动。不要在装饰卡片里嵌套装饰卡片。
 
 ### legacy 文件迁移(已完成)
-曾有约 25 个 legacy 文件首行带 `// ignore_for_file: avoid_hardcoded_color, ...` 豁免,已于 2026-09 全部迁移完毕(`lib/` 下再无此类 ignore 注释)。其中 `AppInputDecoration`/`MetricChip`/`AppSection`/`AppToast` 四个 legacy 兼容类因全项目零引用被直接删除,其余全部改用 `LabTokens`/`colorScheme` 语义色与间距刻度。若以后新写的文件又不小心引入硬编码颜色/间距,处理方式不变:替换全部硬编码 → `dart run custom_lint` 确认该文件 0 违规 → `./scripts/ui_check.sh` 全绿后提交。迁移粒度:**每组件独立 commit**,提交前跑 analyze + smoke,**未授权不要 push**。
-
-`lib/ui/simulator/simulator_log_dock.dart` 是唯一还没做这轮迁移的文件——它本身已经 0 个 lint 豁免(无硬编码颜色/间距),但仍读取 `main.dart` 注入的兼容桥 `AppThemeEffect`,是移除这层桥的最后一块拼图。
+曾有约 25 个 legacy 文件首行带 `// ignore_for_file: avoid_hardcoded_color, ...` 豁免,以及一层 `AppThemeEffect` P0→P1 兼容桥,已于 2026-09 全部迁移/移除完毕:`lib/` 下再无此类 ignore 注释,`AppThemeEffect`/`AppIcons` 及其定义文件也已删除。其中 `AppInputDecoration`/`MetricChip`/`AppSection`/`AppToast` 四个 legacy 兼容类因全项目零引用被直接删除,其余全部改用 `LabTokens`/`colorScheme` 语义色与间距刻度。若以后新写的文件又不小心引入硬编码颜色/间距,处理方式不变:替换全部硬编码 → `dart run custom_lint` 确认该文件 0 违规 → `./scripts/ui_check.sh` 全绿后提交。迁移粒度:**每组件独立 commit**,提交前跑 analyze + smoke,**未授权不要 push**。
 
 ### golden 失败处理
 - **基线以 CI(ubuntu-latest + 固定 Flutter 版本)渲染为准**。在本机 macOS 直接跑 `flutter test test/golden/` / `./scripts/ui_check.sh` 会因跨 OS 抗锯齿差异**整体失配**(每个组件都差 ~1%~2%,差异只落在字形/边框边缘)—— 这不是回归,本机这几个 golden 报错可忽略。判断"是否真回归"只在 CI/Linux 上有效。
