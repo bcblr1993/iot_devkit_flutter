@@ -10,7 +10,6 @@ import 'package:path/path.dart' as p;
 import 'l10n/generated/app_localizations.dart';
 import 'services/mqtt_controller.dart';
 import 'services/lab_theme_manager.dart';
-import 'ui/styles/app_theme_effect.dart';
 import 'services/language_provider.dart';
 import 'services/status_registry.dart';
 import 'services/feature_visibility_provider.dart';
@@ -218,22 +217,7 @@ class IoTDevKitApp extends StatelessWidget {
       ],
       child: Consumer2<LabThemeManager, LanguageProvider>(
         builder: (context, themeManager, languageProvider, child) {
-          final base = themeManager.theme.themeData;
-          // P0→P1 compat bridge: legacy screens (simulator_panel,
-          // simulator_log_dock) still read AppThemeEffect.
-          // Keep LabTokens and append a neutral AppThemeEffect so they
-          // don't null-crash until P1 migrates them off it.
-          final themed = base.copyWith(
-            extensions: [
-              ...base.extensions.values,
-              const AppThemeEffect(
-                animationCurve: Curves.easeOutCubic,
-                layoutDensity: 1.0,
-                borderRadius: 8.0,
-                icons: AppIcons.standard,
-              ),
-            ],
-          );
+          final themed = themeManager.theme.themeData;
           return MaterialApp(
             title: processShard.isSharded
                 ? 'IoT DevKit [${processShard.label}]'

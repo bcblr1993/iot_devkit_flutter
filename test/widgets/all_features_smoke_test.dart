@@ -11,7 +11,6 @@ import 'package:iot_devkit/services/status_registry.dart';
 import 'package:iot_devkit/services/feature_visibility_provider.dart';
 import 'package:iot_devkit/services/lab_theme_manager.dart';
 import 'package:iot_devkit/ui/screens/home_screen.dart';
-import 'package:iot_devkit/ui/styles/app_theme_effect.dart';
 import 'package:iot_devkit/ui/tools/json_virtualized_editor.dart';
 import 'package:iot_devkit/ui/tools/text_diff_tool.dart';
 import 'package:iot_devkit/ui/widgets/json_tree_view.dart';
@@ -546,18 +545,7 @@ class _SmokeApp extends StatelessWidget {
       ],
       child: Consumer2<LabThemeManager, LanguageProvider>(
         builder: (context, themeManager, languageProvider, child) {
-          final base = themeManager.theme.themeData;
-          final themed = base.copyWith(
-            extensions: [
-              ...base.extensions.values,
-              const AppThemeEffect(
-                animationCurve: Curves.easeOutCubic,
-                layoutDensity: 1.0,
-                borderRadius: 8.0,
-                icons: AppIcons.standard,
-              ),
-            ],
-          );
+          final themed = themeManager.theme.themeData;
           return MaterialApp(
             theme: themed,
             darkTheme: themed,

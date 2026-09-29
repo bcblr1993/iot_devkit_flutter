@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../styles/app_theme_effect.dart';
 import '../widgets/log_console.dart';
 
 class SimulatorLogDock extends StatelessWidget {
@@ -13,7 +12,6 @@ class SimulatorLogDock extends StatelessWidget {
   final VoidCallback onClear;
   final VoidCallback onMaximize;
   final Widget? headerContent;
-  final AppThemeEffect effect;
 
   const SimulatorLogDock({
     super.key,
@@ -23,7 +21,6 @@ class SimulatorLogDock extends StatelessWidget {
     required this.onToggle,
     required this.onClear,
     required this.onMaximize,
-    required this.effect,
     this.headerContent,
   });
 
@@ -37,7 +34,7 @@ class SimulatorLogDock extends StatelessWidget {
 
     return AnimatedPositioned(
       duration: const Duration(milliseconds: 220),
-      curve: effect.animationCurve,
+      curve: Curves.easeOutCubic,
       left: 0,
       right: 0,
       bottom: 0,

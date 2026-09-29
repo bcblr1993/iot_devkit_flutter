@@ -15,7 +15,6 @@ import '../../services/config_service.dart';
 import 'log_console.dart';
 import 'performance_monitor.dart';
 import 'profile_sidebar.dart';
-import '../styles/app_theme_effect.dart';
 import '../components/form_grid.dart';
 import '../simulator/keep_alive_wrapper.dart';
 import '../simulator/simulator_header.dart';
@@ -320,16 +319,6 @@ class _SimulatorPanelState extends State<SimulatorPanel>
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final tokens = LabTokens.of(context);
-    // SimulatorLogDock (below) is still a legacy P0→P1 screen that reads
-    // AppThemeEffect directly — keep constructing it to pass through, but
-    // layoutDensity is always 1.0 in practice (see main.dart's compat
-    // bridge), so spacing here uses LabTokens instead of the multiplier.
-    final effect = theme.extension<AppThemeEffect>() ??
-        const AppThemeEffect(
-            animationCurve: Curves.easeInOut,
-            layoutDensity: 1.0,
-            borderRadius: 8.0,
-            icons: AppIcons.standard);
     final isRunning = mqttController.isRunning;
 
     return Stack(
@@ -452,7 +441,6 @@ class _SimulatorPanelState extends State<SimulatorPanel>
           onToggle: widget.onToggleLog,
           onClear: widget.onClearLog,
           onMaximize: () => setState(() => _isLogMaximized = !_isLogMaximized),
-          effect: effect,
           // Live stats (device/online/sent/success/fail/CPU/mem) now ride in
           // the log dock header bar instead of a standalone strip above the
           // action buttons.
