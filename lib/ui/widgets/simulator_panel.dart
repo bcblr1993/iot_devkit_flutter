@@ -243,7 +243,6 @@ class _SimulatorPanelState extends State<SimulatorPanel>
     final statusRegistry = context.read<StatusRegistry>();
     statusRegistry.setStatus(
       l10n.autoProcessesStarting(plan.processCount),
-      Theme.of(context).colorScheme.primary,
       duration: const Duration(seconds: 30),
     );
 
@@ -258,7 +257,6 @@ class _SimulatorPanelState extends State<SimulatorPanel>
           l10n.autoProcessLaunchFailed(
             controller.runStateMessage ?? l10n.unknownError,
           ),
-          Theme.of(context).colorScheme.error,
         );
       } else if (controller.readyProcessCount ==
               controller.activeProcessCount &&
@@ -273,14 +271,12 @@ class _SimulatorPanelState extends State<SimulatorPanel>
             controller.readyProcessCount,
             controller.activeProcessCount,
           ),
-          LabTokens.of(context).ok,
         );
       }
     } catch (error) {
       if (!mounted) return;
       statusRegistry.setStatus(
         l10n.autoProcessLaunchFailed(error.toString()),
-        Theme.of(context).colorScheme.error,
       );
     }
   }

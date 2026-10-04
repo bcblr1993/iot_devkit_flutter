@@ -88,6 +88,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        theme: labThemeSignal.themeData,
         home: Scaffold(
           body: SizedBox(
             width: 1024,

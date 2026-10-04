@@ -318,7 +318,7 @@ class _GroupsManagerState extends State<GroupsManager> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.only(top: 1),
+                      padding: EdgeInsets.only(top: tokens.sXxs / 2),
                       child: Text(
                         l10n.randomChangeDesc,
                         style: theme.textTheme.bodySmall?.copyWith(

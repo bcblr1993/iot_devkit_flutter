@@ -5,7 +5,6 @@ import 'package:iot_devkit/l10n/generated/app_localizations.dart';
 import 'package:iot_devkit/services/mqtt_controller.dart';
 import 'package:iot_devkit/services/status_registry.dart';
 import 'package:iot_devkit/ui/lab/lab.dart';
-import 'package:iot_devkit/ui/styles/app_theme_effect.dart';
 import 'package:iot_devkit/ui/widgets/simulator_panel.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -88,19 +87,6 @@ class _PreviewTestApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final baseTheme = labThemeSignal.themeData;
-    final theme = baseTheme.copyWith(
-      extensions: [
-        ...baseTheme.extensions.values,
-        const AppThemeEffect(
-          animationCurve: Curves.easeOutCubic,
-          layoutDensity: 1,
-          borderRadius: 8,
-          icons: AppIcons.standard,
-        ),
-      ],
-    );
-
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<MqttController>(
@@ -114,7 +100,7 @@ class _PreviewTestApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
-        theme: theme,
+        theme: labThemeSignal.themeData,
         locale: const Locale('en'),
         localizationsDelegates: const [
           AppLocalizations.delegate,

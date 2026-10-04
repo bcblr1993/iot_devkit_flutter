@@ -97,7 +97,7 @@ class SettingsMenu extends StatelessWidget {
             PopupMenuItem(
               enabled: false,
               height: 26,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: EdgeInsets.symmetric(horizontal: tokens.sLg),
               child: Text(
                 l10n.optionalTools.toUpperCase(),
                 style: theme.textTheme.labelSmall?.copyWith(
