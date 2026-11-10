@@ -149,23 +149,27 @@ class CertificateEndpointVerifier {
     X509Certificate certificate,
     List<String> subjectAltNames,
   ) {
-    final normalizedHost = host.trim().toLowerCase();
+    final normalizedHost = _normalizeHost(host);
     if (normalizedHost.isEmpty) return false;
 
     if (subjectAltNames.isNotEmpty) {
       return subjectAltNames.any((name) {
         final normalizedName = name.toLowerCase();
         if (normalizedName.startsWith('ip:')) {
-          return normalizedName.substring(3) == normalizedHost;
+          final ip = normalizedName.substring(3).trim();
+          return _ipsMatch(normalizedHost, ip);
         }
         if (!normalizedName.startsWith('dns:')) return false;
-        final dnsName = normalizedName.substring(4);
+        final dnsName = normalizedName.substring(4).trim();
         return _dnsMatches(normalizedHost, dnsName);
       });
     }
 
     final cn = _extractCommonName(certificate.subject);
-    return cn != null && _dnsMatches(normalizedHost, cn.toLowerCase());
+    if (cn == null) return false;
+    final normalizedCn = _normalizeHost(cn);
+    return _ipsMatch(normalizedHost, normalizedCn) ||
+        _dnsMatches(normalizedHost, normalizedCn);
   }
 
   static List<String> parseSubjectAltNames(String pem) {
@@ -206,6 +210,28 @@ class CertificateEndpointVerifier {
     return names;
   }
 
+  static String _normalizeHost(String host) {
+    var value = host.trim().toLowerCase();
+    if (value.startsWith('[') && value.endsWith(']') && value.length > 2) {
+      value = value.substring(1, value.length - 1).trim();
+    }
+    return value;
+  }
+
+  static bool _ipsMatch(String host, String candidateIp) {
+    if (host == candidateIp) return true;
+    final hostAddr = InternetAddress.tryParse(host);
+    final candidateAddr = InternetAddress.tryParse(candidateIp);
+    if (hostAddr == null || candidateAddr == null) return false;
+    final a = hostAddr.rawAddress;
+    final b = candidateAddr.rawAddress;
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
   static bool _dnsMatches(String host, String dnsName) {
     if (!dnsName.startsWith('*.')) return host == dnsName;
     final suffix = dnsName.substring(1);
@@ -214,7 +240,7 @@ class CertificateEndpointVerifier {
   }
 
   static String? _extractCommonName(String subject) {
-    final match = RegExp(r'CN\s*=\s*([^,]+)').firstMatch(subject);
+    final match = RegExp(r'CN\s*=\s*([^,/]+)').firstMatch(subject);
     return match?.group(1)?.trim();
   }
 
