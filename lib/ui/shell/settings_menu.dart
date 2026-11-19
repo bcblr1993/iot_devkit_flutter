@@ -8,7 +8,9 @@ import '../../services/language_provider.dart';
 import '../../services/lab_theme_manager.dart';
 import '../../services/log_storage_service.dart';
 import '../../utils/about_dialog_helper.dart';
+import '../../viewmodels/app_update_provider.dart';
 import '../lab/lab.dart';
+import '../update/app_update_dialog.dart';
 import '../../utils/app_dialog_helper.dart';
 
 class SettingsMenu extends StatelessWidget {
@@ -23,6 +25,10 @@ class SettingsMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final features = context.watch<FeatureVisibilityProvider>();
+    final updateProvider = context.watch<AppUpdateProvider?>();
+    final hasUpdateBadge = updateProvider != null &&
+        (updateProvider.hasBadgeUpdate ||
+            updateProvider.phase == AppUpdatePhase.readyToInstall);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final tokens = LabTokens.of(context);
@@ -42,7 +48,7 @@ class SettingsMenu extends StatelessWidget {
           side: BorderSide(color: colorScheme.outlineVariant),
         ),
         tooltip: '',
-        offset: const Offset(52, -260),
+        offset: const Offset(52, -304),
         position: PopupMenuPosition.under,
         onSelected: (String action) {
           switch (action) {
@@ -54,6 +60,9 @@ class SettingsMenu extends StatelessWidget {
               break;
             case 'logs':
               LogStorageService.instance.openLogFolder();
+              break;
+            case 'check_update':
+              AppUpdateDialog.show(context);
               break;
             case 'about':
               AboutDialogHelper.showAboutDialog(context);
@@ -71,6 +80,7 @@ class SettingsMenu extends StatelessWidget {
           }
         },
         itemBuilder: (BuildContext context) {
+          final latestVer = updateProvider?.latestRelease?.version;
           return [
             PopupMenuItem(
               value: 'theme',
@@ -146,6 +156,26 @@ class SettingsMenu extends StatelessWidget {
                 label: l10n.menuOpenLogs,
               ),
             ),
+            if (updateProvider != null)
+              PopupMenuItem(
+                value: 'check_update',
+                height: 44,
+                padding: EdgeInsets.zero,
+                child: _SettingsMenuRow(
+                  icon: Icons.system_update_alt_rounded,
+                  label: (hasUpdateBadge && latestVer != null)
+                      ? l10n.menuUpdateAvailable(latestVer)
+                      : l10n.menuCheckUpdate,
+                  iconColor: hasUpdateBadge ? colorScheme.primary : null,
+                  trailing: hasUpdateBadge
+                      ? LabPill(
+                          label: 'NEW',
+                          color: colorScheme.primary,
+                          small: true,
+                        )
+                      : null,
+                ),
+              ),
             PopupMenuItem(
               value: 'about',
               height: 44,
@@ -157,7 +187,10 @@ class SettingsMenu extends StatelessWidget {
             ),
           ];
         },
-        child: _SettingsButton(colorScheme: colorScheme),
+        child: _SettingsButton(
+          colorScheme: colorScheme,
+          showUpdateBadge: hasUpdateBadge,
+        ),
       ),
     );
   }
@@ -294,8 +327,12 @@ class _ThemePickerGrid extends StatelessWidget {
 
 class _SettingsButton extends StatelessWidget {
   final ColorScheme colorScheme;
+  final bool showUpdateBadge;
 
-  const _SettingsButton({required this.colorScheme});
+  const _SettingsButton({
+    required this.colorScheme,
+    this.showUpdateBadge = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -304,23 +341,35 @@ class _SettingsButton extends StatelessWidget {
       width: 44,
       height: 44,
       child: Center(
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          curve: Curves.easeOutCubic,
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: colorScheme.primaryContainer.withValues(alpha: 0.42),
-            borderRadius: BorderRadius.circular(tokens.rXl),
-            border: Border.all(
-              color: colorScheme.primary.withValues(alpha: 0.16),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 160),
+              curve: Curves.easeOutCubic,
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: colorScheme.primaryContainer.withValues(alpha: 0.42),
+                borderRadius: BorderRadius.circular(tokens.rXl),
+                border: Border.all(
+                  color: colorScheme.primary.withValues(alpha: 0.16),
+                ),
+              ),
+              child: Icon(
+                Icons.settings_rounded,
+                size: 20,
+                color: colorScheme.primary,
+              ),
             ),
-          ),
-          child: Icon(
-            Icons.settings_rounded,
-            size: 20,
-            color: colorScheme.primary,
-          ),
+            if (showUpdateBadge)
+              const Positioned(
+                key: ValueKey('settings_update_badge'),
+                right: -1,
+                top: -1,
+                child: LabStatusDot(kind: LabStatus.warn, glow: true),
+              ),
+          ],
         ),
       ),
     );

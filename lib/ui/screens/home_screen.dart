@@ -9,6 +9,7 @@ import '../widgets/log_console.dart';
 import '../shell/app_navigation_rail.dart';
 import '../shell/app_destination.dart';
 import '../shell/main_content_switcher.dart';
+import '../shell/update_status_banner.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -131,20 +132,27 @@ class _HomeScreenState extends State<HomeScreen> {
               const VerticalDivider(thickness: 1, width: 1),
               Expanded(
                 child: RepaintBoundary(
-                  child: MainContentSwitcher(
-                    selectedIndex: safeSelectedIndex,
-                    logs: _logs,
-                    isLogExpanded: _isLogExpanded,
-                    onToggleLog: () {
-                      setState(() {
-                        _isLogExpanded = !_isLogExpanded;
-                      });
-                    },
-                    onClearLog: () {
-                      setState(() {
-                        _logs.clear();
-                      });
-                    },
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: MainContentSwitcher(
+                          selectedIndex: safeSelectedIndex,
+                          logs: _logs,
+                          isLogExpanded: _isLogExpanded,
+                          onToggleLog: () {
+                            setState(() {
+                              _isLogExpanded = !_isLogExpanded;
+                            });
+                          },
+                          onClearLog: () {
+                            setState(() {
+                              _logs.clear();
+                            });
+                          },
+                        ),
+                      ),
+                      const UpdateStatusBanner(),
+                    ],
                   ),
                 ),
               ),

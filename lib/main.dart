@@ -15,9 +15,11 @@ import 'services/status_registry.dart';
 import 'services/feature_visibility_provider.dart';
 import 'utils/statistics_collector.dart';
 import 'ui/screens/home_screen.dart';
+import 'ui/update/app_update_dialog.dart';
 import 'utils/about_dialog_helper.dart';
 import 'services/log_storage_service.dart';
 import 'services/simulation_worker_runtime.dart';
+import 'viewmodels/app_update_provider.dart';
 import 'viewmodels/timesheet_provider.dart';
 import 'models/process_shard.dart';
 
@@ -204,6 +206,12 @@ class IoTDevKitApp extends StatelessWidget {
         ChangeNotifierProvider<TimesheetProvider>(
           create: (_) => TimesheetProvider(),
         ),
+        ChangeNotifierProvider<AppUpdateProvider>(
+          lazy: false,
+          create: (_) => AppUpdateProvider(
+            autoCheckOnStart: !processShard.isSharded,
+          )..initialize(),
+        ),
         ChangeNotifierProvider<MqttController>(
           create: (_) => MqttController(
             processShard: processShard,
@@ -264,6 +272,12 @@ class AppRoot extends StatelessWidget {
               label: l10n.menuAbout,
               onSelected: () {
                 AboutDialogHelper.showAboutDialog(context);
+              },
+            ),
+            PlatformMenuItem(
+              label: l10n.menuCheckUpdate,
+              onSelected: () {
+                AppUpdateDialog.show(context);
               },
             ),
             PlatformMenuItem(

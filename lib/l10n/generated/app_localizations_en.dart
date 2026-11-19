@@ -1154,4 +1154,177 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get themeTagSlate => 'light · cool cobalt';
+
+  @override
+  String get aboutVersionLabel => 'Version';
+
+  @override
+  String get menuCheckUpdate => 'Check for Updates';
+
+  @override
+  String menuUpdateAvailable(String version) {
+    return 'Update v$version Available';
+  }
+
+  @override
+  String get updateDialogTitle => 'Software Update';
+
+  @override
+  String get updateCurrentVersionLabel => 'Current Version';
+
+  @override
+  String get updateLatestVersionLabel => 'Latest Version';
+
+  @override
+  String get updateChecking => 'Checking for the latest release...';
+
+  @override
+  String get updateUpToDateTitle => 'You\'re up to date';
+
+  @override
+  String updateUpToDateSubtitle(String version) {
+    return 'IoT DevKit v$version is already the latest available version.';
+  }
+
+  @override
+  String get updateRecheckButton => 'Check Again';
+
+  @override
+  String get updateReleaseNotesTitle => 'Release Notes';
+
+  @override
+  String get updateNoReleaseNotes =>
+      'No detailed release notes provided. Open the release page for full details.';
+
+  @override
+  String get updateDownloadButton => 'Download Update';
+
+  @override
+  String updateDownloadWithSize(String size) {
+    return 'Download Update ($size)';
+  }
+
+  @override
+  String updateDownloadingTitle(String version) {
+    return 'Downloading update v$version';
+  }
+
+  @override
+  String get updateCancelDownload => 'Cancel';
+
+  @override
+  String get updateReadyTitle => 'Update package verified and ready';
+
+  @override
+  String get updateReadyHintWindows =>
+      'Clicking Install & Exit launches the setup wizard and closes the running app to upgrade.';
+
+  @override
+  String get updateReadyHintMacos =>
+      'Clicking Open DMG Installer mounts the disk image. Drag IoT DevKit to Applications to upgrade.';
+
+  @override
+  String get updateReadyHintLinux =>
+      'Clicking Open Package Folder reveals the archive. Extract and replace your installation, then relaunch.';
+
+  @override
+  String get updateInstallNowWindows => 'Install & Exit';
+
+  @override
+  String get updateOpenInstallerMacos => 'Open DMG Installer';
+
+  @override
+  String get updateOpenFolderLinux => 'Open Package Folder';
+
+  @override
+  String get updateRevealFile => 'Show in Folder';
+
+  @override
+  String get updateOpenReleasePage => 'Release Page';
+
+  @override
+  String get updateSkipVersion => 'Skip Version';
+
+  @override
+  String get updateLater => 'Later';
+
+  @override
+  String get updateViewDetails => 'View Update';
+
+  @override
+  String updateBannerAvailable(String latest, String current) {
+    return 'New version v$latest available (current v$current)';
+  }
+
+  @override
+  String updateBannerDownloading(String version, int progress) {
+    return 'Downloading v$version · $progress%';
+  }
+
+  @override
+  String updateBannerReady(String version) {
+    return 'Update v$version is ready to install';
+  }
+
+  @override
+  String get updateSettingsTitle => 'Update Feed & Preferences';
+
+  @override
+  String get updateAutoCheckLabel =>
+      'Automatically check for updates on startup';
+
+  @override
+  String get updateMirrorLabel => 'Download Mirror / Custom Feed URL';
+
+  @override
+  String get updateMirrorHint => 'https://ghfast.top or custom latest.json URL';
+
+  @override
+  String get updateMirrorHelper =>
+      'Set a GitHub mirror prefix if direct downloads are slow; leave blank for official GitHub';
+
+  @override
+  String get updateSha256Verified => 'SHA-256 Verified';
+
+  @override
+  String updateLastChecked(String time) {
+    return 'Last checked: $time';
+  }
+
+  @override
+  String get updateErrorNetwork =>
+      'Unable to reach the update server. Check your network or configure a mirror and retry.';
+
+  @override
+  String get updateErrorInvalidMirror =>
+      'Invalid mirror or feed URL. Must start with https:// or http://.';
+
+  @override
+  String get updateErrorAssetUnavailable =>
+      'No installer package was found for this OS. Open the release page to download manually.';
+
+  @override
+  String get updateErrorChecksum =>
+      'SHA-256 checksum mismatch. The downloaded file may be corrupted; please retry.';
+
+  @override
+  String get updateErrorInstaller =>
+      'Failed to launch installer automatically. Show the file in folder or install manually.';
+
+  @override
+  String get updateActiveSimulationTitle => 'Simulation in Progress';
+
+  @override
+  String get updateActiveSimulationBody =>
+      'An MQTT simulation is currently running. Installing the update will stop all simulation processes and exit the app. Continue?';
+
+  @override
+  String get updateConfirmStopAndInstall => 'Stop & Install';
+
+  @override
+  String get updateMountedDmgToast =>
+      'DMG mounted. Drag IoT DevKit to Applications in Finder to finish updating.';
+
+  @override
+  String get updateOpenedFolderToast => 'Opened update package folder.';
 }

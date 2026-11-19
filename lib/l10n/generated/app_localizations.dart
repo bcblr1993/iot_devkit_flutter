@@ -2288,6 +2288,294 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'light · cool cobalt'**
   String get themeTagSlate;
+
+  /// No description provided for @aboutVersionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Version'**
+  String get aboutVersionLabel;
+
+  /// No description provided for @menuCheckUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Check for Updates'**
+  String get menuCheckUpdate;
+
+  /// No description provided for @menuUpdateAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Update v{version} Available'**
+  String menuUpdateAvailable(String version);
+
+  /// No description provided for @updateDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Software Update'**
+  String get updateDialogTitle;
+
+  /// No description provided for @updateCurrentVersionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Version'**
+  String get updateCurrentVersionLabel;
+
+  /// No description provided for @updateLatestVersionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest Version'**
+  String get updateLatestVersionLabel;
+
+  /// No description provided for @updateChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking for the latest release...'**
+  String get updateChecking;
+
+  /// No description provided for @updateUpToDateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re up to date'**
+  String get updateUpToDateTitle;
+
+  /// No description provided for @updateUpToDateSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'IoT DevKit v{version} is already the latest available version.'**
+  String updateUpToDateSubtitle(String version);
+
+  /// No description provided for @updateRecheckButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Check Again'**
+  String get updateRecheckButton;
+
+  /// No description provided for @updateReleaseNotesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Release Notes'**
+  String get updateReleaseNotesTitle;
+
+  /// No description provided for @updateNoReleaseNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'No detailed release notes provided. Open the release page for full details.'**
+  String get updateNoReleaseNotes;
+
+  /// No description provided for @updateDownloadButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Download Update'**
+  String get updateDownloadButton;
+
+  /// No description provided for @updateDownloadWithSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Download Update ({size})'**
+  String updateDownloadWithSize(String size);
+
+  /// No description provided for @updateDownloadingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading update v{version}'**
+  String updateDownloadingTitle(String version);
+
+  /// No description provided for @updateCancelDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get updateCancelDownload;
+
+  /// No description provided for @updateReadyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update package verified and ready'**
+  String get updateReadyTitle;
+
+  /// No description provided for @updateReadyHintWindows.
+  ///
+  /// In en, this message translates to:
+  /// **'Clicking Install & Exit launches the setup wizard and closes the running app to upgrade.'**
+  String get updateReadyHintWindows;
+
+  /// No description provided for @updateReadyHintMacos.
+  ///
+  /// In en, this message translates to:
+  /// **'Clicking Open DMG Installer mounts the disk image. Drag IoT DevKit to Applications to upgrade.'**
+  String get updateReadyHintMacos;
+
+  /// No description provided for @updateReadyHintLinux.
+  ///
+  /// In en, this message translates to:
+  /// **'Clicking Open Package Folder reveals the archive. Extract and replace your installation, then relaunch.'**
+  String get updateReadyHintLinux;
+
+  /// No description provided for @updateInstallNowWindows.
+  ///
+  /// In en, this message translates to:
+  /// **'Install & Exit'**
+  String get updateInstallNowWindows;
+
+  /// No description provided for @updateOpenInstallerMacos.
+  ///
+  /// In en, this message translates to:
+  /// **'Open DMG Installer'**
+  String get updateOpenInstallerMacos;
+
+  /// No description provided for @updateOpenFolderLinux.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Package Folder'**
+  String get updateOpenFolderLinux;
+
+  /// No description provided for @updateRevealFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Show in Folder'**
+  String get updateRevealFile;
+
+  /// No description provided for @updateOpenReleasePage.
+  ///
+  /// In en, this message translates to:
+  /// **'Release Page'**
+  String get updateOpenReleasePage;
+
+  /// No description provided for @updateSkipVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip Version'**
+  String get updateSkipVersion;
+
+  /// No description provided for @updateLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get updateLater;
+
+  /// No description provided for @updateViewDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'View Update'**
+  String get updateViewDetails;
+
+  /// No description provided for @updateBannerAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'New version v{latest} available (current v{current})'**
+  String updateBannerAvailable(String latest, String current);
+
+  /// No description provided for @updateBannerDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading v{version} · {progress}%'**
+  String updateBannerDownloading(String version, int progress);
+
+  /// No description provided for @updateBannerReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Update v{version} is ready to install'**
+  String updateBannerReady(String version);
+
+  /// No description provided for @updateSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Feed & Preferences'**
+  String get updateSettingsTitle;
+
+  /// No description provided for @updateAutoCheckLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically check for updates on startup'**
+  String get updateAutoCheckLabel;
+
+  /// No description provided for @updateMirrorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Download Mirror / Custom Feed URL'**
+  String get updateMirrorLabel;
+
+  /// No description provided for @updateMirrorHint.
+  ///
+  /// In en, this message translates to:
+  /// **'https://ghfast.top or custom latest.json URL'**
+  String get updateMirrorHint;
+
+  /// No description provided for @updateMirrorHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a GitHub mirror prefix if direct downloads are slow; leave blank for official GitHub'**
+  String get updateMirrorHelper;
+
+  /// No description provided for @updateSha256Verified.
+  ///
+  /// In en, this message translates to:
+  /// **'SHA-256 Verified'**
+  String get updateSha256Verified;
+
+  /// No description provided for @updateLastChecked.
+  ///
+  /// In en, this message translates to:
+  /// **'Last checked: {time}'**
+  String updateLastChecked(String time);
+
+  /// No description provided for @updateErrorNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to reach the update server. Check your network or configure a mirror and retry.'**
+  String get updateErrorNetwork;
+
+  /// No description provided for @updateErrorInvalidMirror.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid mirror or feed URL. Must start with https:// or http://.'**
+  String get updateErrorInvalidMirror;
+
+  /// No description provided for @updateErrorAssetUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No installer package was found for this OS. Open the release page to download manually.'**
+  String get updateErrorAssetUnavailable;
+
+  /// No description provided for @updateErrorChecksum.
+  ///
+  /// In en, this message translates to:
+  /// **'SHA-256 checksum mismatch. The downloaded file may be corrupted; please retry.'**
+  String get updateErrorChecksum;
+
+  /// No description provided for @updateErrorInstaller.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to launch installer automatically. Show the file in folder or install manually.'**
+  String get updateErrorInstaller;
+
+  /// No description provided for @updateActiveSimulationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Simulation in Progress'**
+  String get updateActiveSimulationTitle;
+
+  /// No description provided for @updateActiveSimulationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'An MQTT simulation is currently running. Installing the update will stop all simulation processes and exit the app. Continue?'**
+  String get updateActiveSimulationBody;
+
+  /// No description provided for @updateConfirmStopAndInstall.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop & Install'**
+  String get updateConfirmStopAndInstall;
+
+  /// No description provided for @updateMountedDmgToast.
+  ///
+  /// In en, this message translates to:
+  /// **'DMG mounted. Drag IoT DevKit to Applications in Finder to finish updating.'**
+  String get updateMountedDmgToast;
+
+  /// No description provided for @updateOpenedFolderToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Opened update package folder.'**
+  String get updateOpenedFolderToast;
 }
 
 class _AppLocalizationsDelegate

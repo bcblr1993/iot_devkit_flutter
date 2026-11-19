@@ -1128,4 +1128,168 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get themeTagSlate => '浅色 · 冷钴蓝';
+
+  @override
+  String get aboutVersionLabel => '版本';
+
+  @override
+  String get menuCheckUpdate => '检查更新';
+
+  @override
+  String menuUpdateAvailable(String version) {
+    return '发现新版本 v$version';
+  }
+
+  @override
+  String get updateDialogTitle => '软件更新';
+
+  @override
+  String get updateCurrentVersionLabel => '当前版本';
+
+  @override
+  String get updateLatestVersionLabel => '最新版本';
+
+  @override
+  String get updateChecking => '正在检查最新版本...';
+
+  @override
+  String get updateUpToDateTitle => '当前已是最新版本';
+
+  @override
+  String updateUpToDateSubtitle(String version) {
+    return 'IoT DevKit v$version 已是当前可用最新版本。';
+  }
+
+  @override
+  String get updateRecheckButton => '重新检查';
+
+  @override
+  String get updateReleaseNotesTitle => '版本更新说明';
+
+  @override
+  String get updateNoReleaseNotes => '暂无详细更新说明，可前往发布页查看完整记录。';
+
+  @override
+  String get updateDownloadButton => '下载更新';
+
+  @override
+  String updateDownloadWithSize(String size) {
+    return '下载更新 ($size)';
+  }
+
+  @override
+  String updateDownloadingTitle(String version) {
+    return '正在下载更新包 v$version';
+  }
+
+  @override
+  String get updateCancelDownload => '取消下载';
+
+  @override
+  String get updateReadyTitle => '安装包已就绪并通过完整性校验';
+
+  @override
+  String get updateReadyHintWindows => '点击“立即安装并退出”将启动安装向导并关闭当前应用以完成升级。';
+
+  @override
+  String get updateReadyHintMacos =>
+      '点击“打开 DMG 安装包”将自动挂载镜像，拖入 Applications 即可完成升级。';
+
+  @override
+  String get updateReadyHintLinux => '点击“打开安装包目录”定位新版本归档包，解压替换后重启即可。';
+
+  @override
+  String get updateInstallNowWindows => '立即安装并退出';
+
+  @override
+  String get updateOpenInstallerMacos => '打开 DMG 安装包';
+
+  @override
+  String get updateOpenFolderLinux => '打开安装包目录';
+
+  @override
+  String get updateRevealFile => '定位文件';
+
+  @override
+  String get updateOpenReleasePage => '前往发布页';
+
+  @override
+  String get updateSkipVersion => '忽略此版本';
+
+  @override
+  String get updateLater => '稍后提醒';
+
+  @override
+  String get updateViewDetails => '查看更新';
+
+  @override
+  String updateBannerAvailable(String latest, String current) {
+    return '发现新版本 v$latest（当前 v$current）';
+  }
+
+  @override
+  String updateBannerDownloading(String version, int progress) {
+    return '正在下载 v$version · $progress%';
+  }
+
+  @override
+  String updateBannerReady(String version) {
+    return '新版本 v$version 已下载就绪';
+  }
+
+  @override
+  String get updateSettingsTitle => '更新源与偏好设置';
+
+  @override
+  String get updateAutoCheckLabel => '启动时自动检查新版本';
+
+  @override
+  String get updateMirrorLabel => '下载加速镜像 / 自定义源';
+
+  @override
+  String get updateMirrorHint => 'https://ghfast.top 或自定义 latest.json 地址';
+
+  @override
+  String get updateMirrorHelper => '访问 GitHub 较慢时可填写加速镜像前缀，留空则直连官方源';
+
+  @override
+  String get updateSha256Verified => 'SHA-256 校验保护';
+
+  @override
+  String updateLastChecked(String time) {
+    return '上次检查：$time';
+  }
+
+  @override
+  String get updateErrorNetwork => '无法连接更新服务器，请检查网络或配置加速镜像后重试。';
+
+  @override
+  String get updateErrorInvalidMirror =>
+      '镜像或自定义更新源地址格式无效，请以 https:// 或 http:// 开头。';
+
+  @override
+  String get updateErrorAssetUnavailable => '当前版本暂未提供本系统安装包，请前往发布页手动下载。';
+
+  @override
+  String get updateErrorChecksum => '安装包 SHA-256 校验未通过，文件可能损坏，请重新下载。';
+
+  @override
+  String get updateErrorInstaller => '无法自动启动安装程序，请打开所在目录或前往发布页手动安装。';
+
+  @override
+  String get updateActiveSimulationTitle => '模拟任务正在运行';
+
+  @override
+  String get updateActiveSimulationBody =>
+      '当前正在运行 MQTT 设备模拟。安装新版本需要先停止所有模拟进程并退出应用，是否继续？';
+
+  @override
+  String get updateConfirmStopAndInstall => '停止模拟并安装';
+
+  @override
+  String get updateMountedDmgToast =>
+      '已挂载 DMG 安装镜像，请在访达中将应用拖入 Applications 完成更新';
+
+  @override
+  String get updateOpenedFolderToast => '已打开更新安装包所在目录';
 }

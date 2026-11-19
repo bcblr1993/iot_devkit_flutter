@@ -424,5 +424,115 @@
   "themeTagMint": "nature · teal",
   "themeTagPaper": "light · for daylight",
   "themeTagLinen": "light · warm clay",
-  "themeTagSlate": "light · cool cobalt"
+  "themeTagSlate": "light · cool cobalt",
+  "aboutVersionLabel": "Version",
+  "menuCheckUpdate": "Check for Updates",
+  "menuUpdateAvailable": "Update v{version} Available",
+  "@menuUpdateAvailable": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateDialogTitle": "Software Update",
+  "updateCurrentVersionLabel": "Current Version",
+  "updateLatestVersionLabel": "Latest Version",
+  "updateChecking": "Checking for the latest release...",
+  "updateUpToDateTitle": "You're up to date",
+  "updateUpToDateSubtitle": "IoT DevKit v{version} is already the latest available version.",
+  "@updateUpToDateSubtitle": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateRecheckButton": "Check Again",
+  "updateReleaseNotesTitle": "Release Notes",
+  "updateNoReleaseNotes": "No detailed release notes provided. Open the release page for full details.",
+  "updateDownloadButton": "Download Update",
+  "updateDownloadWithSize": "Download Update ({size})",
+  "@updateDownloadWithSize": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "updateDownloadingTitle": "Downloading update v{version}",
+  "@updateDownloadingTitle": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateCancelDownload": "Cancel",
+  "updateReadyTitle": "Update package verified and ready",
+  "updateReadyHintWindows": "Clicking Install & Exit launches the setup wizard and closes the running app to upgrade.",
+  "updateReadyHintMacos": "Clicking Open DMG Installer mounts the disk image. Drag IoT DevKit to Applications to upgrade.",
+  "updateReadyHintLinux": "Clicking Open Package Folder reveals the archive. Extract and replace your installation, then relaunch.",
+  "updateInstallNowWindows": "Install & Exit",
+  "updateOpenInstallerMacos": "Open DMG Installer",
+  "updateOpenFolderLinux": "Open Package Folder",
+  "updateRevealFile": "Show in Folder",
+  "updateOpenReleasePage": "Release Page",
+  "updateSkipVersion": "Skip Version",
+  "updateLater": "Later",
+  "updateViewDetails": "View Update",
+  "updateBannerAvailable": "New version v{latest} available (current v{current})",
+  "@updateBannerAvailable": {
+    "placeholders": {
+      "latest": {
+        "type": "String"
+      },
+      "current": {
+        "type": "String"
+      }
+    }
+  },
+  "updateBannerDownloading": "Downloading v{version} · {progress}%",
+  "@updateBannerDownloading": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "progress": {
+        "type": "int"
+      }
+    }
+  },
+  "updateBannerReady": "Update v{version} is ready to install",
+  "@updateBannerReady": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateSettingsTitle": "Update Feed & Preferences",
+  "updateAutoCheckLabel": "Automatically check for updates on startup",
+  "updateMirrorLabel": "Download Mirror / Custom Feed URL",
+  "updateMirrorHint": "https://ghfast.top or custom latest.json URL",
+  "updateMirrorHelper": "Set a GitHub mirror prefix if direct downloads are slow; leave blank for official GitHub",
+  "updateSha256Verified": "SHA-256 Verified",
+  "updateLastChecked": "Last checked: {time}",
+  "@updateLastChecked": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "updateErrorNetwork": "Unable to reach the update server. Check your network or configure a mirror and retry.",
+  "updateErrorInvalidMirror": "Invalid mirror or feed URL. Must start with https:// or http://.",
+  "updateErrorAssetUnavailable": "No installer package was found for this OS. Open the release page to download manually.",
+  "updateErrorChecksum": "SHA-256 checksum mismatch. The downloaded file may be corrupted; please retry.",
+  "updateErrorInstaller": "Failed to launch installer automatically. Show the file in folder or install manually.",
+  "updateActiveSimulationTitle": "Simulation in Progress",
+  "updateActiveSimulationBody": "An MQTT simulation is currently running. Installing the update will stop all simulation processes and exit the app. Continue?",
+  "updateConfirmStopAndInstall": "Stop & Install",
+  "updateMountedDmgToast": "DMG mounted. Drag IoT DevKit to Applications in Finder to finish updating.",
+  "updateOpenedFolderToast": "Opened update package folder."
 }

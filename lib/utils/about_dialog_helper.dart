@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../l10n/generated/app_localizations.dart';
 import '../ui/lab/lab.dart';
+import '../ui/update/app_update_dialog.dart';
+import '../viewmodels/app_update_provider.dart';
 import 'version_helper.dart';
 
 class AboutDialogHelper {
@@ -19,7 +22,7 @@ class AboutDialogHelper {
         final theme = Theme.of(dialogContext);
         final colors = theme.colorScheme;
         final tokens = LabTokens.of(dialogContext);
-        final isZh = Localizations.localeOf(dialogContext).languageCode == 'zh';
+        final updateProvider = dialogContext.watch<AppUpdateProvider?>();
 
         return Dialog(
           elevation: 0,
@@ -95,7 +98,7 @@ class AboutDialogHelper {
                       final compact = constraints.maxWidth < 380;
                       final versionTile = _AboutInfoTile(
                         icon: Icons.new_releases_outlined,
-                        label: isZh ? '版本' : 'Version',
+                        label: l10n.aboutVersionLabel,
                         value: 'v$version',
                       );
                       final dateTile = _AboutInfoTile(
@@ -173,16 +176,66 @@ class AboutDialogHelper {
                     ),
                   ),
                   const SizedBox(height: 18),
-                  FilledButton(
-                    onPressed: () => Navigator.of(dialogContext).pop(),
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(44),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(tokens.rLg),
+                  if (updateProvider != null)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.of(dialogContext).pop();
+                              AppUpdateDialog.show(context);
+                            },
+                            icon: const Icon(
+                              Icons.system_update_alt_rounded,
+                              size: 17,
+                            ),
+                            label: Text(
+                              updateProvider.hasBadgeUpdate &&
+                                      updateProvider.latestRelease != null
+                                  ? l10n.menuUpdateAvailable(
+                                      updateProvider.latestRelease!.version,
+                                    )
+                                  : l10n.menuCheckUpdate,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size.fromHeight(44),
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.circular(tokens.rLg),
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: tokens.sMd),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(),
+                            style: FilledButton.styleFrom(
+                              minimumSize: const Size.fromHeight(44),
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.circular(tokens.rLg),
+                              ),
+                            ),
+                            child: Text(l10n.close),
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    FilledButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(44),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(tokens.rLg),
+                        ),
                       ),
+                      child: Text(l10n.close),
                     ),
-                    child: Text(l10n.close),
-                  ),
                 ],
               ),
             ),

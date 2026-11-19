@@ -426,5 +426,115 @@
   "themeTagMint": "自然 · 青绿",
   "themeTagPaper": "浅色 · 日光",
   "themeTagLinen": "浅色 · 暖陶土",
-  "themeTagSlate": "浅色 · 冷钴蓝"
+  "themeTagSlate": "浅色 · 冷钴蓝",
+  "aboutVersionLabel": "版本",
+  "menuCheckUpdate": "检查更新",
+  "menuUpdateAvailable": "发现新版本 v{version}",
+  "@menuUpdateAvailable": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateDialogTitle": "软件更新",
+  "updateCurrentVersionLabel": "当前版本",
+  "updateLatestVersionLabel": "最新版本",
+  "updateChecking": "正在检查最新版本...",
+  "updateUpToDateTitle": "当前已是最新版本",
+  "updateUpToDateSubtitle": "IoT DevKit v{version} 已是当前可用最新版本。",
+  "@updateUpToDateSubtitle": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateRecheckButton": "重新检查",
+  "updateReleaseNotesTitle": "版本更新说明",
+  "updateNoReleaseNotes": "暂无详细更新说明，可前往发布页查看完整记录。",
+  "updateDownloadButton": "下载更新",
+  "updateDownloadWithSize": "下载更新 ({size})",
+  "@updateDownloadWithSize": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "updateDownloadingTitle": "正在下载更新包 v{version}",
+  "@updateDownloadingTitle": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateCancelDownload": "取消下载",
+  "updateReadyTitle": "安装包已就绪并通过完整性校验",
+  "updateReadyHintWindows": "点击“立即安装并退出”将启动安装向导并关闭当前应用以完成升级。",
+  "updateReadyHintMacos": "点击“打开 DMG 安装包”将自动挂载镜像，拖入 Applications 即可完成升级。",
+  "updateReadyHintLinux": "点击“打开安装包目录”定位新版本归档包，解压替换后重启即可。",
+  "updateInstallNowWindows": "立即安装并退出",
+  "updateOpenInstallerMacos": "打开 DMG 安装包",
+  "updateOpenFolderLinux": "打开安装包目录",
+  "updateRevealFile": "定位文件",
+  "updateOpenReleasePage": "前往发布页",
+  "updateSkipVersion": "忽略此版本",
+  "updateLater": "稍后提醒",
+  "updateViewDetails": "查看更新",
+  "updateBannerAvailable": "发现新版本 v{latest}（当前 v{current}）",
+  "@updateBannerAvailable": {
+    "placeholders": {
+      "latest": {
+        "type": "String"
+      },
+      "current": {
+        "type": "String"
+      }
+    }
+  },
+  "updateBannerDownloading": "正在下载 v{version} · {progress}%",
+  "@updateBannerDownloading": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "progress": {
+        "type": "int"
+      }
+    }
+  },
+  "updateBannerReady": "新版本 v{version} 已下载就绪",
+  "@updateBannerReady": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateSettingsTitle": "更新源与偏好设置",
+  "updateAutoCheckLabel": "启动时自动检查新版本",
+  "updateMirrorLabel": "下载加速镜像 / 自定义源",
+  "updateMirrorHint": "https://ghfast.top 或自定义 latest.json 地址",
+  "updateMirrorHelper": "访问 GitHub 较慢时可填写加速镜像前缀，留空则直连官方源",
+  "updateSha256Verified": "SHA-256 校验保护",
+  "updateLastChecked": "上次检查：{time}",
+  "@updateLastChecked": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "updateErrorNetwork": "无法连接更新服务器，请检查网络或配置加速镜像后重试。",
+  "updateErrorInvalidMirror": "镜像或自定义更新源地址格式无效，请以 https:// 或 http:// 开头。",
+  "updateErrorAssetUnavailable": "当前版本暂未提供本系统安装包，请前往发布页手动下载。",
+  "updateErrorChecksum": "安装包 SHA-256 校验未通过，文件可能损坏，请重新下载。",
+  "updateErrorInstaller": "无法自动启动安装程序，请打开所在目录或前往发布页手动安装。",
+  "updateActiveSimulationTitle": "模拟任务正在运行",
+  "updateActiveSimulationBody": "当前正在运行 MQTT 设备模拟。安装新版本需要先停止所有模拟进程并退出应用，是否继续？",
+  "updateConfirmStopAndInstall": "停止模拟并安装",
+  "updateMountedDmgToast": "已挂载 DMG 安装镜像，请在访达中将应用拖入 Applications 完成更新",
+  "updateOpenedFolderToast": "已打开更新安装包所在目录"
 }
